@@ -20,8 +20,9 @@ const (
 )
 
 type SourceConfig struct {
-	PRCount int `yaml:"pr-count"`
-	Sources []struct {
+	DiffPager *string `yaml:"diff-pager"`
+	PRCount   int     `yaml:"pr-count"`
+	Sources   []struct {
 		Owner string `yaml:"owner"`
 		Repos []struct {
 			Name string `yaml:"name"`
@@ -35,8 +36,9 @@ type Repo struct {
 }
 
 type Config struct {
-	PRCount int
-	Repos   []Repo
+	DiffPager *string
+	PRCount   int
+	Repos     []Repo
 }
 
 type delegateKeyMap struct {

@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"os/exec"
 	"runtime"
 	"strconv"
@@ -37,6 +38,42 @@ func openPRInBrowser(url string) tea.Cmd {
 			return PROpenedinBrowserMsg{url: url, err: err}
 		}
 		return tea.Msg(PROpenedinBrowserMsg{url: url})
+	})
+}
+
+func showDiff(repoOwner, repoName string, prNumber int, pager *string) tea.Cmd {
+	var pagerPrefix string
+	if pager != nil {
+		pagerPrefix = fmt.Sprintf("GH_PAGER='%s' ", *pager)
+
+	}
+	c := exec.Command("bash", "-c",
+		fmt.Sprintf("%sgh --repo %s/%s pr diff %d",
+			pagerPrefix,
+			repoOwner,
+			repoName,
+			prNumber,
+		))
+	return tea.ExecProcess(c, func(err error) tea.Msg {
+		if err != nil {
+			return PRDiffDoneMsg{err: err}
+		}
+		return tea.Msg(PRDiffDoneMsg{})
+	})
+}
+
+func showPR(repoOwner, repoName string, prNumber int) tea.Cmd {
+	c := exec.Command("bash", "-c",
+		fmt.Sprintf("gh --repo %s/%s pr view --comments %d",
+			repoOwner,
+			repoName,
+			prNumber,
+		))
+	return tea.ExecProcess(c, func(err error) tea.Msg {
+		if err != nil {
+			return PRDiffDoneMsg{err: err}
+		}
+		return tea.Msg(PRDiffDoneMsg{})
 	})
 }
 

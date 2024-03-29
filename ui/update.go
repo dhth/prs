@@ -41,6 +41,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					cmds = append(cmds, openPRInBrowser(selected.Url))
 				}
 			}
+		case "ctrl+d":
+			if m.activePane == prList || m.activePane == prTLList {
+				selected, ok := m.prsList.SelectedItem().(pr)
+				if ok {
+					cmds = append(cmds, showDiff(m.repoOwner, m.repoName, selected.Number, m.config.DiffPager))
+				}
+			}
+		case "ctrl+v":
+			if m.activePane == prList || m.activePane == prTLList {
+				selected, ok := m.prsList.SelectedItem().(pr)
+				if ok {
+					cmds = append(cmds, showPR(m.repoOwner, m.repoName, selected.Number))
+				}
+			}
 		}
 	case HideHelpMsg:
 		m.showHelp = false
@@ -119,6 +133,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case PROpenedinBrowserMsg:
 		if msg.err != nil {
 			m.message = fmt.Sprintf("Error opening url: %s", msg.err.Error())
+		}
+	case PRDiffDoneMsg:
+		if msg.err != nil {
+			m.message = fmt.Sprintf("Error opening diff: %s", msg.err.Error())
+		}
+	case PRViewDoneMsg:
+		if msg.err != nil {
+			m.message = fmt.Sprintf("Error showing PR: %s", msg.err.Error())
 		}
 	}
 

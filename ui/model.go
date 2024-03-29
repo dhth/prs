@@ -39,7 +39,7 @@ type model struct {
 
 func (m model) Init() tea.Cmd {
 	return tea.Batch(
-		hideHelp(time.Second*15),
+		hideHelp(time.Minute*1),
 		fetchPRS(m.ghClient, m.repoOwner, m.repoName, m.prCount),
 	)
 }

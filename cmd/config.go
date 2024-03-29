@@ -42,8 +42,9 @@ func readConfig(configFilePath string) (ui.Config, error) {
 	}
 	var prCount = srcCfg.PRCount
 	cfg := ui.Config{
-		PRCount: prCount,
-		Repos:   repos,
+		DiffPager: srcCfg.DiffPager,
+		PRCount:   prCount,
+		Repos:     repos,
 	}
 	return cfg, nil
 

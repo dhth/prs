@@ -36,7 +36,9 @@ func InitialModel(config Config) model {
 		PaddingLeft(1).
 		PaddingBottom(1)
 
-	prListStyle := repoListStyle.Copy()
+	prListStyle := repoListStyle.Copy().
+		Border(lipgloss.NormalBorder(), false, true, false, false).
+		BorderForeground(lipgloss.Color("#363230"))
 
 	prTLStyle := repoListStyle.Copy().
 		PaddingRight(1)

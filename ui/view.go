@@ -31,7 +31,7 @@ func (m model) View() string {
 
 	var helpMsg string
 	if m.showHelp {
-		helpMsg = " " + helpMsgStyle.Render("tab: switch focus; ctrl+r: change repo; q: quit")
+		helpMsg = " " + helpMsgStyle.Render("tab: switch focus; ctrl+r: change repo; ctrl+b: open in browser; ctrl+d: show diff; ctrl+v: view pr")
 	}
 
 	footerStr := fmt.Sprintf("%s%s",

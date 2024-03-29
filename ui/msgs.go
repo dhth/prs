@@ -26,3 +26,11 @@ type PROpenedinBrowserMsg struct {
 	url string
 	err error
 }
+
+type PRDiffDoneMsg struct {
+	err error
+}
+
+type PRViewDoneMsg struct {
+	err error
+}
