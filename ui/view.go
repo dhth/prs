@@ -16,11 +16,10 @@ func (m model) View() string {
 	}
 
 	switch m.activePane {
-	case prList, prTLList:
-		content = lipgloss.JoinHorizontal(lipgloss.Top,
-			m.prListStyle.Render(m.prsList.View()),
-			m.prTLStyle.Render(m.prTLList.View()),
-		)
+	case prList:
+		content = m.prListStyle.Render(m.prsList.View())
+	case prTLList:
+		content = m.prTLStyle.Render(m.prTLList.View())
 	case repoList:
 		content = m.repoListStyle.Render(m.repoList.View())
 	}

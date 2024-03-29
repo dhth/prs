@@ -147,7 +147,7 @@ func (pr pr) Description() string {
 	var additions string
 	var deletions string
 
-	author := authorStyle(pr.Author.Login).Render(Trim(pr.Author.Login, 30))
+	author := authorStyle(pr.Author.Login).Render(Trim(pr.Author.Login, 50))
 	state := prStyle(pr.State).Render(pr.State)
 
 	if pr.Additions > 0 {
@@ -168,16 +168,16 @@ func (item prTLItem) Title() string {
 	switch item.Type {
 	case TLItemPRCommit:
 		if item.PullRequestCommit.Commit.Author.User != nil {
-			author := authorStyle(item.PullRequestCommit.Commit.Author.User.Login).Render(Trim(item.PullRequestCommit.Commit.Author.User.Login, 30))
+			author := authorStyle(item.PullRequestCommit.Commit.Author.User.Login).Render(Trim(item.PullRequestCommit.Commit.Author.User.Login, 50))
 			title = fmt.Sprintf("%s pushed a commit", author)
 		} else {
 			title = fmt.Sprintf("%s pushed a commit", item.PullRequestCommit.Commit.Author.Name)
 		}
 	case TLItemPRReview:
-		author := authorStyle(item.PullRequestReview.Author.Login).Render(Trim(item.PullRequestReview.Author.Login, 30))
+		author := authorStyle(item.PullRequestReview.Author.Login).Render(Trim(item.PullRequestReview.Author.Login, 50))
 		title = fmt.Sprintf("%sreviewed", author)
 	case TLItemMergedEvent:
-		author := authorStyle(item.MergedEvent.Actor.Login).Render(Trim(item.MergedEvent.Actor.Login, 30))
+		author := authorStyle(item.MergedEvent.Actor.Login).Render(Trim(item.MergedEvent.Actor.Login, 50))
 		title = fmt.Sprintf("%smerged the PR", author)
 	}
 	return title

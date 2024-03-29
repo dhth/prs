@@ -65,16 +65,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.terminalHeight = msg.Height
 
 		m.repoList.SetHeight(msg.Height - h1 - 2)
-		m.repoList.SetWidth(int(float64(msg.Width)*0.4) - 6)
-		m.repoListStyle = m.repoListStyle.Width(int(float64(msg.Width)*0.4) - 2)
+		m.repoList.SetWidth(int(float64(msg.Width)) - 4)
+		m.repoListStyle = m.repoListStyle.Width(int(float64(msg.Width)) - 2)
 
 		m.prsList.SetHeight(msg.Height - h1 - 2)
-		m.prsList.SetWidth(int(float64(msg.Width)*0.4) - 6)
-		m.prListStyle = m.prListStyle.Width(int(float64(msg.Width)*0.4) - 2)
+		m.prsList.SetWidth(int(float64(msg.Width)) - 4)
+		m.prListStyle = m.prListStyle.Width(int(float64(msg.Width)) - 2)
 
 		m.prTLList.SetHeight(msg.Height - h2 - 2)
-		m.prTLList.SetWidth(int(float64(msg.Width)*0.6) - 6)
-		m.prTLStyle = m.prTLStyle.Width(int(float64(msg.Width)*0.6) - 2)
+		m.prTLList.SetWidth(int(float64(msg.Width)) - 4)
+		m.prTLStyle = m.prTLStyle.Width(int(float64(msg.Width)) - 2)
 	case RepoChosenMsg:
 		repoDetails := strings.Split(msg.repo, ":::")
 		if len(repoDetails) != 2 {
@@ -100,6 +100,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					tlItems = append(tlItems, issue)
 				}
 				m.prTLList.SetItems(tlItems)
+				m.prTLList.Title = fmt.Sprintf("PR #%d Timeline", msg.prNumber)
 			}
 		}
 	case PRsFetchedMsg:

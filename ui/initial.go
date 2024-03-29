@@ -36,9 +36,7 @@ func InitialModel(config Config) model {
 		PaddingLeft(1).
 		PaddingBottom(1)
 
-	prListStyle := repoListStyle.Copy().
-		Border(lipgloss.NormalBorder(), false, true, false, false).
-		BorderForeground(lipgloss.Color("#363230"))
+	prListStyle := repoListStyle.Copy()
 
 	prTLStyle := repoListStyle.Copy().
 		PaddingRight(1)
@@ -86,7 +84,7 @@ func InitialModel(config Config) model {
 	m.prsList.Styles.Title.Foreground(lipgloss.Color("#282828"))
 	m.prsList.Styles.Title.Bold(true)
 
-	m.prTLList.Title = "Timeline"
+	m.prTLList.Title = "PR Timeline"
 	m.prTLList.SetStatusBarItemName("item", "items")
 	m.prTLList.DisableQuitKeybindings()
 	m.prTLList.SetShowHelp(false)
