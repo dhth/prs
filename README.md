@@ -7,7 +7,7 @@
 terminal.
 
 <p align="center">
-  <img src="./static/prs.gif?raw=true" alt="Usage" />
+  <img src="https://tools.dhruvs.space/images/prs/prs.gif" alt="Usage" />
 </p>
 
 
@@ -50,6 +50,15 @@ sources:
 prs
 prs -config-file /path/to/config.yml
 ```
+
+Screenshots
+---
+
+![Screen 1](https://tools.dhruvs.space/images/prs/prs-1.png)
+
+![Screen 2](https://tools.dhruvs.space/images/prs/prs-timeline-1.png)
+
+![Screen 3](https://tools.dhruvs.space/images/prs/prs-repos-1.png)
 
 Acknowledgements
 ---
