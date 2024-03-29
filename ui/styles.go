@@ -16,6 +16,7 @@ const (
 	ReviewApprovedColor         = "#b8bb26"
 	ReviewChangesRequestedColor = "#fabd2f"
 	ReviewDismissedColor        = "#928374"
+	DateColor                   = "#928374"
 )
 
 var (
@@ -43,6 +44,11 @@ var (
 	helpMsgStyle = baseStyle.Copy().
 			Bold(true).
 			Foreground(lipgloss.Color("#83a598"))
+
+	dateStyle = lipgloss.NewStyle().
+			PaddingLeft(1).
+			PaddingRight(1).
+			Foreground(lipgloss.Color(DateColor))
 
 	linesChangedStyle = lipgloss.NewStyle().
 				PaddingLeft(1)

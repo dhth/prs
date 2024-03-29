@@ -8,6 +8,8 @@ require (
 	github.com/charmbracelet/lipgloss v0.10.0
 	github.com/cli/go-gh/v2 v2.7.0
 	github.com/cli/shurcooL-graphql v0.0.4
+	github.com/dustin/go-humanize v1.0.1
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -32,5 +34,4 @@ require (
 	golang.org/x/sys v0.13.0 // indirect
 	golang.org/x/term v0.13.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

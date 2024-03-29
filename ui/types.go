@@ -2,8 +2,10 @@ package ui
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/charmbracelet/bubbles/key"
+	humanize "github.com/dustin/go-humanize"
 )
 
 const (
@@ -56,7 +58,7 @@ type pr struct {
 		Name string
 	}
 	State     string
-	CreatedAt string
+	CreatedAt time.Time
 	ClosedAt  string
 	Author    struct {
 		Login string
@@ -87,6 +89,7 @@ type prTLItem struct {
 	PullRequestCommit struct {
 		Commit struct {
 			Oid             string
+			CommittedDate   time.Time
 			MessageHeadline string
 			Author          struct {
 				Name string
@@ -97,7 +100,7 @@ type prTLItem struct {
 		}
 	} `graphql:"... on PullRequestCommit"`
 	PullRequestReview struct {
-		CreatedAt string
+		CreatedAt time.Time
 		State     string
 		Body      string
 		Author    struct {
@@ -105,7 +108,7 @@ type prTLItem struct {
 		}
 	} `graphql:"... on PullRequestReview"`
 	MergedEvent struct {
-		CreatedAt   string
+		CreatedAt   time.Time
 		MergeCommit struct {
 			Oid             string
 			MessageHeadline string
@@ -150,6 +153,7 @@ func (pr pr) Description() string {
 
 	author := authorStyle(pr.Author.Login).Render(RightPadTrim(pr.Author.Login, 80))
 	state := prStyle(pr.State).Render(pr.State)
+	createdAt := dateStyle.Render(RightPadTrim("created "+humanize.Time(pr.CreatedAt), 24))
 
 	if pr.Additions > 0 {
 		additions = additionsStyle.Render(fmt.Sprintf("+%d", pr.Additions))
@@ -157,7 +161,7 @@ func (pr pr) Description() string {
 	if pr.Deletions > 0 {
 		deletions = deletionsStyle.Render(fmt.Sprintf("-%d", pr.Deletions))
 	}
-	return fmt.Sprintf("%s%s%s%s", author, state, additions, deletions)
+	return fmt.Sprintf("%s%s%s%s%s", author, createdAt, state, additions, deletions)
 }
 
 func (pr pr) FilterValue() string {
@@ -166,20 +170,24 @@ func (pr pr) FilterValue() string {
 
 func (item prTLItem) Title() string {
 	var title string
+	var date string
 	switch item.Type {
 	case TLItemPRCommit:
 		if item.PullRequestCommit.Commit.Author.User != nil {
 			author := authorStyle(item.PullRequestCommit.Commit.Author.User.Login).Render(Trim(item.PullRequestCommit.Commit.Author.User.Login, 50))
-			title = fmt.Sprintf("%s pushed a commit", author)
+			date = dateStyle.Render(humanize.Time(item.PullRequestCommit.Commit.CommittedDate))
+			title = fmt.Sprintf("%s pushed a commit %s", author, date)
 		} else {
 			title = fmt.Sprintf("%s pushed a commit", item.PullRequestCommit.Commit.Author.Name)
 		}
 	case TLItemPRReview:
 		author := authorStyle(item.PullRequestReview.Author.Login).Render(Trim(item.PullRequestReview.Author.Login, 50))
-		title = fmt.Sprintf("%sreviewed", author)
+		date = dateStyle.Render(humanize.Time(item.PullRequestReview.CreatedAt))
+		title = fmt.Sprintf("%sreviewed %s", author, date)
 	case TLItemMergedEvent:
 		author := authorStyle(item.MergedEvent.Actor.Login).Render(Trim(item.MergedEvent.Actor.Login, 50))
-		title = fmt.Sprintf("%smerged the PR", author)
+		date = dateStyle.Render(humanize.Time(item.MergedEvent.CreatedAt))
+		title = fmt.Sprintf("%smerged the PR %s", author, date)
 	}
 	return title
 }
