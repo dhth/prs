@@ -29,6 +29,17 @@ var (
 			Bold(true).
 			Background(lipgloss.Color("#b8bb26"))
 
+	helpVPTitleStyle = baseStyle.Copy().
+				Bold(true).
+				Background(lipgloss.Color("#8ec07c")).
+				Align(lipgloss.Left)
+
+	viewPortStyle = lipgloss.NewStyle().
+			PaddingTop(1).
+			PaddingRight(2).
+			PaddingLeft(1).
+			PaddingBottom(1)
+
 	helpMsgStyle = baseStyle.Copy().
 			Bold(true).
 			Foreground(lipgloss.Color("#83a598"))
@@ -36,6 +47,7 @@ var (
 	linesChangedStyle = lipgloss.NewStyle().
 				PaddingLeft(1)
 	additionsStyle = linesChangedStyle.Copy().
+			PaddingLeft(2).
 			Foreground(lipgloss.Color(AdditionsColor))
 
 	deletionsStyle = linesChangedStyle.Copy().
@@ -57,7 +69,6 @@ var (
 		color := authorColors[int(hash)%len(authorColors)]
 
 		st := lipgloss.NewStyle().
-			PaddingLeft(1).
 			PaddingRight(1).
 			Foreground(lipgloss.Color(color))
 
@@ -85,21 +96,19 @@ var (
 
 	reviewStyle = func(state string) lipgloss.Style {
 		st := lipgloss.NewStyle().
-			PaddingLeft(1).
 			PaddingRight(1).
-			Width(12).
-			Align(lipgloss.Center).
-			Foreground(lipgloss.Color("#282828"))
+			Bold(true).
+			Align(lipgloss.Center)
 
 		switch state {
 		case ReviewCommented:
-			st.Background(lipgloss.Color(ReviewCommentedColor))
+			st.Foreground(lipgloss.Color(ReviewCommentedColor))
 		case ReviewApproved:
-			st.Background(lipgloss.Color(ReviewApprovedColor))
+			st.Foreground(lipgloss.Color(ReviewApprovedColor))
 		case ReviewChangesRequested:
-			st.Background(lipgloss.Color(ReviewChangesRequestedColor))
+			st.Foreground(lipgloss.Color(ReviewChangesRequestedColor))
 		default:
-			st.Background(lipgloss.Color(ReviewDismissedColor))
+			st.Foreground(lipgloss.Color(ReviewDismissedColor))
 		}
 		return st
 	}

@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/charmbracelet/bubbles/list"
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	ghapi "github.com/cli/go-gh/v2/pkg/api"
@@ -15,6 +16,7 @@ const (
 	prList Pane = iota
 	prTLList
 	repoList
+	helpView
 )
 
 type model struct {
@@ -31,6 +33,8 @@ type model struct {
 	repoListStyle  lipgloss.Style
 	prListStyle    lipgloss.Style
 	prTLStyle      lipgloss.Style
+	helpVP         viewport.Model
+	helpVPReady    bool
 	terminalHeight int
 	terminalWidth  int
 	activePane     Pane

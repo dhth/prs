@@ -22,6 +22,16 @@ func (m model) View() string {
 		content = m.prTLStyle.Render(m.prTLList.View())
 	case repoList:
 		content = m.repoListStyle.Render(m.repoList.View())
+	case helpView:
+		var helpVP string
+		if !m.helpVPReady {
+			helpVP = "\n  Initializing..."
+		} else {
+			helpVP = viewPortStyle.Render(fmt.Sprintf("  %s\n\n%s\n",
+				helpVPTitleStyle.Render("Help"),
+				m.helpVP.View()))
+		}
+		content = helpVP
 	}
 
 	footerStyle := lipgloss.NewStyle().
@@ -30,7 +40,7 @@ func (m model) View() string {
 
 	var helpMsg string
 	if m.showHelp {
-		helpMsg = " " + helpMsgStyle.Render("tab: switch focus; ctrl+r: change repo; ctrl+b: open in browser; ctrl+d: show diff; ctrl+v: view pr")
+		helpMsg = " " + helpMsgStyle.Render("Press ? for help")
 	}
 
 	footerStr := fmt.Sprintf("%s%s",

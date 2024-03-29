@@ -5,8 +5,11 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/bubbles/list"
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 )
+
+const useHighPerformanceRenderer = false
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
@@ -17,10 +20,34 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "q":
-			if m.activePane == repoList {
+			if m.activePane == repoList || m.activePane == helpView {
 				m.activePane = prList
 			} else {
 				return m, tea.Quit
+			}
+		case "[":
+			if m.activePane == prTLList {
+				m.prsList.CursorUp()
+				selected := m.prsList.SelectedItem()
+				if selected != nil {
+					cmds = append(cmds, choosePR(selected.FilterValue()))
+				}
+			}
+		case "]":
+			if m.activePane == prTLList {
+				m.prsList.CursorDown()
+				selected := m.prsList.SelectedItem()
+				if selected != nil {
+					cmds = append(cmds, choosePR(selected.FilterValue()))
+				}
+			}
+		case "1":
+			if m.activePane != prList {
+				m.activePane = prList
+			}
+		case "2":
+			if m.activePane != prTLList {
+				m.activePane = prTLList
 			}
 		case "tab", "shift+tab":
 			if m.activePane == prList {
@@ -55,6 +82,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					cmds = append(cmds, showPR(m.repoOwner, m.repoName, selected.Number))
 				}
 			}
+		case "?":
+			m.activePane = helpView
 		}
 	case HideHelpMsg:
 		m.showHelp = false
@@ -65,16 +94,26 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.terminalHeight = msg.Height
 
 		m.repoList.SetHeight(msg.Height - h1 - 2)
-		m.repoList.SetWidth(int(float64(msg.Width)) - 4)
-		m.repoListStyle = m.repoListStyle.Width(int(float64(msg.Width)) - 2)
+		m.repoList.SetWidth(msg.Width)
+		m.repoListStyle = m.repoListStyle.Width(msg.Width)
 
 		m.prsList.SetHeight(msg.Height - h1 - 2)
-		m.prsList.SetWidth(int(float64(msg.Width)) - 4)
-		m.prListStyle = m.prListStyle.Width(int(float64(msg.Width)) - 2)
+		m.prsList.SetWidth(msg.Width)
+		m.prListStyle = m.prListStyle.Width(msg.Width)
 
 		m.prTLList.SetHeight(msg.Height - h2 - 2)
-		m.prTLList.SetWidth(int(float64(msg.Width)) - 4)
-		m.prTLStyle = m.prTLStyle.Width(int(float64(msg.Width)) - 2)
+		m.prTLList.SetWidth(msg.Width)
+		m.prTLStyle = m.prTLStyle.Width(msg.Width)
+
+		if !m.helpVPReady {
+			m.helpVP = viewport.New(msg.Width, msg.Height-7)
+			m.helpVP.HighPerformanceRendering = useHighPerformanceRenderer
+			m.helpVP.SetContent(HelpText)
+			m.helpVPReady = true
+		} else {
+			m.helpVP.Width = msg.Width
+			m.helpVP.Height = msg.Height - 7
+		}
 	case RepoChosenMsg:
 		repoDetails := strings.Split(msg.repo, ":::")
 		if len(repoDetails) != 2 {
@@ -154,6 +193,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, cmd)
 	case repoList:
 		m.repoList, cmd = m.repoList.Update(msg)
+		cmds = append(cmds, cmd)
+	case helpView:
+		m.helpVP, cmd = m.helpVP.Update(msg)
 		cmds = append(cmds, cmd)
 	}
 

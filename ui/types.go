@@ -13,6 +13,7 @@ const (
 	TLItemPRCommit         = "PullRequestCommit"
 	TLItemPRReview         = "PullRequestReview"
 	TLItemMergedEvent      = "MergedEvent"
+	ReviewPending          = "PENDING"
 	ReviewCommented        = "COMMENTED"
 	ReviewApproved         = "APPROVED"
 	ReviewChangesRequested = "CHANGES_REQUESTED"
@@ -147,7 +148,7 @@ func (pr pr) Description() string {
 	var additions string
 	var deletions string
 
-	author := authorStyle(pr.Author.Login).Render(Trim(pr.Author.Login, 50))
+	author := authorStyle(pr.Author.Login).Render(RightPadTrim(pr.Author.Login, 80))
 	state := prStyle(pr.State).Render(pr.State)
 
 	if pr.Additions > 0 {
@@ -156,7 +157,7 @@ func (pr pr) Description() string {
 	if pr.Deletions > 0 {
 		deletions = deletionsStyle.Render(fmt.Sprintf("-%d", pr.Deletions))
 	}
-	return fmt.Sprintf("%s%s%s%s", state, additions, deletions, author)
+	return fmt.Sprintf("%s%s%s%s", author, state, additions, deletions)
 }
 
 func (pr pr) FilterValue() string {
