@@ -16,14 +16,10 @@ func InitialModel(config Config) model {
 		repoListItems = append(repoListItems, issue)
 	}
 
-	var repoListDelKeys = newRepoListDelKeyMap()
-	repoListDel := newRepoListItemDel(repoListDelKeys)
-
-	var prListDelKeys = newPRListDelKeyMap()
-	prListDel := newPRListItemDel(prListDelKeys)
-
-	var prTLListDelKeys = newPRTLListDelKeyMap()
-	prTLListDel := newPRTLListItemDel(prTLListDelKeys)
+	repoListDel := newRepoListItemDel()
+	prListDel := newPRListItemDel()
+	prTLListDel := newPRTLListItemDel()
+	prRevCmtDel := newPRRevCmtListItemDel()
 
 	baseStyle = lipgloss.NewStyle().
 		PaddingLeft(1).
@@ -39,6 +35,9 @@ func InitialModel(config Config) model {
 	prListStyle := repoListStyle.Copy()
 
 	prTLStyle := repoListStyle.Copy().
+		PaddingRight(1)
+
+	prReviewCmtListStyle := repoListStyle.Copy().
 		PaddingRight(1)
 
 	opts := ghapi.ClientOptions{
@@ -61,10 +60,12 @@ func InitialModel(config Config) model {
 		repoList:      list.New(repoListItems, repoListDel, 0, 0),
 		prsList:       list.New(nil, prListDel, 0, 0),
 		prTLList:      list.New(nil, prTLListDel, 0, 0),
+		prRevCList:    list.New(nil, prRevCmtDel, 0, 0),
 		prTLCache:     prTLCache,
 		repoListStyle: repoListStyle,
 		prListStyle:   prListStyle,
 		prTLStyle:     prTLStyle,
+		prRevCLStyle:  prReviewCmtListStyle,
 		showHelp:      true,
 	}
 
@@ -94,6 +95,15 @@ func InitialModel(config Config) model {
 	m.prTLList.Styles.Title.Background(lipgloss.Color("#d3869b"))
 	m.prTLList.Styles.Title.Foreground(lipgloss.Color("#282828"))
 	m.prTLList.Styles.Title.Bold(true)
+
+	m.prRevCList.Title = "Review Comments"
+	m.prRevCList.SetStatusBarItemName("comment", "comments")
+	m.prRevCList.DisableQuitKeybindings()
+	m.prRevCList.SetShowHelp(false)
+	m.prRevCList.SetFilteringEnabled(false)
+	m.prRevCList.Styles.Title.Background(lipgloss.Color("#8ec07c"))
+	m.prRevCList.Styles.Title.Foreground(lipgloss.Color("#282828"))
+	m.prRevCList.Styles.Title.Bold(true)
 
 	return m
 }

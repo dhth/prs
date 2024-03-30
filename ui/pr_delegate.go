@@ -7,15 +7,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-func newPRListDelKeyMap() *delegateKeyMap {
-	return &delegateKeyMap{
-		choose: key.NewBinding(
-			key.WithKeys("enter"),
-		),
-	}
-}
-
-func newPRListItemDel(keys *delegateKeyMap) list.DefaultDelegate {
+func newPRListItemDel() list.DefaultDelegate {
 	d := list.NewDefaultDelegate()
 
 	d.Styles.SelectedTitle = d.Styles.
@@ -31,7 +23,6 @@ func newPRListItemDel(keys *delegateKeyMap) list.DefaultDelegate {
 		case tea.KeyMsg:
 			switch {
 			case key.Matches(msgType,
-				keys.choose,
 				list.DefaultKeyMap().CursorUp,
 				list.DefaultKeyMap().CursorDown,
 				list.DefaultKeyMap().GoToStart,

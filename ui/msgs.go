@@ -22,7 +22,7 @@ type PRTLFetchedMsg struct {
 	err       error
 }
 
-type PROpenedinBrowserMsg struct {
+type URLOpenedinBrowserMsg struct {
 	url string
 	err error
 }

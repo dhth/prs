@@ -5,13 +5,13 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-func newRepoListItemDel() list.DefaultDelegate {
+func newPRRevCmtListItemDel() list.DefaultDelegate {
 	d := list.NewDefaultDelegate()
 
 	d.Styles.SelectedTitle = d.Styles.
 		SelectedTitle.
-		Foreground(lipgloss.Color("#fe8019")).
-		BorderLeftForeground(lipgloss.Color("#fe8019"))
+		Foreground(lipgloss.Color("#8ec07c")).
+		BorderLeftForeground(lipgloss.Color("#8ec07c"))
 	d.Styles.SelectedDesc = d.Styles.
 		SelectedTitle.
 		Copy()

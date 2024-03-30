@@ -19,6 +19,8 @@ const (
 	DateColor                   = "#928374"
 	NumReviewsColor             = "#665c54"
 	NumCommentsColor            = "#83a598"
+	DiffColor                   = "#83a598"
+	RevCmtColor                 = "#d3869b"
 )
 
 var (
@@ -51,6 +53,14 @@ var (
 			PaddingLeft(1).
 			Foreground(lipgloss.Color(DateColor))
 
+	reviewCmtBodyStyle = lipgloss.NewStyle().
+				PaddingLeft(2).
+				Foreground(lipgloss.Color(RevCmtColor))
+
+	filePathStyle = lipgloss.NewStyle().
+			PaddingLeft(2).
+			Foreground(lipgloss.Color(DateColor))
+
 	numReviewsStyle = lipgloss.NewStyle().
 			PaddingLeft(1).
 			Foreground(lipgloss.Color(NumReviewsColor))
@@ -58,6 +68,10 @@ var (
 	numCommentsStyle = lipgloss.NewStyle().
 				PaddingLeft(1).
 				Foreground(lipgloss.Color(NumCommentsColor))
+
+	diffStyle = lipgloss.NewStyle().
+			PaddingLeft(2).
+			Foreground(lipgloss.Color(DiffColor))
 
 	linesChangedStyle = lipgloss.NewStyle().
 				PaddingLeft(1)

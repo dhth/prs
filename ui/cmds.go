@@ -24,7 +24,7 @@ func choosePR(prNumberStr string) tea.Cmd {
 	}
 }
 
-func openPRInBrowser(url string) tea.Cmd {
+func openURLInBrowser(url string) tea.Cmd {
 	var openCmd string
 	switch runtime.GOOS {
 	case "darwin":
@@ -35,9 +35,9 @@ func openPRInBrowser(url string) tea.Cmd {
 	c := exec.Command(openCmd, url)
 	return tea.ExecProcess(c, func(err error) tea.Msg {
 		if err != nil {
-			return PROpenedinBrowserMsg{url: url, err: err}
+			return URLOpenedinBrowserMsg{url: url, err: err}
 		}
-		return tea.Msg(PROpenedinBrowserMsg{url: url})
+		return tea.Msg(URLOpenedinBrowserMsg{url: url})
 	})
 }
 

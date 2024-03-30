@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/charmbracelet/bubbles/key"
@@ -81,6 +82,15 @@ type prsQuery struct {
 	} `graphql:"repositoryOwner(login: $repositoryOwner)"`
 }
 
+type prReviewComment struct {
+	CreatedAt time.Time
+	Body      string
+	Outdated  bool
+	DiffHunk  string
+	Path      string
+	Url       string
+}
+
 type prTLItem struct {
 	Type              string `graphql:"type: __typename"`
 	PullRequestCommit struct {
@@ -104,6 +114,7 @@ type prTLItem struct {
 		Body      string
 		Comments  struct {
 			TotalCount int
+			Nodes      []prReviewComment
 		} `graphql:"comments(last: 100)"`
 		Author struct {
 			Login string
@@ -215,7 +226,7 @@ func (item prTLItem) Description() string {
 		reviewState := reviewStyle(item.PullRequestReview.State).Render(item.PullRequestReview.State)
 		var comment string
 		if item.PullRequestReview.Body != "" {
-			comment = fmt.Sprintf(" with comment: %s", item.PullRequestReview.Body)
+			comment = fmt.Sprintf(" with comment: %s", Trim(strings.Split(item.PullRequestReview.Body, "\r")[0], 80))
 		}
 		desc = fmt.Sprintf("🔎 %s%s", reviewState, comment)
 	case TLItemMergedEvent:
@@ -226,4 +237,18 @@ func (item prTLItem) Description() string {
 
 func (item prTLItem) FilterValue() string {
 	return item.Type
+}
+
+func (cmt prReviewComment) render() string {
+	var s string
+	s += filePathStyle.Render(cmt.Path)
+	s += "\n\n"
+	if cmt.Outdated {
+		s += filePathStyle.Render("outdated")
+		s += "\n\n"
+	}
+	s += reviewCmtBodyStyle.Render(cmt.Body)
+	s += "\n\n"
+	s += diffStyle.Render(cmt.DiffHunk)
+	return s
 }

@@ -4,9 +4,10 @@ var (
 	HelpText = `
   prs Reference Manual (scroll with j/k or arrow keys)
 
-  prs has 4 views:
+  prs has 5 views:
   - PR List View
   - PR Timeline List View
+  - PR Review Comments View
   - Repo List View
   - Help View (this one)
 
@@ -25,8 +26,10 @@ var (
 
   PR List View
       <ctrl+b>    Open PR in the browser
+      <enter>     Switch focus to PR Timeline View for currently selected PR
 
   PR Timeline View
       <ctrl+b>    Open timeline item in browser
+      <enter>     Switch focus to Review Comments View for currently selected item
 `
 )

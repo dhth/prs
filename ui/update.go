@@ -21,7 +21,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "ctrl+c", "q":
 			if m.activePane == repoList || m.activePane == helpView {
+				m.repoList.ResetSelected()
 				m.activePane = m.lastPane
+			} else if m.activePane == prRevCmts {
+				m.prRevCmtVP.GotoTop()
+				m.activePane = prTLList
+			} else if m.activePane == prTLList {
+				m.prTLList.ResetSelected()
+				m.activePane = prList
 			} else {
 				return m, tea.Quit
 			}
@@ -46,10 +53,62 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.activePane = prList
 				m.lastPane = prList
 			}
+		case "enter":
+			switch m.activePane {
+			case prList:
+				m.activePane = prTLList
+			case prTLList:
+				item, ok := m.prTLList.SelectedItem().(prTLItem)
+				if ok {
+					if item.Type == TLItemPRReview {
+						revCmts := item.PullRequestReview.Comments.Nodes
+						if len(revCmts) > 0 {
+							var prReviewCmts string
+							for _, cmt := range revCmts {
+								prReviewCmts += cmt.render()
+								prReviewCmts += "\n\n"
+								prReviewCmts += reviewCmtBodyStyle.Render("---")
+								prReviewCmts += "\n\n"
+							}
+							prReviewCmts += "\n\n"
+							m.prRevCmtVP.SetContent(prReviewCmts)
+							m.activePane = prRevCmts
+							m.lastPane = prRevCmts
+						}
+					}
+				}
+			case repoList:
+				selected := m.repoList.SelectedItem()
+				if selected != nil {
+					cmds = append(cmds, chooseRepo(selected.FilterValue()))
+				}
+			}
 		case "2":
 			if m.activePane != prTLList {
 				m.activePane = prTLList
 				m.lastPane = prTLList
+			}
+		case "3":
+			if m.activePane == prTLList {
+				item, ok := m.prTLList.SelectedItem().(prTLItem)
+				if ok {
+					if item.Type == TLItemPRReview {
+						revCmts := item.PullRequestReview.Comments.Nodes
+						if len(revCmts) > 0 {
+							var prReviewCmts string
+							for _, cmt := range revCmts {
+								prReviewCmts += cmt.render()
+								prReviewCmts += "\n\n"
+								prReviewCmts += reviewCmtBodyStyle.Render("---")
+								prReviewCmts += "\n\n"
+							}
+							prReviewCmts += "\n\n"
+							m.prRevCmtVP.SetContent(prReviewCmts)
+							m.activePane = prRevCmts
+							m.lastPane = prRevCmts
+						}
+					}
+				}
 			}
 		case "tab", "shift+tab":
 			if m.activePane == prList {
@@ -66,20 +125,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+b":
 			switch m.activePane {
 			case prList:
-				selected, ok := m.prsList.SelectedItem().(pr)
+				pr, ok := m.prsList.SelectedItem().(pr)
 				if ok {
-					cmds = append(cmds, openPRInBrowser(selected.Url))
+					cmds = append(cmds, openURLInBrowser(pr.Url))
 				}
-			case prTLList:
-				selected, ok := m.prTLList.SelectedItem().(prTLItem)
+			case prTLList, prRevCmts:
+				item, ok := m.prTLList.SelectedItem().(prTLItem)
 				if ok {
-					switch selected.Type {
+					switch item.Type {
 					case TLItemPRCommit:
-						cmds = append(cmds, openPRInBrowser(selected.PullRequestCommit.Url))
+						cmds = append(cmds, openURLInBrowser(item.PullRequestCommit.Url))
 					case TLItemPRReview:
-						cmds = append(cmds, openPRInBrowser(selected.PullRequestReview.Url))
+						cmds = append(cmds, openURLInBrowser(item.PullRequestReview.Url))
 					case TLItemMergedEvent:
-						cmds = append(cmds, openPRInBrowser(selected.MergedEvent.Url))
+						cmds = append(cmds, openURLInBrowser(item.MergedEvent.Url))
 					}
 				}
 			}
@@ -119,6 +178,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.prTLList.SetHeight(msg.Height - h2 - 2)
 		m.prTLList.SetWidth(msg.Width)
 		m.prTLStyle = m.prTLStyle.Width(msg.Width)
+
+		m.prRevCList.SetHeight(msg.Height - h1 - 2)
+		m.prRevCList.SetWidth(msg.Width)
+		m.prRevCLStyle = m.prRevCLStyle.Width(msg.Width)
+
+		if !m.prRevCmtVPReady {
+			m.prRevCmtVP = viewport.New(int(float64(msg.Width)*0.9), msg.Height-7)
+			m.prRevCmtVP.HighPerformanceRendering = useHighPerformanceRenderer
+			m.prRevCmtVPReady = true
+		} else {
+			m.prRevCmtVP.Width = int(float64(msg.Width) * 0.9)
+			m.prRevCmtVP.Height = msg.Height - 7
+		}
 
 		if !m.helpVPReady {
 			m.helpVP = viewport.New(msg.Width, msg.Height-7)
@@ -185,7 +257,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.prTLList.SetItems(tlItems)
 			m.prTLCache[fmt.Sprintf("%s/%s:%d", m.repoOwner, m.repoName, msg.prNumber)] = msg.prTLItems
 		}
-	case PROpenedinBrowserMsg:
+	case URLOpenedinBrowserMsg:
 		if msg.err != nil {
 			m.message = fmt.Sprintf("Error opening url: %s", msg.err.Error())
 		}
@@ -205,6 +277,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, cmd)
 	case prTLList:
 		m.prTLList, cmd = m.prTLList.Update(msg)
+		cmds = append(cmds, cmd)
+	case prRevCmts:
+		m.prRevCmtVP, cmd = m.prRevCmtVP.Update(msg)
 		cmds = append(cmds, cmd)
 	case repoList:
 		m.repoList, cmd = m.repoList.Update(msg)

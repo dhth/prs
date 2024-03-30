@@ -22,6 +22,16 @@ func (m model) View() string {
 		content = m.prTLStyle.Render(m.prTLList.View())
 	case repoList:
 		content = m.repoListStyle.Render(m.repoList.View())
+	case prRevCmts:
+		var prRevCmtsVP string
+		if !m.prRevCmtVPReady {
+			prRevCmtsVP = "\n  Initializing..."
+		} else {
+			prRevCmtsVP = viewPortStyle.Render(fmt.Sprintf("  %s\n\n%s\n",
+				helpVPTitleStyle.Render("Review Comments"),
+				m.prRevCmtVP.View()))
+		}
+		content = prRevCmtsVP
 	case helpView:
 		var helpVP string
 		if !m.helpVPReady {
