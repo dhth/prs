@@ -179,10 +179,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.prTLList.SetWidth(msg.Width)
 		m.prTLStyle = m.prTLStyle.Width(msg.Width)
 
-		m.prRevCList.SetHeight(msg.Height - h1 - 2)
-		m.prRevCList.SetWidth(msg.Width)
-		m.prRevCLStyle = m.prRevCLStyle.Width(msg.Width)
-
 		if !m.prRevCmtVPReady {
 			m.prRevCmtVP = viewport.New(int(float64(msg.Width)*0.9), msg.Height-7)
 			m.prRevCmtVP.HighPerformanceRendering = useHighPerformanceRenderer

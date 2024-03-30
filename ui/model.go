@@ -29,7 +29,6 @@ type model struct {
 	repoList        list.Model
 	prsList         list.Model
 	prTLList        list.Model
-	prRevCList      list.Model
 	prRevCmtVP      viewport.Model
 	prRevCmtVPReady bool
 	prTLCache       map[string][]prTLItem
@@ -37,7 +36,6 @@ type model struct {
 	repoListStyle   lipgloss.Style
 	prListStyle     lipgloss.Style
 	prTLStyle       lipgloss.Style
-	prRevCLStyle    lipgloss.Style
 	helpVP          viewport.Model
 	helpVPReady     bool
 	terminalHeight  int
