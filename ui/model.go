@@ -38,6 +38,7 @@ type model struct {
 	terminalHeight int
 	terminalWidth  int
 	activePane     Pane
+	lastPane       Pane
 	showHelp       bool
 }
 

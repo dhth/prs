@@ -87,6 +87,7 @@ type prsQuery struct {
 type prTLItem struct {
 	Type              string `graphql:"type: __typename"`
 	PullRequestCommit struct {
+		Url    string
 		Commit struct {
 			Oid             string
 			CommittedDate   time.Time
@@ -100,6 +101,7 @@ type prTLItem struct {
 		}
 	} `graphql:"... on PullRequestCommit"`
 	PullRequestReview struct {
+		Url       string
 		CreatedAt time.Time
 		State     string
 		Body      string
@@ -109,6 +111,7 @@ type prTLItem struct {
 	} `graphql:"... on PullRequestReview"`
 	MergedEvent struct {
 		CreatedAt   time.Time
+		Url         string
 		MergeCommit struct {
 			Oid             string
 			MessageHeadline string

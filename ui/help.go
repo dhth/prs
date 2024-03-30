@@ -2,7 +2,7 @@ package ui
 
 var (
 	HelpText = `
-  prs Reference Manual
+  prs Reference Manual (scroll with j/k or arrow keys)
 
   prs has 4 views:
   - PR List View
@@ -19,9 +19,14 @@ var (
       <ctrl+r>    Switch focus to Repo List View
       ?           Switch focus to Help View
 
-  PR/Timeline List View
+  PR List/Timeline List View
       <ctrl+v>    Show PR details
       <ctrl+d>    Show PR diff
+
+  PR List View
       <ctrl+b>    Open PR in the browser
+
+  PR Timeline View
+      <ctrl+b>    Open timeline item in browser
 `
 )

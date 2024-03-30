@@ -21,7 +21,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "ctrl+c", "q":
 			if m.activePane == repoList || m.activePane == helpView {
-				m.activePane = prList
+				m.activePane = m.lastPane
 			} else {
 				return m, tea.Quit
 			}
@@ -44,10 +44,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "1":
 			if m.activePane != prList {
 				m.activePane = prList
+				m.lastPane = prList
 			}
 		case "2":
 			if m.activePane != prTLList {
 				m.activePane = prTLList
+				m.lastPane = prTLList
 			}
 		case "tab", "shift+tab":
 			if m.activePane == prList {
@@ -62,10 +64,23 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.activePane = prList
 			}
 		case "ctrl+b":
-			if m.activePane == prList || m.activePane == prTLList {
+			switch m.activePane {
+			case prList:
 				selected, ok := m.prsList.SelectedItem().(pr)
 				if ok {
 					cmds = append(cmds, openPRInBrowser(selected.Url))
+				}
+			case prTLList:
+				selected, ok := m.prTLList.SelectedItem().(prTLItem)
+				if ok {
+					switch selected.Type {
+					case TLItemPRCommit:
+						cmds = append(cmds, openPRInBrowser(selected.PullRequestCommit.Url))
+					case TLItemPRReview:
+						cmds = append(cmds, openPRInBrowser(selected.PullRequestReview.Url))
+					case TLItemMergedEvent:
+						cmds = append(cmds, openPRInBrowser(selected.MergedEvent.Url))
+					}
 				}
 			}
 		case "ctrl+d":
