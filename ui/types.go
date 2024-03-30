@@ -66,10 +66,7 @@ type pr struct {
 	Url       string
 	Additions int
 	Deletions int
-	Comments  struct {
-		TotalCount int
-	}
-	Reviews struct {
+	Reviews   struct {
 		TotalCount int
 	}
 }
@@ -105,7 +102,10 @@ type prTLItem struct {
 		CreatedAt time.Time
 		State     string
 		Body      string
-		Author    struct {
+		Comments  struct {
+			TotalCount int
+		} `graphql:"comments(last: 100)"`
+		Author struct {
 			Login string
 		}
 	} `graphql:"... on PullRequestReview"`
@@ -153,6 +153,7 @@ func (pr pr) Title() string {
 func (pr pr) Description() string {
 	var additions string
 	var deletions string
+	var reviews string
 
 	author := authorStyle(pr.Author.Login).Render(RightPadTrim(pr.Author.Login, 80))
 	state := prStyle(pr.State).Render(pr.State)
@@ -164,7 +165,11 @@ func (pr pr) Description() string {
 	if pr.Deletions > 0 {
 		deletions = deletionsStyle.Render(fmt.Sprintf("-%d", pr.Deletions))
 	}
-	return fmt.Sprintf("%s%s%s%s%s", author, createdAt, state, additions, deletions)
+
+	if pr.Reviews.TotalCount > 0 {
+		reviews = numReviewsStyle.Render(fmt.Sprintf("%dr", pr.Reviews.TotalCount))
+	}
+	return fmt.Sprintf("%s%s%s%s%s%s", author, createdAt, state, additions, deletions, reviews)
 }
 
 func (pr pr) FilterValue() string {
@@ -186,7 +191,13 @@ func (item prTLItem) Title() string {
 	case TLItemPRReview:
 		author := authorStyle(item.PullRequestReview.Author.Login).Render(Trim(item.PullRequestReview.Author.Login, 50))
 		date = dateStyle.Render(humanize.Time(item.PullRequestReview.CreatedAt))
-		title = fmt.Sprintf("%sreviewed %s", author, date)
+		var comments string
+		if item.PullRequestReview.Comments.TotalCount > 1 {
+			comments = numCommentsStyle.Render(fmt.Sprintf("with %d comments", item.PullRequestReview.Comments.TotalCount))
+		} else if item.PullRequestReview.Comments.TotalCount == 1 {
+			comments = numCommentsStyle.Render("with 1 comment")
+		}
+		title = fmt.Sprintf("%sreviewed %s %s", author, comments, date)
 	case TLItemMergedEvent:
 		author := authorStyle(item.MergedEvent.Actor.Login).Render(Trim(item.MergedEvent.Actor.Login, 50))
 		date = dateStyle.Render(humanize.Time(item.MergedEvent.CreatedAt))

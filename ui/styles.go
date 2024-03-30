@@ -8,7 +8,7 @@ import (
 
 const (
 	PrOpenColor                 = "#fabd2f"
-	PrMergedColor               = "#83c07c"
+	PrMergedColor               = "#b8bb26"
 	PrClosedColor               = "#928374"
 	AdditionsColor              = "#8ec07c"
 	DeletionsColor              = "#fb4934"
@@ -17,6 +17,8 @@ const (
 	ReviewChangesRequestedColor = "#fabd2f"
 	ReviewDismissedColor        = "#928374"
 	DateColor                   = "#928374"
+	NumReviewsColor             = "#665c54"
+	NumCommentsColor            = "#83a598"
 )
 
 var (
@@ -47,11 +49,19 @@ var (
 
 	dateStyle = lipgloss.NewStyle().
 			PaddingLeft(1).
-			PaddingRight(1).
 			Foreground(lipgloss.Color(DateColor))
+
+	numReviewsStyle = lipgloss.NewStyle().
+			PaddingLeft(1).
+			Foreground(lipgloss.Color(NumReviewsColor))
+
+	numCommentsStyle = lipgloss.NewStyle().
+				PaddingLeft(1).
+				Foreground(lipgloss.Color(NumCommentsColor))
 
 	linesChangedStyle = lipgloss.NewStyle().
 				PaddingLeft(1)
+
 	additionsStyle = linesChangedStyle.Copy().
 			PaddingLeft(2).
 			Foreground(lipgloss.Color(AdditionsColor))
@@ -86,6 +96,7 @@ var (
 			PaddingLeft(1).
 			PaddingRight(1).
 			Width(8).
+			Bold(true).
 			Align(lipgloss.Center).
 			Foreground(lipgloss.Color("#282828"))
 
