@@ -10,8 +10,8 @@ func newPRRevCmtListItemDel() list.DefaultDelegate {
 
 	d.Styles.SelectedTitle = d.Styles.
 		SelectedTitle.
-		Foreground(lipgloss.Color("#8ec07c")).
-		BorderLeftForeground(lipgloss.Color("#8ec07c"))
+		Foreground(lipgloss.Color(RevCmtListColor)).
+		BorderLeftForeground(lipgloss.Color(RevCmtListColor))
 	d.Styles.SelectedDesc = d.Styles.
 		SelectedTitle.
 		Copy()

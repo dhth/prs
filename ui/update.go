@@ -20,7 +20,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "q":
-			if m.activePane == repoList || m.activePane == helpView {
+			if m.activePane == repoList {
+				if !m.repoChosen {
+					return m, tea.Quit
+				}
+				m.repoList.ResetSelected()
+				m.activePane = m.lastPane
+			} else if m.activePane == helpView {
 				m.repoList.ResetSelected()
 				m.activePane = m.lastPane
 			} else if m.activePane == prRevCmts {
@@ -51,7 +57,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "1":
 			if m.activePane != prList {
 				m.activePane = prList
-				m.lastPane = prList
 			}
 		case "enter":
 			switch m.activePane {
@@ -73,7 +78,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							prReviewCmts += "\n\n"
 							m.prRevCmtVP.SetContent(prReviewCmts)
 							m.activePane = prRevCmts
-							m.lastPane = prRevCmts
 						}
 					}
 				}
@@ -86,7 +90,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "2":
 			if m.activePane != prTLList {
 				m.activePane = prTLList
-				m.lastPane = prTLList
 			}
 		case "3":
 			if m.activePane == prTLList {
@@ -105,7 +108,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							prReviewCmts += "\n\n"
 							m.prRevCmtVP.SetContent(prReviewCmts)
 							m.activePane = prRevCmts
-							m.lastPane = prRevCmts
 						}
 					}
 				}
@@ -118,9 +120,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "ctrl+r":
 			if m.activePane != repoList {
+				m.lastPane = m.activePane
 				m.activePane = repoList
 			} else {
-				m.activePane = prList
+				m.activePane = m.lastPane
 			}
 		case "ctrl+b":
 			switch m.activePane {
@@ -157,6 +160,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 		case "?":
+			m.lastPane = m.activePane
 			m.activePane = helpView
 		}
 	case HideHelpMsg:
@@ -202,6 +206,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if len(repoDetails) != 2 {
 			m.message = "Something went horribly wrong. Let @dhth know about this failure."
 		} else {
+			m.repoChosen = true
 			m.repoOwner = repoDetails[0]
 			m.repoName = repoDetails[1]
 			m.activePane = prList

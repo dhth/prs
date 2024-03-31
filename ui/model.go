@@ -13,10 +13,10 @@ import (
 type Pane uint
 
 const (
-	prList Pane = iota
+	repoList Pane = iota
+	prList
 	prTLList
 	prRevCmts
-	repoList
 	helpView
 )
 
@@ -43,11 +43,9 @@ type model struct {
 	activePane      Pane
 	lastPane        Pane
 	showHelp        bool
+	repoChosen      bool
 }
 
 func (m model) Init() tea.Cmd {
-	return tea.Batch(
-		hideHelp(time.Minute*1),
-		fetchPRS(m.ghClient, m.repoOwner, m.repoName, m.prCount),
-	)
+	return hideHelp(time.Minute * 1)
 }

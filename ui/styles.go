@@ -7,6 +7,11 @@ import (
 )
 
 const (
+	DefaultBackgroundColor      = "#282828"
+	RepoListColor               = "#b8bb26"
+	PRListColor                 = "#fe8019"
+	PRTLListColor               = "#d3869b"
+	RevCmtListColor             = "#8ec07c"
 	PrOpenColor                 = "#fabd2f"
 	PrMergedColor               = "#b8bb26"
 	PrClosedColor               = "#928374"
@@ -27,7 +32,7 @@ var (
 	baseStyle = lipgloss.NewStyle().
 			PaddingLeft(1).
 			PaddingRight(1).
-			Foreground(lipgloss.Color("#282828"))
+			Foreground(lipgloss.Color(DefaultBackgroundColor))
 
 	modeStyle = baseStyle.Copy().
 			Align(lipgloss.Center).
@@ -112,7 +117,7 @@ var (
 			Width(8).
 			Bold(true).
 			Align(lipgloss.Center).
-			Foreground(lipgloss.Color("#282828"))
+			Foreground(lipgloss.Color(DefaultBackgroundColor))
 
 		switch state {
 		case PRStateOpen:

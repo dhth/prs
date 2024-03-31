@@ -12,8 +12,8 @@ func newPRListItemDel() list.DefaultDelegate {
 
 	d.Styles.SelectedTitle = d.Styles.
 		SelectedTitle.
-		Foreground(lipgloss.Color("#fe8019")).
-		BorderLeftForeground(lipgloss.Color("#fe8019"))
+		Foreground(lipgloss.Color(PRListColor)).
+		BorderLeftForeground(lipgloss.Color(PRListColor))
 	d.Styles.SelectedDesc = d.Styles.
 		SelectedTitle.
 		Copy()

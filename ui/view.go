@@ -45,7 +45,7 @@ func (m model) View() string {
 	}
 
 	footerStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#282828")).
+		Foreground(lipgloss.Color(DefaultBackgroundColor)).
 		Background(lipgloss.Color("#7c6f64"))
 
 	var helpMsg string
