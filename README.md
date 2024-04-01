@@ -14,6 +14,12 @@ terminal.
 💾 Installation
 ---
 
+**homebrew**:
+
+```sh
+brew install dhth/tap/prs
+```
+
 **go**:
 
 ```sh
