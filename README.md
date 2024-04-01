@@ -6,10 +6,20 @@
 `prs` lets you stay updated on the PRs you care about without leaving the
 terminal.
 
+*`prs` is not a replacement of [gh](https://github.com/cli/cli), or the Github
+web UI itself, it simply allows you to get to the updates you care about in
+fewer key presses.*
+
 <p align="center">
   <img src="https://tools.dhruvs.space/images/prs/prs.gif" alt="Usage" />
 </p>
 
+🤔 Motivation
+---
+
+For my day job as a tech lead, I need to stay updated on several PRs, and my
+hope is that `prs` will let me do that faster than the Github web UI (or other
+tools for that matter).
 
 💾 Installation
 ---
