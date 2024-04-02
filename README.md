@@ -95,7 +95,8 @@ General
   <tab>       Switch focus between PR List and PR Timeline Pane
   1           Switch focus to PR List View
   2           Switch focus to PR Timeline List View
-  <ctrl+r>    Switch focus to Repo List View
+  3           Switch focus to PR Review Comments View
+  <ctrl+s>    Switch focus to Repo List View
   ?           Switch focus to Help View
 
 PR List/Timeline List View
@@ -104,10 +105,12 @@ PR List/Timeline List View
 
 PR List View
   <ctrl+b>    Open PR in the browser
+  <ctrl+r>    Reload PR list
   <enter>     Switch focus to PR Timeline View for currently selected PR
 
 PR Timeline View
   <ctrl+b>    Open timeline item in browser
+  <ctrl+r>    Reload timeline list
   <enter>     Switch focus to Review Comments View for currently selected item
 ```
 

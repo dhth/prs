@@ -25,6 +25,7 @@ type model struct {
 	ghClient        *ghapi.GraphQLClient
 	repoOwner       string
 	repoName        string
+	activePRNumber  int
 	prCount         int
 	repoList        list.Model
 	prsList         list.Model

@@ -38,6 +38,7 @@ func InitialModel(config Config) model {
 
 	opts := ghapi.ClientOptions{
 		EnableCache: true,
+		CacheTTL:    time.Second * 30,
 		Timeout:     5 * time.Second,
 	}
 	client, err := ghapi.NewGraphQLClient(opts)

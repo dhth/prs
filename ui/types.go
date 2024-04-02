@@ -60,6 +60,7 @@ type pr struct {
 	}
 	State     string
 	CreatedAt time.Time
+	UpdatedAt time.Time
 	ClosedAt  string
 	Author    struct {
 		Login string
@@ -168,7 +169,7 @@ func (pr pr) Description() string {
 
 	author := authorStyle(pr.Author.Login).Render(RightPadTrim(pr.Author.Login, 80))
 	state := prStyle(pr.State).Render(pr.State)
-	createdAt := dateStyle.Render(RightPadTrim("created "+humanize.Time(pr.CreatedAt), 24))
+	updatedAt := dateStyle.Render(RightPadTrim("updated "+humanize.Time(pr.UpdatedAt), 24))
 
 	if pr.Additions > 0 {
 		additions = additionsStyle.Render(fmt.Sprintf("+%d", pr.Additions))
@@ -180,7 +181,7 @@ func (pr pr) Description() string {
 	if pr.Reviews.TotalCount > 0 {
 		reviews = numReviewsStyle.Render(fmt.Sprintf("%dr", pr.Reviews.TotalCount))
 	}
-	return fmt.Sprintf("%s%s%s%s%s%s", author, createdAt, state, additions, deletions, reviews)
+	return fmt.Sprintf("%s%s%s%s%s%s", author, updatedAt, state, additions, deletions, reviews)
 }
 
 func (pr pr) FilterValue() string {
@@ -241,14 +242,14 @@ func (item prTLItem) FilterValue() string {
 
 func (cmt prReviewComment) render() string {
 	var s string
-	s += filePathStyle.Render(cmt.Path)
+	s += "file: " + cmt.Path
 	s += "\n\n"
 	if cmt.Outdated {
-		s += filePathStyle.Render("outdated")
+		s += "outdated"
 		s += "\n\n"
 	}
-	s += reviewCmtBodyStyle.Render(cmt.Body)
+	s += cmt.Body
 	s += "\n\n"
-	s += diffStyle.Render(cmt.DiffHunk)
+	s += cmt.DiffHunk
 	return s
 }

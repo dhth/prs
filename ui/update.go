@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/list"
@@ -38,6 +39,24 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			} else {
 				return m, tea.Quit
 			}
+		case "ctrl+r":
+			switch m.activePane {
+			case prList:
+				m.prsList.ResetSelected()
+				m.prTLList.ResetSelected()
+				cmds = append(cmds, fetchPRS(m.ghClient, m.repoOwner, m.repoName, m.prCount))
+			case prTLList:
+				tlFromCache, ok := m.prTLCache[fmt.Sprintf("%s/%s:%d", m.repoOwner, m.repoName, m.activePRNumber)]
+				if !ok {
+					cmds = append(cmds, fetchPRTLItems(m.ghClient, m.repoOwner, m.repoName, m.activePRNumber, 100, 10))
+				} else {
+					tlItems := make([]list.Item, 0, len(tlFromCache))
+					for _, issue := range tlFromCache {
+						tlItems = append(tlItems, issue)
+					}
+					m.prTLList.SetItems(tlItems)
+				}
+			}
 		case "[":
 			if m.activePane == prTLList {
 				m.prsList.CursorUp()
@@ -61,6 +80,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "enter":
 			switch m.activePane {
 			case prList:
+				tlFromCache, ok := m.prTLCache[fmt.Sprintf("%s/%s:%d", m.repoOwner, m.repoName, m.activePRNumber)]
+				if !ok {
+					cmds = append(cmds, fetchPRTLItems(m.ghClient, m.repoOwner, m.repoName, m.activePRNumber, 100, 10))
+				} else {
+					tlItems := make([]list.Item, 0, len(tlFromCache))
+					for _, issue := range tlFromCache {
+						tlItems = append(tlItems, issue)
+					}
+					m.prTLList.SetItems(tlItems)
+					m.prTLList.Title = fmt.Sprintf("PR #%d Timeline", m.activePRNumber)
+				}
 				m.activePane = prTLList
 			case prTLList:
 				item, ok := m.prTLList.SelectedItem().(prTLItem)
@@ -72,7 +102,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							for _, cmt := range revCmts {
 								prReviewCmts += cmt.render()
 								prReviewCmts += "\n\n"
-								prReviewCmts += reviewCmtBodyStyle.Render("---")
+								prReviewCmts += strings.Repeat("*", int(float64(m.terminalWidth)*0.8))
 								prReviewCmts += "\n\n"
 							}
 							prReviewCmts += "\n\n"
@@ -89,6 +119,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "2":
 			if m.activePane != prTLList {
+				tlFromCache, ok := m.prTLCache[fmt.Sprintf("%s/%s:%d", m.repoOwner, m.repoName, m.activePRNumber)]
+				if !ok {
+					cmds = append(cmds, fetchPRTLItems(m.ghClient, m.repoOwner, m.repoName, m.activePRNumber, 100, 10))
+				} else {
+					tlItems := make([]list.Item, 0, len(tlFromCache))
+					for _, issue := range tlFromCache {
+						tlItems = append(tlItems, issue)
+					}
+					m.prTLList.SetItems(tlItems)
+					m.prTLList.Title = fmt.Sprintf("PR #%d Timeline", m.activePRNumber)
+				}
 				m.activePane = prTLList
 			}
 		case "3":
@@ -118,7 +159,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			} else {
 				m.activePane = prList
 			}
-		case "ctrl+r":
+		case "ctrl+s":
 			if m.activePane != repoList {
 				m.lastPane = m.activePane
 				m.activePane = repoList
@@ -218,17 +259,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.err != nil {
 			m.message = "Something went wrong: " + msg.err.Error()
 		} else {
-			tlFromCache, ok := m.prTLCache[fmt.Sprintf("%s/%s:%d", m.repoOwner, m.repoName, msg.prNumber)]
-			if !ok {
-				cmds = append(cmds, fetchPRTLItems(m.ghClient, m.repoOwner, m.repoName, msg.prNumber, 100, 10))
-			} else {
-				tlItems := make([]list.Item, 0, len(tlFromCache))
-				for _, issue := range tlFromCache {
-					tlItems = append(tlItems, issue)
-				}
-				m.prTLList.SetItems(tlItems)
-				m.prTLList.Title = fmt.Sprintf("PR #%d Timeline", msg.prNumber)
-			}
+			m.activePRNumber = msg.prNumber
 		}
 	case PRsFetchedMsg:
 		if msg.err != nil {
@@ -245,17 +276,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				for i := 0; i < len(msg.prs); i++ {
 					cmds = append(cmds, fetchPRTLItems(m.ghClient, m.repoOwner, m.repoName, msg.prs[i].Number, 100, 10))
 				}
+				firstPRNumber := strconv.Itoa(msg.prs[0].Number)
+				cmds = append(cmds, choosePR(firstPRNumber))
 			}
 		}
 	case PRTLFetchedMsg:
 		if msg.err != nil {
 			m.message = msg.err.Error()
 		} else {
-			tlItems := make([]list.Item, 0, len(msg.prTLItems))
-			for _, issue := range msg.prTLItems {
-				tlItems = append(tlItems, issue)
-			}
-			m.prTLList.SetItems(tlItems)
 			m.prTLCache[fmt.Sprintf("%s/%s:%d", m.repoOwner, m.repoName, msg.prNumber)] = msg.prTLItems
 		}
 	case URLOpenedinBrowserMsg:
