@@ -55,6 +55,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						tlItems = append(tlItems, issue)
 					}
 					m.prTLList.SetItems(tlItems)
+					m.prTLList.ResetSelected()
 				}
 			}
 		case "[":
@@ -102,7 +103,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							for _, cmt := range revCmts {
 								prReviewCmts += cmt.render()
 								prReviewCmts += "\n\n"
-								prReviewCmts += strings.Repeat("*", int(float64(m.terminalWidth)*0.8))
+								prReviewCmts += reviewCmtDividerStyle.Render(strings.Repeat("*", int(float64(m.terminalWidth)*0.6)))
 								prReviewCmts += "\n\n"
 							}
 							prReviewCmts += "\n\n"
@@ -143,7 +144,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							for _, cmt := range revCmts {
 								prReviewCmts += cmt.render()
 								prReviewCmts += "\n\n"
-								prReviewCmts += reviewCmtBodyStyle.Render("---")
+								prReviewCmts += reviewCmtDividerStyle.Render(strings.Repeat("*", int(float64(m.terminalWidth)*0.6)))
 								prReviewCmts += "\n\n"
 							}
 							prReviewCmts += "\n\n"

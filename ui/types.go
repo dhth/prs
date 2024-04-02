@@ -242,14 +242,14 @@ func (item prTLItem) FilterValue() string {
 
 func (cmt prReviewComment) render() string {
 	var s string
-	s += "file: " + cmt.Path
+	s += filePathStyle.Render("file: " + cmt.Path)
 	s += "\n\n"
 	if cmt.Outdated {
-		s += "outdated"
+		s += outdatedStyle.Render("outdated")
 		s += "\n\n"
 	}
-	s += cmt.Body
+	s += reviewCmtBodyStyle.Render(cmt.Body)
 	s += "\n\n"
-	s += cmt.DiffHunk
+	s += diffStyle.Render(cmt.DiffHunk)
 	return s
 }
