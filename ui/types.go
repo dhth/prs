@@ -5,22 +5,21 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/bubbles/key"
 	humanize "github.com/dustin/go-humanize"
 )
 
 const (
-	PRStateOpen            = "OPEN"
-	PRStateMerged          = "MERGED"
-	PRStateClosed          = "CLOSED"
-	TLItemPRCommit         = "PullRequestCommit"
-	TLItemPRReview         = "PullRequestReview"
-	TLItemMergedEvent      = "MergedEvent"
-	ReviewPending          = "PENDING"
-	ReviewCommented        = "COMMENTED"
-	ReviewApproved         = "APPROVED"
-	ReviewChangesRequested = "CHANGES_REQUESTED"
-	ReviewDismissed        = "DISMISSED"
+	prStateOpen            = "OPEN"
+	prStateMerged          = "MERGED"
+	prStateClosed          = "CLOSED"
+	tlItemPRCommit         = "PullRequestCommit"
+	tlItemPRReview         = "PullRequestReview"
+	tlItemMergedEvent      = "MergedEvent"
+	reviewPending          = "PENDING"
+	reviewCommented        = "COMMENTED"
+	reviewApproved         = "APPROVED"
+	reviewChangesRequested = "CHANGES_REQUESTED"
+	reviewDismissed        = "DISMISSED"
 )
 
 type SourceConfig struct {
@@ -43,10 +42,6 @@ type Config struct {
 	DiffPager *string
 	PRCount   int
 	Repos     []Repo
-}
-
-type delegateKeyMap struct {
-	choose key.Binding
 }
 
 type pr struct {
@@ -192,7 +187,7 @@ func (item prTLItem) Title() string {
 	var title string
 	var date string
 	switch item.Type {
-	case TLItemPRCommit:
+	case tlItemPRCommit:
 		if item.PullRequestCommit.Commit.Author.User != nil {
 			author := authorStyle(item.PullRequestCommit.Commit.Author.User.Login).Render(Trim(item.PullRequestCommit.Commit.Author.User.Login, 50))
 			date = dateStyle.Render(humanize.Time(item.PullRequestCommit.Commit.CommittedDate))
@@ -200,7 +195,7 @@ func (item prTLItem) Title() string {
 		} else {
 			title = fmt.Sprintf("%s pushed a commit", item.PullRequestCommit.Commit.Author.Name)
 		}
-	case TLItemPRReview:
+	case tlItemPRReview:
 		author := authorStyle(item.PullRequestReview.Author.Login).Render(Trim(item.PullRequestReview.Author.Login, 50))
 		date = dateStyle.Render(humanize.Time(item.PullRequestReview.CreatedAt))
 		var comments string
@@ -210,7 +205,7 @@ func (item prTLItem) Title() string {
 			comments = numCommentsStyle.Render("with 1 comment")
 		}
 		title = fmt.Sprintf("%sreviewed %s %s", author, comments, date)
-	case TLItemMergedEvent:
+	case tlItemMergedEvent:
 		author := authorStyle(item.MergedEvent.Actor.Login).Render(Trim(item.MergedEvent.Actor.Login, 50))
 		date = dateStyle.Render(humanize.Time(item.MergedEvent.CreatedAt))
 		title = fmt.Sprintf("%smerged the PR %s", author, date)
@@ -221,16 +216,16 @@ func (item prTLItem) Title() string {
 func (item prTLItem) Description() string {
 	var desc string
 	switch item.Type {
-	case TLItemPRCommit:
+	case tlItemPRCommit:
 		desc = fmt.Sprintf("📧 %s", item.PullRequestCommit.Commit.MessageHeadline)
-	case TLItemPRReview:
+	case tlItemPRReview:
 		reviewState := reviewStyle(item.PullRequestReview.State).Render(item.PullRequestReview.State)
 		var comment string
 		if item.PullRequestReview.Body != "" {
 			comment = fmt.Sprintf(" with comment: %s", Trim(strings.Split(item.PullRequestReview.Body, "\r")[0], 80))
 		}
 		desc = fmt.Sprintf("🔎 %s%s", reviewState, comment)
-	case TLItemMergedEvent:
+	case tlItemMergedEvent:
 		desc = fmt.Sprintf("🚀 message: %s", item.MergedEvent.MergeCommit.MessageHeadline)
 	}
 	return desc

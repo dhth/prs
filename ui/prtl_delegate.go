@@ -10,8 +10,8 @@ func newPRTLListItemDel() list.DefaultDelegate {
 
 	d.Styles.SelectedTitle = d.Styles.
 		SelectedTitle.
-		Foreground(lipgloss.Color(PRTLListColor)).
-		BorderLeftForeground(lipgloss.Color(PRTLListColor))
+		Foreground(lipgloss.Color(prTLListColor)).
+		BorderLeftForeground(lipgloss.Color(prTLListColor))
 	d.Styles.SelectedDesc = d.Styles.
 		SelectedTitle.
 		Copy()

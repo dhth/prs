@@ -7,35 +7,35 @@ import (
 )
 
 const (
-	DefaultBackgroundColor      = "#282828"
-	RepoListColor               = "#b8bb26"
-	PRListColor                 = "#fe8019"
-	PRTLListColor               = "#d3869b"
-	RevCmtListColor             = "#8ec07c"
-	PrOpenColor                 = "#fabd2f"
-	PrMergedColor               = "#b8bb26"
-	PrClosedColor               = "#928374"
-	AdditionsColor              = "#8ec07c"
-	DeletionsColor              = "#fb4934"
-	ReviewCommentedColor        = "#83a598"
-	ReviewApprovedColor         = "#b8bb26"
-	ReviewChangesRequestedColor = "#fabd2f"
-	ReviewDismissedColor        = "#928374"
-	DateColor                   = "#928374"
-	FilePathColor               = "#d3869b"
-	OutdatedColor               = "#fabd2f"
-	NumReviewsColor             = "#665c54"
-	NumCommentsColor            = "#83a598"
-	DiffColor                   = "#83a598"
-	RevCmtColor                 = "#d3869b"
-	RevCmtDividerColor          = "#928374"
+	defaultBackgroundColor      = "#282828"
+	repoListColor               = "#b8bb26"
+	prListColor                 = "#fe8019"
+	prTLListColor               = "#d3869b"
+	revCmtListColor             = "#8ec07c"
+	prOpenColor                 = "#fabd2f"
+	prMergedColor               = "#b8bb26"
+	prClosedColor               = "#928374"
+	additionsColor              = "#8ec07c"
+	deletionsColor              = "#fb4934"
+	reviewCommentedColor        = "#83a598"
+	reviewApprovedColor         = "#b8bb26"
+	reviewChangesRequestedColor = "#fabd2f"
+	reviewDismissedColor        = "#928374"
+	dateColor                   = "#928374"
+	filePathColor               = "#d3869b"
+	outdatedColor               = "#fabd2f"
+	numReviewsColor             = "#665c54"
+	numCommentsColor            = "#83a598"
+	diffColor                   = "#83a598"
+	revCmtColor                 = "#d3869b"
+	revCmtDividerColor          = "#928374"
 )
 
 var (
 	baseStyle = lipgloss.NewStyle().
 			PaddingLeft(1).
 			PaddingRight(1).
-			Foreground(lipgloss.Color(DefaultBackgroundColor))
+			Foreground(lipgloss.Color(defaultBackgroundColor))
 
 	modeStyle = baseStyle.Copy().
 			Align(lipgloss.Center).
@@ -59,39 +59,39 @@ var (
 
 	dateStyle = lipgloss.NewStyle().
 			PaddingLeft(1).
-			Foreground(lipgloss.Color(DateColor))
+			Foreground(lipgloss.Color(dateColor))
 
 	reviewCmtBodyStyle = lipgloss.NewStyle()
 
 	filePathStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color(FilePathColor))
+			Foreground(lipgloss.Color(filePathColor))
 
 	outdatedStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color(OutdatedColor))
+			Foreground(lipgloss.Color(outdatedColor))
 
 	reviewCmtDividerStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color(RevCmtDividerColor))
+				Foreground(lipgloss.Color(revCmtDividerColor))
 
 	numReviewsStyle = lipgloss.NewStyle().
 			PaddingLeft(1).
-			Foreground(lipgloss.Color(NumReviewsColor))
+			Foreground(lipgloss.Color(numReviewsColor))
 
 	numCommentsStyle = lipgloss.NewStyle().
 				PaddingLeft(1).
-				Foreground(lipgloss.Color(NumCommentsColor))
+				Foreground(lipgloss.Color(numCommentsColor))
 
 	diffStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color(DiffColor))
+			Foreground(lipgloss.Color(diffColor))
 
 	linesChangedStyle = lipgloss.NewStyle().
 				PaddingLeft(1)
 
 	additionsStyle = linesChangedStyle.Copy().
 			PaddingLeft(2).
-			Foreground(lipgloss.Color(AdditionsColor))
+			Foreground(lipgloss.Color(additionsColor))
 
 	deletionsStyle = linesChangedStyle.Copy().
-			Foreground(lipgloss.Color(DeletionsColor))
+			Foreground(lipgloss.Color(deletionsColor))
 
 	authorColors = []string{
 		"#ccccff", // Lavender Blue
@@ -122,15 +122,15 @@ var (
 			Width(8).
 			Bold(true).
 			Align(lipgloss.Center).
-			Foreground(lipgloss.Color(DefaultBackgroundColor))
+			Foreground(lipgloss.Color(defaultBackgroundColor))
 
 		switch state {
-		case PRStateOpen:
-			st.Background(lipgloss.Color(PrOpenColor))
-		case PRStateMerged:
-			st.Background(lipgloss.Color(PrMergedColor))
+		case prStateOpen:
+			st.Background(lipgloss.Color(prOpenColor))
+		case prStateMerged:
+			st.Background(lipgloss.Color(prMergedColor))
 		default:
-			st.Background(lipgloss.Color(PrClosedColor))
+			st.Background(lipgloss.Color(prClosedColor))
 		}
 		return st
 	}
@@ -142,14 +142,14 @@ var (
 			Align(lipgloss.Center)
 
 		switch state {
-		case ReviewCommented:
-			st.Foreground(lipgloss.Color(ReviewCommentedColor))
-		case ReviewApproved:
-			st.Foreground(lipgloss.Color(ReviewApprovedColor))
-		case ReviewChangesRequested:
-			st.Foreground(lipgloss.Color(ReviewChangesRequestedColor))
+		case reviewCommented:
+			st.Foreground(lipgloss.Color(reviewCommentedColor))
+		case reviewApproved:
+			st.Foreground(lipgloss.Color(reviewApprovedColor))
+		case reviewChangesRequested:
+			st.Foreground(lipgloss.Color(reviewChangesRequestedColor))
 		default:
-			st.Foreground(lipgloss.Color(ReviewDismissedColor))
+			st.Foreground(lipgloss.Color(reviewDismissedColor))
 		}
 		return st
 	}

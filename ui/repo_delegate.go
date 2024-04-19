@@ -10,8 +10,8 @@ func newRepoListItemDel() list.DefaultDelegate {
 
 	d.Styles.SelectedTitle = d.Styles.
 		SelectedTitle.
-		Foreground(lipgloss.Color(RepoListColor)).
-		BorderLeftForeground(lipgloss.Color(RepoListColor))
+		Foreground(lipgloss.Color(repoListColor)).
+		BorderLeftForeground(lipgloss.Color(repoListColor))
 	d.Styles.SelectedDesc = d.Styles.
 		SelectedTitle.
 		Copy()

@@ -96,7 +96,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case prTLList:
 				item, ok := m.prTLList.SelectedItem().(prTLItem)
 				if ok {
-					if item.Type == TLItemPRReview {
+					if item.Type == tlItemPRReview {
 						revCmts := item.PullRequestReview.Comments.Nodes
 						if len(revCmts) > 0 {
 							var prReviewCmts string
@@ -137,7 +137,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.activePane == prTLList {
 				item, ok := m.prTLList.SelectedItem().(prTLItem)
 				if ok {
-					if item.Type == TLItemPRReview {
+					if item.Type == tlItemPRReview {
 						revCmts := item.PullRequestReview.Comments.Nodes
 						if len(revCmts) > 0 {
 							var prReviewCmts string
@@ -178,11 +178,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				item, ok := m.prTLList.SelectedItem().(prTLItem)
 				if ok {
 					switch item.Type {
-					case TLItemPRCommit:
+					case tlItemPRCommit:
 						cmds = append(cmds, openURLInBrowser(item.PullRequestCommit.Url))
-					case TLItemPRReview:
+					case tlItemPRReview:
 						cmds = append(cmds, openURLInBrowser(item.PullRequestReview.Url))
-					case TLItemMergedEvent:
+					case tlItemMergedEvent:
 						cmds = append(cmds, openURLInBrowser(item.MergedEvent.Url))
 					}
 				}

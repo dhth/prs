@@ -23,7 +23,7 @@ func InitialModel(config Config) model {
 	baseStyle = lipgloss.NewStyle().
 		PaddingLeft(1).
 		PaddingRight(1).
-		Foreground(lipgloss.Color(DefaultBackgroundColor))
+		Foreground(lipgloss.Color(defaultBackgroundColor))
 
 	repoListStyle := baseStyle.Copy().
 		PaddingTop(1).
@@ -67,8 +67,8 @@ func InitialModel(config Config) model {
 	m.repoList.DisableQuitKeybindings()
 	m.repoList.SetShowHelp(false)
 	m.repoList.SetFilteringEnabled(false)
-	m.repoList.Styles.Title.Background(lipgloss.Color(RepoListColor))
-	m.repoList.Styles.Title.Foreground(lipgloss.Color(DefaultBackgroundColor))
+	m.repoList.Styles.Title.Background(lipgloss.Color(repoListColor))
+	m.repoList.Styles.Title.Foreground(lipgloss.Color(defaultBackgroundColor))
 	m.repoList.Styles.Title.Bold(true)
 
 	m.prsList.Title = "PRs (fetching...)"
@@ -76,8 +76,8 @@ func InitialModel(config Config) model {
 	m.prsList.DisableQuitKeybindings()
 	m.prsList.SetShowHelp(false)
 	m.prsList.SetFilteringEnabled(false)
-	m.prsList.Styles.Title.Background(lipgloss.Color(PRListColor))
-	m.prsList.Styles.Title.Foreground(lipgloss.Color(DefaultBackgroundColor))
+	m.prsList.Styles.Title.Background(lipgloss.Color(prListColor))
+	m.prsList.Styles.Title.Foreground(lipgloss.Color(defaultBackgroundColor))
 	m.prsList.Styles.Title.Bold(true)
 
 	m.prTLList.Title = "PR Timeline"
@@ -85,8 +85,8 @@ func InitialModel(config Config) model {
 	m.prTLList.DisableQuitKeybindings()
 	m.prTLList.SetShowHelp(false)
 	m.prTLList.SetFilteringEnabled(false)
-	m.prTLList.Styles.Title.Background(lipgloss.Color(PRTLListColor))
-	m.prTLList.Styles.Title.Foreground(lipgloss.Color(DefaultBackgroundColor))
+	m.prTLList.Styles.Title.Background(lipgloss.Color(prTLListColor))
+	m.prTLList.Styles.Title.Foreground(lipgloss.Color(defaultBackgroundColor))
 	m.prTLList.Styles.Title.Bold(true)
 
 	return m
