@@ -29,6 +29,9 @@ const (
 	diffColor                   = "#83a598"
 	revCmtColor                 = "#d3869b"
 	revCmtDividerColor          = "#928374"
+	helpViewTitleColor          = "#83a598"
+	helpHeaderColor             = "#83a598"
+	helpSectionColor            = "#fabd2f"
 )
 
 var (
@@ -41,11 +44,6 @@ var (
 			Align(lipgloss.Center).
 			Bold(true).
 			Background(lipgloss.Color("#b8bb26"))
-
-	helpVPTitleStyle = baseStyle.Copy().
-				Bold(true).
-				Background(lipgloss.Color("#8ec07c")).
-				Align(lipgloss.Left)
 
 	viewPortStyle = lipgloss.NewStyle().
 			PaddingTop(1).
@@ -153,4 +151,16 @@ var (
 		}
 		return st
 	}
+
+	helpVPTitleStyle = baseStyle.Copy().
+				Bold(true).
+				Background(lipgloss.Color(helpViewTitleColor)).
+				Align(lipgloss.Left)
+
+	helpHeaderStyle = lipgloss.NewStyle().
+			Bold(true).
+			Foreground(lipgloss.Color(helpHeaderColor))
+
+	helpSectionStyle = lipgloss.NewStyle().
+				Foreground(lipgloss.Color(helpSectionColor))
 )

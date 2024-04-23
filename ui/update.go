@@ -201,6 +201,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					cmds = append(cmds, showPR(m.repoOwner, m.repoName, selected.Number))
 				}
 			}
+		case "g":
+			if m.activePane == prRevCmts {
+				m.prRevCmtVP.GotoTop()
+			}
+		case "G":
+			if m.activePane == prRevCmts {
+				m.prRevCmtVP.GotoBottom()
+			}
 		case "?":
 			m.lastPane = m.activePane
 			m.activePane = helpView
@@ -237,7 +245,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if !m.helpVPReady {
 			m.helpVP = viewport.New(msg.Width, msg.Height-7)
 			m.helpVP.HighPerformanceRendering = useHighPerformanceRenderer
-			m.helpVP.SetContent(HelpText)
+			m.helpVP.SetContent(helpText)
 			m.helpVPReady = true
 		} else {
 			m.helpVP.Width = msg.Width
