@@ -9,17 +9,18 @@ import (
 )
 
 const (
-	prStateOpen            = "OPEN"
-	prStateMerged          = "MERGED"
-	prStateClosed          = "CLOSED"
-	tlItemPRCommit         = "PullRequestCommit"
-	tlItemPRReview         = "PullRequestReview"
-	tlItemMergedEvent      = "MergedEvent"
-	reviewPending          = "PENDING"
-	reviewCommented        = "COMMENTED"
-	reviewApproved         = "APPROVED"
-	reviewChangesRequested = "CHANGES_REQUESTED"
-	reviewDismissed        = "DISMISSED"
+	prStateOpen             = "OPEN"
+	prStateMerged           = "MERGED"
+	prStateClosed           = "CLOSED"
+	tlItemPRCommit          = "PullRequestCommit"
+	tlItemPRReviewRequested = "ReviewRequestedEvent"
+	tlItemPRReview          = "PullRequestReview"
+	tlItemMergedEvent       = "MergedEvent"
+	reviewPending           = "PENDING"
+	reviewCommented         = "COMMENTED"
+	reviewApproved          = "APPROVED"
+	reviewChangesRequested  = "CHANGES_REQUESTED"
+	reviewDismissed         = "DISMISSED"
 )
 
 type SourceConfig struct {
@@ -103,6 +104,17 @@ type prTLItem struct {
 			}
 		}
 	} `graphql:"... on PullRequestCommit"`
+	PullRequestReviewRequested struct {
+		CreatedAt time.Time
+		Actor     struct {
+			Login string
+		}
+		RequestedReviewer struct {
+			User struct {
+				Login string
+			} `graphql:"... on User"`
+		}
+	} `graphql:"... on ReviewRequestedEvent"`
 	PullRequestReview struct {
 		Url       string
 		CreatedAt time.Time
@@ -135,7 +147,7 @@ type prTLQuery struct {
 			PullRequest struct {
 				TimelineItems struct {
 					Nodes []prTLItem
-				} `graphql:"timelineItems(last: $timelineItemsCount, itemTypes: [PULL_REQUEST_COMMIT, MERGED_EVENT, PULL_REQUEST_REVIEW])"`
+				} `graphql:"timelineItems(last: $timelineItemsCount, itemTypes: [PULL_REQUEST_COMMIT, REVIEW_REQUESTED_EVENT, MERGED_EVENT, PULL_REQUEST_REVIEW])"`
 			} `graphql:"pullRequest(number: $pullRequestNumber)"`
 		} `graphql:"repository(name: $repositoryName)"`
 	} `graphql:"repositoryOwner(login: $repositoryOwner)"`
@@ -191,10 +203,14 @@ func (item prTLItem) Title() string {
 		if item.PullRequestCommit.Commit.Author.User != nil {
 			author := authorStyle(item.PullRequestCommit.Commit.Author.User.Login).Render(Trim(item.PullRequestCommit.Commit.Author.User.Login, 50))
 			date = dateStyle.Render(humanize.Time(item.PullRequestCommit.Commit.CommittedDate))
-			title = fmt.Sprintf("%s pushed a commit %s", author, date)
+			title = fmt.Sprintf("%spushed a commit%s", author, date)
 		} else {
 			title = fmt.Sprintf("%s pushed a commit", item.PullRequestCommit.Commit.Author.Name)
 		}
+	case tlItemPRReviewRequested:
+		actor := authorStyle(item.PullRequestReviewRequested.Actor.Login).Render(Trim(item.PullRequestReviewRequested.Actor.Login, 50))
+		reviewer := authorStyle(item.PullRequestReviewRequested.RequestedReviewer.User.Login).Render(Trim(item.PullRequestReviewRequested.RequestedReviewer.User.Login, 50))
+		title = fmt.Sprintf("%srequested a review from %s", actor, reviewer)
 	case tlItemPRReview:
 		author := authorStyle(item.PullRequestReview.Author.Login).Render(Trim(item.PullRequestReview.Author.Login, 50))
 		date = dateStyle.Render(humanize.Time(item.PullRequestReview.CreatedAt))
@@ -204,11 +220,11 @@ func (item prTLItem) Title() string {
 		} else if item.PullRequestReview.Comments.TotalCount == 1 {
 			comments = numCommentsStyle.Render("with 1 comment")
 		}
-		title = fmt.Sprintf("%sreviewed %s %s", author, comments, date)
+		title = fmt.Sprintf("%sreviewed%s%s", author, comments, date)
 	case tlItemMergedEvent:
 		author := authorStyle(item.MergedEvent.Actor.Login).Render(Trim(item.MergedEvent.Actor.Login, 50))
 		date = dateStyle.Render(humanize.Time(item.MergedEvent.CreatedAt))
-		title = fmt.Sprintf("%smerged the PR %s", author, date)
+		title = fmt.Sprintf("%smerged the PR%s", author, date)
 	}
 	return title
 }
@@ -218,6 +234,8 @@ func (item prTLItem) Description() string {
 	switch item.Type {
 	case tlItemPRCommit:
 		desc = fmt.Sprintf("📧 %s", item.PullRequestCommit.Commit.MessageHeadline)
+	case tlItemPRReviewRequested:
+		desc = fmt.Sprintf("🙏%s", dateStyle.Render(humanize.Time(item.PullRequestReviewRequested.CreatedAt)))
 	case tlItemPRReview:
 		reviewState := reviewStyle(item.PullRequestReview.State).Render(item.PullRequestReview.State)
 		var comment string
