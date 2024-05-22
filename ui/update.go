@@ -180,6 +180,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					switch item.Type {
 					case tlItemPRCommit:
 						cmds = append(cmds, openURLInBrowser(item.PullRequestCommit.Url))
+					case tlItemHeadRefForcePushed:
+						cmds = append(cmds, openURLInBrowser(item.HeadRefForcePushed.AfterCommit.Url))
 					case tlItemPRReview:
 						cmds = append(cmds, openURLInBrowser(item.PullRequestReview.Url))
 					case tlItemMergedEvent:

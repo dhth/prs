@@ -9,19 +9,22 @@ import (
 )
 
 const (
-	prStateOpen             = "OPEN"
-	prStateMerged           = "MERGED"
-	prStateClosed           = "CLOSED"
-	tlItemPRCommit          = "PullRequestCommit"
-	tlItemPRReadyForReview  = "ReadyForReviewEvent"
-	tlItemPRReviewRequested = "ReviewRequestedEvent"
-	tlItemPRReview          = "PullRequestReview"
-	tlItemMergedEvent       = "MergedEvent"
-	reviewPending           = "PENDING"
-	reviewCommented         = "COMMENTED"
-	reviewApproved          = "APPROVED"
-	reviewChangesRequested  = "CHANGES_REQUESTED"
-	reviewDismissed         = "DISMISSED"
+	prStateOpen              = "OPEN"
+	prStateMerged            = "MERGED"
+	prStateClosed            = "CLOSED"
+	tlItemPRCommit           = "PullRequestCommit"
+	tlItemPRReadyForReview   = "ReadyForReviewEvent"
+	tlItemPRReviewRequested  = "ReviewRequestedEvent"
+	tlItemPRReview           = "PullRequestReview"
+	tlItemMergedEvent        = "MergedEvent"
+	tlItemHeadRefForcePushed = "HeadRefForcePushedEvent"
+	reviewPending            = "PENDING"
+	reviewCommented          = "COMMENTED"
+	reviewApproved           = "APPROVED"
+	reviewChangesRequested   = "CHANGES_REQUESTED"
+	reviewDismissed          = "DISMISSED"
+
+	commitHashLen = 7
 )
 
 type SourceConfig struct {
@@ -105,6 +108,20 @@ type prTLItem struct {
 			}
 		}
 	} `graphql:"... on PullRequestCommit"`
+	HeadRefForcePushed struct {
+		CreatedAt time.Time
+		Actor     struct {
+			Login string
+		}
+		BeforeCommit struct {
+			Oid string
+		}
+		AfterCommit struct {
+			Oid             string
+			Url             string
+			MessageHeadline string
+		}
+	} `graphql:"... on HeadRefForcePushedEvent"`
 	PullRequestReadyForReview struct {
 		CreatedAt time.Time
 		Actor     struct {
@@ -154,7 +171,7 @@ type prTLQuery struct {
 			PullRequest struct {
 				TimelineItems struct {
 					Nodes []prTLItem
-				} `graphql:"timelineItems(last: $timelineItemsCount, itemTypes: [PULL_REQUEST_COMMIT, READY_FOR_REVIEW_EVENT, REVIEW_REQUESTED_EVENT, MERGED_EVENT, PULL_REQUEST_REVIEW])"`
+				} `graphql:"timelineItems(last: $timelineItemsCount, itemTypes: [PULL_REQUEST_COMMIT, READY_FOR_REVIEW_EVENT, REVIEW_REQUESTED_EVENT, MERGED_EVENT, PULL_REQUEST_REVIEW, HEAD_REF_FORCE_PUSHED_EVENT])"`
 			} `graphql:"pullRequest(number: $pullRequestNumber)"`
 		} `graphql:"repository(name: $repositoryName)"`
 	} `graphql:"repositoryOwner(login: $repositoryOwner)"`
@@ -214,6 +231,17 @@ func (item prTLItem) Title() string {
 		} else {
 			title = fmt.Sprintf("%s pushed a commit", item.PullRequestCommit.Commit.Author.Name)
 		}
+	case tlItemHeadRefForcePushed:
+		actor := authorStyle(item.HeadRefForcePushed.Actor.Login).Render(Trim(item.HeadRefForcePushed.Actor.Login, 50))
+		beforeCommitHash := item.HeadRefForcePushed.BeforeCommit.Oid
+		afterCommitHash := item.HeadRefForcePushed.AfterCommit.Oid
+		if len(beforeCommitHash) >= commitHashLen {
+			beforeCommitHash = beforeCommitHash[:commitHashLen]
+		}
+		if len(afterCommitHash) >= commitHashLen {
+			afterCommitHash = afterCommitHash[:commitHashLen]
+		}
+		title = fmt.Sprintf("%s force pushed head ref from %s to %s", actor, beforeCommitHash, afterCommitHash)
 	case tlItemPRReadyForReview:
 		actor := authorStyle(item.PullRequestReadyForReview.Actor.Login).Render(Trim(item.PullRequestReadyForReview.Actor.Login, 50))
 		title = fmt.Sprintf("%smarked PR as ready for review", actor)
@@ -244,6 +272,8 @@ func (item prTLItem) Description() string {
 	switch item.Type {
 	case tlItemPRCommit:
 		desc = fmt.Sprintf("📧 %s", item.PullRequestCommit.Commit.MessageHeadline)
+	case tlItemHeadRefForcePushed:
+		desc = fmt.Sprintf("💪 %s", item.HeadRefForcePushed.AfterCommit.MessageHeadline)
 	case tlItemPRReadyForReview:
 		desc = fmt.Sprintf("🚦%s", dateStyle.Render(humanize.Time(item.PullRequestReadyForReview.CreatedAt)))
 	case tlItemPRReviewRequested:
