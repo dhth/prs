@@ -13,6 +13,7 @@ const (
 	prStateMerged           = "MERGED"
 	prStateClosed           = "CLOSED"
 	tlItemPRCommit          = "PullRequestCommit"
+	tlItemPRReadyForReview  = "ReadyForReviewEvent"
 	tlItemPRReviewRequested = "ReviewRequestedEvent"
 	tlItemPRReview          = "PullRequestReview"
 	tlItemMergedEvent       = "MergedEvent"
@@ -104,6 +105,12 @@ type prTLItem struct {
 			}
 		}
 	} `graphql:"... on PullRequestCommit"`
+	PullRequestReadyForReview struct {
+		CreatedAt time.Time
+		Actor     struct {
+			Login string
+		}
+	} `graphql:"... on ReadyForReviewEvent"`
 	PullRequestReviewRequested struct {
 		CreatedAt time.Time
 		Actor     struct {
@@ -147,7 +154,7 @@ type prTLQuery struct {
 			PullRequest struct {
 				TimelineItems struct {
 					Nodes []prTLItem
-				} `graphql:"timelineItems(last: $timelineItemsCount, itemTypes: [PULL_REQUEST_COMMIT, REVIEW_REQUESTED_EVENT, MERGED_EVENT, PULL_REQUEST_REVIEW])"`
+				} `graphql:"timelineItems(last: $timelineItemsCount, itemTypes: [PULL_REQUEST_COMMIT, READY_FOR_REVIEW_EVENT, REVIEW_REQUESTED_EVENT, MERGED_EVENT, PULL_REQUEST_REVIEW])"`
 			} `graphql:"pullRequest(number: $pullRequestNumber)"`
 		} `graphql:"repository(name: $repositoryName)"`
 	} `graphql:"repositoryOwner(login: $repositoryOwner)"`
@@ -207,6 +214,9 @@ func (item prTLItem) Title() string {
 		} else {
 			title = fmt.Sprintf("%s pushed a commit", item.PullRequestCommit.Commit.Author.Name)
 		}
+	case tlItemPRReadyForReview:
+		actor := authorStyle(item.PullRequestReadyForReview.Actor.Login).Render(Trim(item.PullRequestReadyForReview.Actor.Login, 50))
+		title = fmt.Sprintf("%smarked PR as ready for review", actor)
 	case tlItemPRReviewRequested:
 		actor := authorStyle(item.PullRequestReviewRequested.Actor.Login).Render(Trim(item.PullRequestReviewRequested.Actor.Login, 50))
 		reviewer := authorStyle(item.PullRequestReviewRequested.RequestedReviewer.User.Login).Render(Trim(item.PullRequestReviewRequested.RequestedReviewer.User.Login, 50))
@@ -234,6 +244,8 @@ func (item prTLItem) Description() string {
 	switch item.Type {
 	case tlItemPRCommit:
 		desc = fmt.Sprintf("📧 %s", item.PullRequestCommit.Commit.MessageHeadline)
+	case tlItemPRReadyForReview:
+		desc = fmt.Sprintf("🚦%s", dateStyle.Render(humanize.Time(item.PullRequestReadyForReview.CreatedAt)))
 	case tlItemPRReviewRequested:
 		desc = fmt.Sprintf("🙏%s", dateStyle.Render(humanize.Time(item.PullRequestReviewRequested.CreatedAt)))
 	case tlItemPRReview:
