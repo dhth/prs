@@ -10,6 +10,10 @@ import (
 	"github.com/dhth/prs/ui"
 )
 
+var (
+	modeFlag = flag.String("mode", "repos", "mode to run prs in; values: repos, review")
+)
+
 func die(msg string, args ...any) {
 	fmt.Fprintf(os.Stderr, msg+"\n", args...)
 	os.Exit(1)
@@ -50,5 +54,15 @@ func Execute() {
 		die(cfgErrSuggestion("Error: no repos found in config file"))
 	}
 
-	ui.RenderUI(config)
+	var mode ui.Mode
+	switch *modeFlag {
+	case "repos":
+		mode = ui.RepoMode
+	case "review":
+		mode = ui.ReviewMode
+	default:
+		die("unknown mode provided; possible values: repos, review")
+	}
+
+	ui.RenderUI(config, mode)
 }

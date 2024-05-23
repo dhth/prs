@@ -9,11 +9,13 @@ import (
 	ghapi "github.com/cli/go-gh/v2/pkg/api"
 )
 
-func InitialModel(config Config) model {
+func InitialModel(config Config, mode Mode) model {
 
 	repoListItems := make([]list.Item, 0, len(config.Repos))
-	for _, issue := range config.Repos {
-		repoListItems = append(repoListItems, issue)
+	if mode == RepoMode {
+		for _, issue := range config.Repos {
+			repoListItems = append(repoListItems, issue)
+		}
 	}
 
 	repoListDel := newRepoListItemDel()
@@ -49,10 +51,10 @@ func InitialModel(config Config) model {
 	prTLCache := make(map[string][]prTLItem)
 
 	m := model{
+		mode:          mode,
 		config:        config,
 		ghClient:      client,
 		prCount:       config.PRCount,
-		repoList:      list.New(repoListItems, repoListDel, 0, 0),
 		prsList:       list.New(nil, prListDel, 0, 0),
 		prTLList:      list.New(nil, prTLListDel, 0, 0),
 		prTLCache:     prTLCache,
@@ -62,16 +64,22 @@ func InitialModel(config Config) model {
 		showHelp:      true,
 	}
 
-	m.repoList.Title = "Repos"
-	m.repoList.SetStatusBarItemName("repo", "repos")
-	m.repoList.DisableQuitKeybindings()
-	m.repoList.SetShowHelp(false)
-	m.repoList.SetFilteringEnabled(false)
-	m.repoList.Styles.Title.Background(lipgloss.Color(repoListColor))
-	m.repoList.Styles.Title.Foreground(lipgloss.Color(defaultBackgroundColor))
-	m.repoList.Styles.Title.Bold(true)
+	switch m.mode {
+	case RepoMode:
+		m.repoList = list.New(repoListItems, repoListDel, 0, 0)
+		m.repoList.Title = "Repos"
+		m.repoList.SetStatusBarItemName("repo", "repos")
+		m.repoList.DisableQuitKeybindings()
+		m.repoList.SetShowHelp(false)
+		m.repoList.SetFilteringEnabled(false)
+		m.repoList.Styles.Title.Background(lipgloss.Color(repoListColor))
+		m.repoList.Styles.Title.Foreground(lipgloss.Color(defaultBackgroundColor))
+		m.repoList.Styles.Title.Bold(true)
+	case ReviewMode:
+		m.activePane = prList
+	}
 
-	m.prsList.Title = "PRs (fetching...)"
+	m.prsList.Title = "fetching..."
 	m.prsList.SetStatusBarItemName("PR", "PRs")
 	m.prsList.DisableQuitKeybindings()
 	m.prsList.SetShowHelp(false)

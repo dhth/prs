@@ -16,7 +16,19 @@ type PRsFetchedMsg struct {
 	err error
 }
 
+type ReviewPRsFetchedMsg struct {
+	prs []reviewPr
+	err error
+}
+
+type ViewerLoginFetched struct {
+	login string
+	err   error
+}
+
 type PRTLFetchedMsg struct {
+	repoOwner string
+	repoName  string
 	prNumber  int
 	prTLItems []prTLItem
 	err       error

@@ -22,6 +22,7 @@ const (
 	reviewChangesRequestedColor = "#fabd2f"
 	reviewDismissedColor        = "#928374"
 	dateColor                   = "#928374"
+	repoColor                   = "#bdae93"
 	filePathColor               = "#d3869b"
 	outdatedColor               = "#fabd2f"
 	numReviewsColor             = "#665c54"
@@ -58,6 +59,10 @@ var (
 	dateStyle = lipgloss.NewStyle().
 			PaddingLeft(1).
 			Foreground(lipgloss.Color(dateColor))
+
+	repoStyle = lipgloss.NewStyle().
+			PaddingLeft(1).
+			Foreground(lipgloss.Color(repoColor))
 
 	reviewCmtBodyStyle = lipgloss.NewStyle()
 

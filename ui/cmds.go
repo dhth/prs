@@ -90,9 +90,23 @@ func fetchPRS(ghClient *ghapi.GraphQLClient, repoOwner string, repoName string, 
 	}
 }
 
+func fetchViewerLogin(ghClient *ghapi.GraphQLClient) tea.Cmd {
+	return func() tea.Msg {
+		login, err := getViewerLogin(ghClient)
+		return ViewerLoginFetched{login, err}
+	}
+}
+
+func fetchReviewPRS(ghClient *ghapi.GraphQLClient, authorLogin string) tea.Cmd {
+	return func() tea.Msg {
+		prs, err := GetReviewPRs(ghClient, authorLogin)
+		return ReviewPRsFetchedMsg{prs, err}
+	}
+}
+
 func fetchPRTLItems(ghClient *ghapi.GraphQLClient, repoOwner string, repoName string, prNumber int, tlItemsCount int, commentsCount int) tea.Cmd {
 	return func() tea.Msg {
 		prTLItems, err := GetPRTL(ghClient, repoOwner, repoName, prNumber, tlItemsCount, commentsCount)
-		return PRTLFetchedMsg{prNumber, prTLItems, err}
+		return PRTLFetchedMsg{repoOwner, repoName, prNumber, prTLItems, err}
 	}
 }

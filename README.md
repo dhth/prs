@@ -65,6 +65,7 @@ sources:
 ```bash
 prs
 prs -config-file /path/to/config.yml
+prs -mode=review # to only see PRs requesting your review
 ```
 
 Screenshots

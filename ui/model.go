@@ -15,12 +15,21 @@ type Pane uint
 const (
 	repoList Pane = iota
 	prList
+	reviewPRList
 	prTLList
 	prRevCmts
 	helpView
 )
 
+type Mode uint
+
+const (
+	RepoMode Mode = iota
+	ReviewMode
+)
+
 type model struct {
+	mode            Mode
 	config          Config
 	ghClient        *ghapi.GraphQLClient
 	repoOwner       string
@@ -45,8 +54,15 @@ type model struct {
 	lastPane        Pane
 	showHelp        bool
 	repoChosen      bool
+	userLogin       string
 }
 
 func (m model) Init() tea.Cmd {
-	return hideHelp(time.Minute * 1)
+	var cmds []tea.Cmd
+	cmds = append(cmds, hideHelp(time.Minute*1))
+
+	if m.mode == ReviewMode {
+		cmds = append(cmds, fetchViewerLogin(m.ghClient))
+	}
+	return tea.Batch(cmds...)
 }

@@ -25,7 +25,7 @@ var (
   - PR List View
   - PR Timeline List View
   - PR Review Comments View
-  - Repo List View
+  - Repo List View (only applicable when -mode=repos)
   - Help View (this one)
 `),
 		helpHeaderStyle.Render("Keyboard Shortcuts"),

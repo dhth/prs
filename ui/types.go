@@ -73,6 +73,30 @@ type pr struct {
 	}
 }
 
+type reviewPr struct {
+	Number     int
+	PRTitle    string `graphql:"prTitle: title"`
+	Repository struct {
+		Owner struct {
+			Login string
+		}
+		Name string
+	}
+	State     string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	ClosedAt  string
+	Author    struct {
+		Login string
+	}
+	Url       string
+	Additions int
+	Deletions int
+	Reviews   struct {
+		TotalCount int
+	}
+}
+
 type prsQuery struct {
 	RepositoryOwner struct {
 		Repository struct {
@@ -90,6 +114,23 @@ type prReviewComment struct {
 	DiffHunk  string
 	Path      string
 	Url       string
+}
+
+type userLoginQuery struct {
+	Viewer struct {
+		Login string
+	}
+}
+
+type reviewPrsQuery struct {
+	Search struct {
+		Edges []struct {
+			Node struct {
+				Type     string `graphql:"type: __typename"`
+				reviewPr `graphql:"... on PullRequest"`
+			}
+		}
+	} `graphql:"search(query: $query, type: ISSUE, first: 50)"`
 }
 
 type prTLItem struct {
@@ -219,6 +260,36 @@ func (pr pr) FilterValue() string {
 	return fmt.Sprintf("%d", pr.Number)
 }
 
+func (pr reviewPr) Title() string {
+	return fmt.Sprintf("#%2d %s", pr.Number, pr.PRTitle)
+}
+
+func (pr reviewPr) Description() string {
+	var additions string
+	var deletions string
+	var reviews string
+
+	author := authorStyle(pr.Author.Login).Render(RightPadTrim(pr.Author.Login, 60))
+	repo := repoStyle.Render(RightPadTrim(pr.Repository.Name, 28))
+	updatedAt := dateStyle.Render(RightPadTrim("updated "+humanize.Time(pr.UpdatedAt), 24))
+
+	if pr.Additions > 0 {
+		additions = additionsStyle.Render(fmt.Sprintf("+%d", pr.Additions))
+	}
+	if pr.Deletions > 0 {
+		deletions = deletionsStyle.Render(fmt.Sprintf("-%d", pr.Deletions))
+	}
+
+	if pr.Reviews.TotalCount > 0 {
+		reviews = numReviewsStyle.Render(fmt.Sprintf("%dr", pr.Reviews.TotalCount))
+	}
+	return fmt.Sprintf("%s%s%s%s%s%s", author, repo, updatedAt, additions, deletions, reviews)
+}
+
+func (pr reviewPr) FilterValue() string {
+	return fmt.Sprintf("%d", pr.Number)
+}
+
 func (item prTLItem) Title() string {
 	var title string
 	var date string
@@ -241,7 +312,8 @@ func (item prTLItem) Title() string {
 		if len(afterCommitHash) >= commitHashLen {
 			afterCommitHash = afterCommitHash[:commitHashLen]
 		}
-		title = fmt.Sprintf("%s force pushed head ref from %s to %s", actor, beforeCommitHash, afterCommitHash)
+		date = dateStyle.Render(humanize.Time(item.HeadRefForcePushed.CreatedAt))
+		title = fmt.Sprintf("%s force pushed head ref from %s to %s%s", actor, beforeCommitHash, afterCommitHash, date)
 	case tlItemPRReadyForReview:
 		actor := authorStyle(item.PullRequestReadyForReview.Actor.Login).Render(Trim(item.PullRequestReadyForReview.Actor.Login, 50))
 		title = fmt.Sprintf("%smarked PR as ready for review", actor)
