@@ -6,7 +6,7 @@ import (
 	ghgql "github.com/cli/shurcooL-graphql"
 )
 
-func GetPRs(ghClient *ghapi.GraphQLClient, repoOwner string, repoName string, prCount int) ([]pr, error) {
+func getPRs(ghClient *ghapi.GraphQLClient, repoOwner string, repoName string, prCount int) ([]pr, error) {
 	var query prsQuery
 
 	variables := map[string]interface{}{
@@ -31,7 +31,7 @@ func getViewerLogin(ghClient *ghapi.GraphQLClient) (string, error) {
 	return query.Viewer.Login, nil
 }
 
-func GetReviewPRs(ghClient *ghapi.GraphQLClient, authorLogin string) ([]reviewPr, error) {
+func getReviewPRs(ghClient *ghapi.GraphQLClient, authorLogin string) ([]pr, error) {
 	var query reviewPrsQuery
 
 	variables := map[string]interface{}{
@@ -41,14 +41,14 @@ func GetReviewPRs(ghClient *ghapi.GraphQLClient, authorLogin string) ([]reviewPr
 	if err != nil {
 		return nil, err
 	}
-	var prs []reviewPr
+	var prs []pr
 	for _, edge := range query.Search.Edges {
-		prs = append(prs, edge.Node.reviewPr)
+		prs = append(prs, edge.Node.pr)
 	}
 	return prs, nil
 }
 
-func GetPRTL(ghClient *ghapi.GraphQLClient, repoOwner string, repoName string, prNumber int, tlItemsCount int, commentsCount int) ([]prTLItem, error) {
+func getPRTL(ghClient *ghapi.GraphQLClient, repoOwner string, repoName string, prNumber int, tlItemsCount int, commentsCount int) ([]prTLItem, error) {
 	var query prTLQuery
 
 	variables := map[string]interface{}{

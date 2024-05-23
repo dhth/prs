@@ -1,32 +1,32 @@
 package ui
 
-type HideHelpMsg struct{}
+type hideHelpMsg struct{}
 
-type RepoChosenMsg struct {
+type repoChosenMsg struct {
 	repo string
 }
 
-type PRChosenMsg struct {
+type prChosenMsg struct {
 	prNumber int
 	err      error
 }
 
-type PRsFetchedMsg struct {
+type prsFetchedMsg struct {
 	prs []pr
 	err error
 }
 
-type ReviewPRsFetchedMsg struct {
-	prs []reviewPr
+type reviewPRsFetchedMsg struct {
+	prs []pr
 	err error
 }
 
-type ViewerLoginFetched struct {
+type viewerLoginFetched struct {
 	login string
 	err   error
 }
 
-type PRTLFetchedMsg struct {
+type prTLFetchedMsg struct {
 	repoOwner string
 	repoName  string
 	prNumber  int
@@ -34,15 +34,15 @@ type PRTLFetchedMsg struct {
 	err       error
 }
 
-type URLOpenedinBrowserMsg struct {
+type urlOpenedinBrowserMsg struct {
 	url string
 	err error
 }
 
-type PRDiffDoneMsg struct {
+type prDiffDoneMsg struct {
 	err error
 }
 
-type PRViewDoneMsg struct {
+type prViewDoneMsg struct {
 	err error
 }

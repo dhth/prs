@@ -59,11 +59,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					repoName = m.repoName
 					prNumber = m.activePRNumber
 				case ReviewMode:
-					pr, reviewPrOk := m.prsList.SelectedItem().(reviewPr)
+					pr, reviewPrOk := m.prsList.SelectedItem().(prResult)
 					if reviewPrOk {
-						repoOwner = pr.Repository.Owner.Login
-						repoName = pr.Repository.Name
-						prNumber = pr.Number
+						repoOwner = pr.details.Repository.Owner.Login
+						repoName = pr.details.Repository.Name
+						prNumber = pr.details.Number
 					}
 				}
 				if repoOwner != "" && repoName != "" {
@@ -90,6 +90,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "1":
 			if m.activePane != prList {
 				m.activePane = prList
+			}
+		case "d":
+			if m.activePane != prList {
+				selected, ok := m.prsList.SelectedItem().(prResult)
+				if ok {
+					m.message = fmt.Sprintf("context: %v", selected.context)
+				}
 			}
 		case "enter":
 			switch m.activePane {
@@ -190,14 +197,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				var url string
 				switch m.mode {
 				case RepoMode:
-					pr, ok := m.prsList.SelectedItem().(pr)
+					pr, ok := m.prsList.SelectedItem().(prResult)
 					if ok {
-						url = pr.Url
+						url = pr.details.Url
 					}
 				case ReviewMode:
-					pr, ok := m.prsList.SelectedItem().(reviewPr)
+					pr, ok := m.prsList.SelectedItem().(prResult)
 					if ok {
-						url = pr.Url
+						url = pr.details.Url
 					}
 				}
 				cmds = append(cmds, openURLInBrowser(url))
@@ -220,14 +227,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.activePane == prList || m.activePane == prTLList {
 				switch m.mode {
 				case RepoMode:
-					selected, ok := m.prsList.SelectedItem().(pr)
+					pr, ok := m.prsList.SelectedItem().(prResult)
 					if ok {
-						cmds = append(cmds, showDiff(m.repoOwner, m.repoName, selected.Number, m.config.DiffPager))
+						cmds = append(cmds, showDiff(m.repoOwner,
+							m.repoName,
+							pr.details.Number,
+							m.config.DiffPager))
 					}
 				case ReviewMode:
-					pr, ok := m.prsList.SelectedItem().(reviewPr)
+					pr, ok := m.prsList.SelectedItem().(prResult)
 					if ok {
-						cmds = append(cmds, showDiff(pr.Repository.Owner.Login, pr.Repository.Name, pr.Number, m.config.DiffPager))
+						cmds = append(cmds, showDiff(pr.details.Repository.Owner.Login,
+							pr.details.Repository.Name,
+							pr.details.Number,
+							m.config.DiffPager))
 					}
 				}
 			}
@@ -235,14 +248,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.activePane == prList || m.activePane == prTLList {
 				switch m.mode {
 				case RepoMode:
-					pr, ok := m.prsList.SelectedItem().(pr)
+					pr, ok := m.prsList.SelectedItem().(prResult)
 					if ok {
-						cmds = append(cmds, showPR(m.repoOwner, m.repoName, pr.Number))
+						cmds = append(cmds, showPR(m.repoOwner, m.repoName, pr.details.Number))
 					}
 				case ReviewMode:
-					pr, ok := m.prsList.SelectedItem().(reviewPr)
+					pr, ok := m.prsList.SelectedItem().(prResult)
 					if ok {
-						cmds = append(cmds, showPR(pr.Repository.Owner.Login, pr.Repository.Name, pr.Number))
+						cmds = append(cmds, showPR(pr.details.Repository.Owner.Login,
+							pr.details.Repository.Name,
+							pr.details.Number))
 					}
 				}
 			}
@@ -258,7 +273,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.lastPane = m.activePane
 			m.activePane = helpView
 		}
-	case HideHelpMsg:
+	case hideHelpMsg:
 		m.showHelp = false
 	case tea.WindowSizeMsg:
 		_, h1 := m.prListStyle.GetFrameSize()
@@ -298,7 +313,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.helpVP.Width = msg.Width
 			m.helpVP.Height = msg.Height - 7
 		}
-	case RepoChosenMsg:
+	case repoChosenMsg:
 		repoDetails := strings.Split(msg.repo, ":::")
 		if len(repoDetails) != 2 {
 			m.message = "Something went horribly wrong. Let @dhth know about this failure."
@@ -311,45 +326,50 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.prTLList.ResetSelected()
 			cmds = append(cmds, fetchPRS(m.ghClient, m.repoOwner, m.repoName, m.prCount))
 		}
-	case ViewerLoginFetched:
+	case viewerLoginFetched:
 		if msg.err != nil {
 			m.message = fmt.Sprintf("Error fetching gh username: %s", msg.err)
 		} else {
 			m.userLogin = msg.login
 			cmds = append(cmds, fetchReviewPRS(m.ghClient, m.userLogin))
 		}
-	case PRChosenMsg:
+	case prChosenMsg:
 		if msg.err != nil {
 			m.message = "Something went wrong: " + msg.err.Error()
 		} else {
 			m.activePRNumber = msg.prNumber
 		}
-	case PRsFetchedMsg:
+	case prsFetchedMsg:
 		if msg.err != nil {
 			m.message = msg.err.Error()
 		} else {
 			prs := make([]list.Item, 0, len(msg.prs))
-			for _, issue := range msg.prs {
-				prs = append(prs, issue)
+			for _, pr := range msg.prs {
+				prs = append(prs, prResult{context: prContextRepo, details: pr})
 			}
 			m.prsList.SetItems(prs)
 			m.prsList.Title = fmt.Sprintf("PRs (%s)", m.repoName)
 
 			if len(msg.prs) > 0 {
 				for _, pr := range msg.prs {
-					cmds = append(cmds, fetchPRTLItems(m.ghClient, pr.Repository.Owner.Login, pr.Repository.Name, pr.Number, 100, 10))
+					cmds = append(cmds, fetchPRTLItems(m.ghClient,
+						pr.Repository.Owner.Login,
+						pr.Repository.Name,
+						pr.Number,
+						100,
+						10))
 				}
 				firstPRNumber := strconv.Itoa(msg.prs[0].Number)
 				cmds = append(cmds, choosePR(firstPRNumber))
 			}
 		}
-	case ReviewPRsFetchedMsg:
+	case reviewPRsFetchedMsg:
 		if msg.err != nil {
 			m.message = msg.err.Error()
 		} else {
 			prs := make([]list.Item, 0, len(msg.prs))
-			for _, issue := range msg.prs {
-				prs = append(prs, issue)
+			for _, pr := range msg.prs {
+				prs = append(prs, prResult{context: prContextReview, details: pr})
 			}
 			m.prsList.SetItems(prs)
 			m.prsList.Title = "PRs requesting your review"
@@ -362,7 +382,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				cmds = append(cmds, choosePR(firstPRNumber))
 			}
 		}
-	case PRTLFetchedMsg:
+	case prTLFetchedMsg:
 		if msg.err != nil {
 			m.message = msg.err.Error()
 		} else {
@@ -374,15 +394,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.prTLList.Title = fmt.Sprintf("PR #%d Timeline", msg.prNumber)
 			m.prTLCache[fmt.Sprintf("%s/%s:%d", msg.repoOwner, msg.repoName, msg.prNumber)] = msg.prTLItems
 		}
-	case URLOpenedinBrowserMsg:
+	case urlOpenedinBrowserMsg:
 		if msg.err != nil {
 			m.message = fmt.Sprintf("Error opening url: %s", msg.err.Error())
 		}
-	case PRDiffDoneMsg:
+	case prDiffDoneMsg:
 		if msg.err != nil {
 			m.message = fmt.Sprintf("Error opening diff: %s", msg.err.Error())
 		}
-	case PRViewDoneMsg:
+	case prViewDoneMsg:
 		if msg.err != nil {
 			m.message = fmt.Sprintf("Error showing PR: %s", msg.err.Error())
 		}
@@ -420,11 +440,11 @@ func (m *model) setTL() (tea.Cmd, bool) {
 		repoName = m.repoName
 		prNumber = m.activePRNumber
 	case ReviewMode:
-		pr, reviewPrOk := m.prsList.SelectedItem().(reviewPr)
+		pr, reviewPrOk := m.prsList.SelectedItem().(prResult)
 		if reviewPrOk {
-			repoOwner = pr.Repository.Owner.Login
-			repoName = pr.Repository.Name
-			prNumber = pr.Number
+			repoOwner = pr.details.Repository.Owner.Login
+			repoName = pr.details.Repository.Name
+			prNumber = pr.details.Number
 		}
 	}
 

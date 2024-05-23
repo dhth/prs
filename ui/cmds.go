@@ -13,14 +13,14 @@ import (
 
 func chooseRepo(repo string) tea.Cmd {
 	return func() tea.Msg {
-		return RepoChosenMsg{repo}
+		return repoChosenMsg{repo}
 	}
 }
 
 func choosePR(prNumberStr string) tea.Cmd {
 	return func() tea.Msg {
 		prNumber, err := strconv.Atoi(prNumberStr)
-		return PRChosenMsg{prNumber, err}
+		return prChosenMsg{prNumber, err}
 	}
 }
 
@@ -35,9 +35,9 @@ func openURLInBrowser(url string) tea.Cmd {
 	c := exec.Command(openCmd, url)
 	return tea.ExecProcess(c, func(err error) tea.Msg {
 		if err != nil {
-			return URLOpenedinBrowserMsg{url: url, err: err}
+			return urlOpenedinBrowserMsg{url: url, err: err}
 		}
-		return tea.Msg(URLOpenedinBrowserMsg{url: url})
+		return tea.Msg(urlOpenedinBrowserMsg{url: url})
 	})
 }
 
@@ -56,9 +56,9 @@ func showDiff(repoOwner, repoName string, prNumber int, pager *string) tea.Cmd {
 		))
 	return tea.ExecProcess(c, func(err error) tea.Msg {
 		if err != nil {
-			return PRDiffDoneMsg{err: err}
+			return prDiffDoneMsg{err: err}
 		}
-		return tea.Msg(PRDiffDoneMsg{})
+		return tea.Msg(prDiffDoneMsg{})
 	})
 }
 
@@ -71,42 +71,42 @@ func showPR(repoOwner, repoName string, prNumber int) tea.Cmd {
 		))
 	return tea.ExecProcess(c, func(err error) tea.Msg {
 		if err != nil {
-			return PRDiffDoneMsg{err: err}
+			return prDiffDoneMsg{err: err}
 		}
-		return tea.Msg(PRDiffDoneMsg{})
+		return tea.Msg(prDiffDoneMsg{})
 	})
 }
 
 func hideHelp(interval time.Duration) tea.Cmd {
 	return tea.Tick(interval, func(time.Time) tea.Msg {
-		return HideHelpMsg{}
+		return hideHelpMsg{}
 	})
 }
 
 func fetchPRS(ghClient *ghapi.GraphQLClient, repoOwner string, repoName string, prCount int) tea.Cmd {
 	return func() tea.Msg {
-		prs, err := GetPRs(ghClient, repoOwner, repoName, prCount)
-		return PRsFetchedMsg{prs, err}
+		prs, err := getPRs(ghClient, repoOwner, repoName, prCount)
+		return prsFetchedMsg{prs, err}
 	}
 }
 
 func fetchViewerLogin(ghClient *ghapi.GraphQLClient) tea.Cmd {
 	return func() tea.Msg {
 		login, err := getViewerLogin(ghClient)
-		return ViewerLoginFetched{login, err}
+		return viewerLoginFetched{login, err}
 	}
 }
 
 func fetchReviewPRS(ghClient *ghapi.GraphQLClient, authorLogin string) tea.Cmd {
 	return func() tea.Msg {
-		prs, err := GetReviewPRs(ghClient, authorLogin)
-		return ReviewPRsFetchedMsg{prs, err}
+		prs, err := getReviewPRs(ghClient, authorLogin)
+		return reviewPRsFetchedMsg{prs, err}
 	}
 }
 
 func fetchPRTLItems(ghClient *ghapi.GraphQLClient, repoOwner string, repoName string, prNumber int, tlItemsCount int, commentsCount int) tea.Cmd {
 	return func() tea.Msg {
-		prTLItems, err := GetPRTL(ghClient, repoOwner, repoName, prNumber, tlItemsCount, commentsCount)
-		return PRTLFetchedMsg{repoOwner, repoName, prNumber, prTLItems, err}
+		prTLItems, err := getPRTL(ghClient, repoOwner, repoName, prNumber, tlItemsCount, commentsCount)
+		return prTLFetchedMsg{repoOwner, repoName, prNumber, prTLItems, err}
 	}
 }

@@ -27,6 +27,13 @@ const (
 	commitHashLen = 7
 )
 
+type prContext uint
+
+const (
+	prContextRepo prContext = iota
+	prContextReview
+)
+
 type SourceConfig struct {
 	DiffPager *string `yaml:"diff-pager"`
 	PRCount   int     `yaml:"pr-count"`
@@ -49,31 +56,12 @@ type Config struct {
 	Repos     []Repo
 }
 
-type pr struct {
-	Number     int
-	PRTitle    string `graphql:"prTitle: title"`
-	Repository struct {
-		Owner struct {
-			Login string
-		}
-		Name string
-	}
-	State     string
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	ClosedAt  string
-	Author    struct {
-		Login string
-	}
-	Url       string
-	Additions int
-	Deletions int
-	Reviews   struct {
-		TotalCount int
-	}
+type prResult struct {
+	context prContext
+	details pr
 }
 
-type reviewPr struct {
+type pr struct {
 	Number     int
 	PRTitle    string `graphql:"prTitle: title"`
 	Repository struct {
@@ -126,8 +114,8 @@ type reviewPrsQuery struct {
 	Search struct {
 		Edges []struct {
 			Node struct {
-				Type     string `graphql:"type: __typename"`
-				reviewPr `graphql:"... on PullRequest"`
+				Type string `graphql:"type: __typename"`
+				pr   `graphql:"... on PullRequest"`
 			}
 		}
 	} `graphql:"search(query: $query, type: ISSUE, first: 50)"`
@@ -230,64 +218,48 @@ func (repo Repo) FilterValue() string {
 	return fmt.Sprintf("%s:::%s", repo.Owner, repo.Name)
 }
 
-func (pr pr) Title() string {
-	return fmt.Sprintf("#%2d %s", pr.Number, pr.PRTitle)
+func (pr prResult) Title() string {
+	return fmt.Sprintf("#%2d %s", pr.details.Number, pr.details.PRTitle)
 }
 
-func (pr pr) Description() string {
+func (pr prResult) Description() string {
 	var additions string
 	var deletions string
 	var reviews string
+	var author string
+	var desc string
 
-	author := authorStyle(pr.Author.Login).Render(RightPadTrim(pr.Author.Login, 80))
-	state := prStyle(pr.State).Render(pr.State)
-	updatedAt := dateStyle.Render(RightPadTrim("updated "+humanize.Time(pr.UpdatedAt), 24))
-
-	if pr.Additions > 0 {
-		additions = additionsStyle.Render(fmt.Sprintf("+%d", pr.Additions))
+	updatedAt := dateStyle.Render(RightPadTrim("updated "+humanize.Time(pr.details.UpdatedAt), 24))
+	if pr.details.Additions > 0 {
+		additions = additionsStyle.Render(fmt.Sprintf("+%d", pr.details.Additions))
 	}
-	if pr.Deletions > 0 {
-		deletions = deletionsStyle.Render(fmt.Sprintf("-%d", pr.Deletions))
+	if pr.details.Deletions > 0 {
+		deletions = deletionsStyle.Render(fmt.Sprintf("-%d", pr.details.Deletions))
 	}
 
-	if pr.Reviews.TotalCount > 0 {
-		reviews = numReviewsStyle.Render(fmt.Sprintf("%dr", pr.Reviews.TotalCount))
+	if pr.details.Reviews.TotalCount > 0 {
+		reviews = numReviewsStyle.Render(fmt.Sprintf("%dr", pr.details.Reviews.TotalCount))
 	}
-	return fmt.Sprintf("%s%s%s%s%s%s", author, updatedAt, state, additions, deletions, reviews)
+
+	switch pr.context {
+	case prContextRepo:
+		author = authorStyle(pr.details.Author.Login).Render(RightPadTrim(pr.details.Author.Login, 80))
+		state := prStyle(pr.details.State).Render(pr.details.State)
+
+		desc = fmt.Sprintf("%s%s%s%s%s%s", author, updatedAt, state, additions, deletions, reviews)
+
+	case prContextReview:
+		author = authorStyle(pr.details.Author.Login).Render(RightPadTrim(pr.details.Author.Login, 60))
+		repo := repoStyle.Render(RightPadTrim(pr.details.Repository.Name, 28))
+
+		desc = fmt.Sprintf("%s%s%s%s%s%s", author, repo, updatedAt, additions, deletions, reviews)
+	}
+
+	return desc
 }
 
-func (pr pr) FilterValue() string {
-	return fmt.Sprintf("%d", pr.Number)
-}
-
-func (pr reviewPr) Title() string {
-	return fmt.Sprintf("#%2d %s", pr.Number, pr.PRTitle)
-}
-
-func (pr reviewPr) Description() string {
-	var additions string
-	var deletions string
-	var reviews string
-
-	author := authorStyle(pr.Author.Login).Render(RightPadTrim(pr.Author.Login, 60))
-	repo := repoStyle.Render(RightPadTrim(pr.Repository.Name, 28))
-	updatedAt := dateStyle.Render(RightPadTrim("updated "+humanize.Time(pr.UpdatedAt), 24))
-
-	if pr.Additions > 0 {
-		additions = additionsStyle.Render(fmt.Sprintf("+%d", pr.Additions))
-	}
-	if pr.Deletions > 0 {
-		deletions = deletionsStyle.Render(fmt.Sprintf("-%d", pr.Deletions))
-	}
-
-	if pr.Reviews.TotalCount > 0 {
-		reviews = numReviewsStyle.Render(fmt.Sprintf("%dr", pr.Reviews.TotalCount))
-	}
-	return fmt.Sprintf("%s%s%s%s%s%s", author, repo, updatedAt, additions, deletions, reviews)
-}
-
-func (pr reviewPr) FilterValue() string {
-	return fmt.Sprintf("%d", pr.Number)
+func (pr prResult) FilterValue() string {
+	return fmt.Sprintf("%d", pr.details.Number)
 }
 
 func (item prTLItem) Title() string {
