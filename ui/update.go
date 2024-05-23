@@ -46,8 +46,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				switch m.mode {
 				case RepoMode:
 					cmds = append(cmds, fetchPRS(m.ghClient, m.repoOwner, m.repoName, m.prCount))
-				case ReviewMode:
-					cmds = append(cmds, fetchReviewPRS(m.ghClient, m.userLogin))
+				case ReviewerMode:
+					cmds = append(cmds, fetchPRsToReview(m.ghClient, m.userLogin))
+				case AuthorMode:
+					cmds = append(cmds, fetchAuthoredPRs(m.ghClient, m.userLogin))
 				}
 			case prTLList:
 				var repoOwner, repoName string
@@ -58,7 +60,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					repoOwner = m.repoOwner
 					repoName = m.repoName
 					prNumber = m.activePRNumber
-				case ReviewMode:
+				case ReviewerMode:
 					pr, reviewPrOk := m.prsList.SelectedItem().(prResult)
 					if reviewPrOk {
 						repoOwner = pr.details.Repository.Owner.Login
@@ -67,7 +69,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 				}
 				if repoOwner != "" && repoName != "" {
-					cmds = append(cmds, fetchPRTLItems(m.ghClient, repoOwner, repoName, prNumber, 100, 10))
+					cmds = append(cmds, fetchPRTLItems(m.ghClient, repoOwner, repoName, prNumber, 100))
 					m.prTLList.ResetSelected()
 				}
 			}
@@ -120,7 +122,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							for _, cmt := range revCmts {
 								prReviewCmts += cmt.render()
 								prReviewCmts += "\n\n"
-								prReviewCmts += reviewCmtDividerStyle.Render(strings.Repeat("*", int(float64(m.terminalWidth)*0.6)))
+								prReviewCmts += reviewCmtDividerStyle.Render(strings.Repeat("-", int(float64(m.terminalWidth)*0.6)))
 								prReviewCmts += "\n\n"
 							}
 							prReviewCmts += "\n\n"
@@ -201,7 +203,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					if ok {
 						url = pr.details.Url
 					}
-				case ReviewMode:
+				case ReviewerMode:
 					pr, ok := m.prsList.SelectedItem().(prResult)
 					if ok {
 						url = pr.details.Url
@@ -234,7 +236,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							pr.details.Number,
 							m.config.DiffPager))
 					}
-				case ReviewMode:
+				case ReviewerMode:
 					pr, ok := m.prsList.SelectedItem().(prResult)
 					if ok {
 						cmds = append(cmds, showDiff(pr.details.Repository.Owner.Login,
@@ -252,7 +254,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					if ok {
 						cmds = append(cmds, showPR(m.repoOwner, m.repoName, pr.details.Number))
 					}
-				case ReviewMode:
+				case ReviewerMode:
 					pr, ok := m.prsList.SelectedItem().(prResult)
 					if ok {
 						cmds = append(cmds, showPR(pr.details.Repository.Owner.Login,
@@ -331,7 +333,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.message = fmt.Sprintf("Error fetching gh username: %s", msg.err)
 		} else {
 			m.userLogin = msg.login
-			cmds = append(cmds, fetchReviewPRS(m.ghClient, m.userLogin))
+			switch m.mode {
+			case ReviewerMode:
+				cmds = append(cmds, fetchPRsToReview(m.ghClient, m.userLogin))
+			case AuthorMode:
+				cmds = append(cmds, fetchAuthoredPRs(m.ghClient, m.userLogin))
+			}
 		}
 	case prChosenMsg:
 		if msg.err != nil {
@@ -357,7 +364,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						pr.Repository.Name,
 						pr.Number,
 						100,
-						10))
+					))
 				}
 				firstPRNumber := strconv.Itoa(msg.prs[0].Number)
 				cmds = append(cmds, choosePR(firstPRNumber))
@@ -369,14 +376,33 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			prs := make([]list.Item, 0, len(msg.prs))
 			for _, pr := range msg.prs {
-				prs = append(prs, prResult{context: prContextReview, details: pr})
+				prs = append(prs, prResult{context: prContextReviewer, details: pr})
 			}
 			m.prsList.SetItems(prs)
 			m.prsList.Title = "PRs requesting your review"
 
 			if len(msg.prs) > 0 {
 				for _, pr := range msg.prs {
-					cmds = append(cmds, fetchPRTLItems(m.ghClient, pr.Repository.Owner.Login, pr.Repository.Name, pr.Number, 100, 10))
+					cmds = append(cmds, fetchPRTLItems(m.ghClient, pr.Repository.Owner.Login, pr.Repository.Name, pr.Number, 100))
+				}
+				firstPRNumber := strconv.Itoa(msg.prs[0].Number)
+				cmds = append(cmds, choosePR(firstPRNumber))
+			}
+		}
+	case authoredPRsFetchedMsg:
+		if msg.err != nil {
+			m.message = msg.err.Error()
+		} else {
+			prs := make([]list.Item, 0, len(msg.prs))
+			for _, pr := range msg.prs {
+				prs = append(prs, prResult{context: prContextAuthor, details: pr})
+			}
+			m.prsList.SetItems(prs)
+			m.prsList.Title = "Open PRs authored by you"
+
+			if len(msg.prs) > 0 {
+				for _, pr := range msg.prs {
+					cmds = append(cmds, fetchPRTLItems(m.ghClient, pr.Repository.Owner.Login, pr.Repository.Name, pr.Number, 100))
 				}
 				firstPRNumber := strconv.Itoa(msg.prs[0].Number)
 				cmds = append(cmds, choosePR(firstPRNumber))
@@ -439,7 +465,7 @@ func (m *model) setTL() (tea.Cmd, bool) {
 		repoOwner = m.repoOwner
 		repoName = m.repoName
 		prNumber = m.activePRNumber
-	case ReviewMode:
+	case ReviewerMode, AuthorMode:
 		pr, reviewPrOk := m.prsList.SelectedItem().(prResult)
 		if reviewPrOk {
 			repoOwner = pr.details.Repository.Owner.Login
@@ -454,7 +480,7 @@ func (m *model) setTL() (tea.Cmd, bool) {
 
 	tlFromCache, ok := m.prTLCache[fmt.Sprintf("%s/%s:%d", repoOwner, repoName, prNumber)]
 	if !ok {
-		cmd = fetchPRTLItems(m.ghClient, repoOwner, repoName, prNumber, 100, 10)
+		cmd = fetchPRTLItems(m.ghClient, repoOwner, repoName, prNumber, 100)
 		return cmd, true
 	}
 

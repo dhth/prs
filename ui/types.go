@@ -12,6 +12,9 @@ const (
 	prStateOpen              = "OPEN"
 	prStateMerged            = "MERGED"
 	prStateClosed            = "CLOSED"
+	prRevDecChangesReq       = "CHANGES_REQUESTED"
+	prRevDecApproved         = "APPROVED"
+	prRevDecRevReq           = "REVIEW_REQUIRED"
 	tlItemPRCommit           = "PullRequestCommit"
 	tlItemPRReadyForReview   = "ReadyForReviewEvent"
 	tlItemPRReviewRequested  = "ReviewRequestedEvent"
@@ -31,7 +34,8 @@ type prContext uint
 
 const (
 	prContextRepo prContext = iota
-	prContextReview
+	prContextReviewer
+	prContextAuthor
 )
 
 type SourceConfig struct {
@@ -70,11 +74,12 @@ type pr struct {
 		}
 		Name string
 	}
-	State     string
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	ClosedAt  string
-	Author    struct {
+	State          string
+	ReviewDecision *string
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	ClosedAt       string
+	Author         struct {
 		Login string
 	}
 	Url       string
@@ -110,7 +115,7 @@ type userLoginQuery struct {
 	}
 }
 
-type reviewPrsQuery struct {
+type prSearchQuery struct {
 	Search struct {
 		Edges []struct {
 			Node struct {
@@ -219,14 +224,25 @@ func (repo Repo) FilterValue() string {
 }
 
 func (pr prResult) Title() string {
-	return fmt.Sprintf("#%2d %s", pr.details.Number, pr.details.PRTitle)
+	var reviewDecision string
+
+	if pr.details.ReviewDecision != nil {
+		switch *pr.details.ReviewDecision {
+		case "CHANGES_REQUESTED":
+			reviewDecision = "± "
+		case "APPROVED":
+			reviewDecision = "✅ "
+		case "REVIEW_REQUIRED":
+			reviewDecision = "🟡 "
+		}
+	}
+	return fmt.Sprintf("%s#%2d %s", reviewDecision, pr.details.Number, pr.details.PRTitle)
 }
 
 func (pr prResult) Description() string {
 	var additions string
 	var deletions string
 	var reviews string
-	var author string
 	var desc string
 
 	updatedAt := dateStyle.Render(RightPadTrim("updated "+humanize.Time(pr.details.UpdatedAt), 24))
@@ -243,16 +259,21 @@ func (pr prResult) Description() string {
 
 	switch pr.context {
 	case prContextRepo:
-		author = authorStyle(pr.details.Author.Login).Render(RightPadTrim(pr.details.Author.Login, 80))
+		author := authorStyle(pr.details.Author.Login).Render(RightPadTrim(pr.details.Author.Login, 80))
 		state := prStyle(pr.details.State).Render(pr.details.State)
 
 		desc = fmt.Sprintf("%s%s%s%s%s%s", author, updatedAt, state, additions, deletions, reviews)
 
-	case prContextReview:
-		author = authorStyle(pr.details.Author.Login).Render(RightPadTrim(pr.details.Author.Login, 60))
+	case prContextReviewer:
+		author := authorStyle(pr.details.Author.Login).Render(RightPadTrim(pr.details.Author.Login, 60))
 		repo := repoStyle.Render(RightPadTrim(pr.details.Repository.Name, 28))
 
 		desc = fmt.Sprintf("%s%s%s%s%s%s", author, repo, updatedAt, additions, deletions, reviews)
+
+	case prContextAuthor:
+		repo := repoStyle.Render(RightPadTrim(pr.details.Repository.Name, 88))
+
+		desc = fmt.Sprintf("%s%s%s%s%s", repo, updatedAt, additions, deletions, reviews)
 	}
 
 	return desc

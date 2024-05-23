@@ -16,10 +16,9 @@ type prsFetchedMsg struct {
 	err error
 }
 
-type reviewPRsFetchedMsg struct {
-	prs []pr
-	err error
-}
+type reviewPRsFetchedMsg prsFetchedMsg
+
+type authoredPRsFetchedMsg prsFetchedMsg
 
 type viewerLoginFetched struct {
 	login string

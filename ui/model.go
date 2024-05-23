@@ -25,7 +25,8 @@ type Mode uint
 
 const (
 	RepoMode Mode = iota
-	ReviewMode
+	ReviewerMode
+	AuthorMode
 )
 
 type model struct {
@@ -61,7 +62,7 @@ func (m model) Init() tea.Cmd {
 	var cmds []tea.Cmd
 	cmds = append(cmds, hideHelp(time.Minute*1))
 
-	if m.mode == ReviewMode {
+	if m.mode == ReviewerMode || m.mode == AuthorMode {
 		cmds = append(cmds, fetchViewerLogin(m.ghClient))
 	}
 	return tea.Batch(cmds...)

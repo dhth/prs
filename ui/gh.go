@@ -31,8 +31,8 @@ func getViewerLogin(ghClient *ghapi.GraphQLClient) (string, error) {
 	return query.Viewer.Login, nil
 }
 
-func getReviewPRs(ghClient *ghapi.GraphQLClient, authorLogin string) ([]pr, error) {
-	var query reviewPrsQuery
+func getPRsToReview(ghClient *ghapi.GraphQLClient, authorLogin string) ([]pr, error) {
+	var query prSearchQuery
 
 	variables := map[string]interface{}{
 		"query": ghgql.String(fmt.Sprintf("type:pr state:open review-requested:%s sort:updated-desc", authorLogin)),
@@ -48,7 +48,24 @@ func getReviewPRs(ghClient *ghapi.GraphQLClient, authorLogin string) ([]pr, erro
 	return prs, nil
 }
 
-func getPRTL(ghClient *ghapi.GraphQLClient, repoOwner string, repoName string, prNumber int, tlItemsCount int, commentsCount int) ([]prTLItem, error) {
+func getAuthoredPRs(ghClient *ghapi.GraphQLClient, authorLogin string) ([]pr, error) {
+	var query prSearchQuery
+
+	variables := map[string]interface{}{
+		"query": ghgql.String(fmt.Sprintf("is:pr is:open author:%s sort:updated-desc", authorLogin)),
+	}
+	err := ghClient.Query("AuthoredPullRequests", &query, variables)
+	if err != nil {
+		return nil, err
+	}
+	var prs []pr
+	for _, edge := range query.Search.Edges {
+		prs = append(prs, edge.Node.pr)
+	}
+	return prs, nil
+}
+
+func getPRTL(ghClient *ghapi.GraphQLClient, repoOwner string, repoName string, prNumber int, tlItemsCount int) ([]prTLItem, error) {
 	var query prTLQuery
 
 	variables := map[string]interface{}{

@@ -29,7 +29,7 @@ const (
 	numCommentsColor            = "#83a598"
 	diffColor                   = "#83a598"
 	revCmtColor                 = "#d3869b"
-	revCmtDividerColor          = "#928374"
+	revCmtDividerColor          = "#665c54"
 	helpViewTitleColor          = "#83a598"
 	helpHeaderColor             = "#83a598"
 	helpSectionColor            = "#fabd2f"
@@ -61,7 +61,6 @@ var (
 			Foreground(lipgloss.Color(dateColor))
 
 	repoStyle = lipgloss.NewStyle().
-			PaddingLeft(1).
 			Foreground(lipgloss.Color(repoColor))
 
 	reviewCmtBodyStyle = lipgloss.NewStyle()

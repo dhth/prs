@@ -75,7 +75,7 @@ func InitialModel(config Config, mode Mode) model {
 		m.repoList.Styles.Title.Background(lipgloss.Color(repoListColor))
 		m.repoList.Styles.Title.Foreground(lipgloss.Color(defaultBackgroundColor))
 		m.repoList.Styles.Title.Bold(true)
-	case ReviewMode:
+	case ReviewerMode, AuthorMode:
 		m.activePane = prList
 	}
 

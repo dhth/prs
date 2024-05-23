@@ -97,16 +97,23 @@ func fetchViewerLogin(ghClient *ghapi.GraphQLClient) tea.Cmd {
 	}
 }
 
-func fetchReviewPRS(ghClient *ghapi.GraphQLClient, authorLogin string) tea.Cmd {
+func fetchPRsToReview(ghClient *ghapi.GraphQLClient, authorLogin string) tea.Cmd {
 	return func() tea.Msg {
-		prs, err := getReviewPRs(ghClient, authorLogin)
+		prs, err := getPRsToReview(ghClient, authorLogin)
 		return reviewPRsFetchedMsg{prs, err}
 	}
 }
 
-func fetchPRTLItems(ghClient *ghapi.GraphQLClient, repoOwner string, repoName string, prNumber int, tlItemsCount int, commentsCount int) tea.Cmd {
+func fetchAuthoredPRs(ghClient *ghapi.GraphQLClient, authorLogin string) tea.Cmd {
 	return func() tea.Msg {
-		prTLItems, err := getPRTL(ghClient, repoOwner, repoName, prNumber, tlItemsCount, commentsCount)
+		prs, err := getAuthoredPRs(ghClient, authorLogin)
+		return authoredPRsFetchedMsg{prs, err}
+	}
+}
+
+func fetchPRTLItems(ghClient *ghapi.GraphQLClient, repoOwner string, repoName string, prNumber int, tlItemsCount int) tea.Cmd {
+	return func() tea.Msg {
+		prTLItems, err := getPRTL(ghClient, repoOwner, repoName, prNumber, tlItemsCount)
 		return prTLFetchedMsg{repoOwner, repoName, prNumber, prTLItems, err}
 	}
 }

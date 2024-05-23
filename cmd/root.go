@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	modeFlag = flag.String("mode", "repos", "mode to run prs in; values: repos, review")
+	modeFlag = flag.String("mode", "repos", "mode to run prs in; values: repos, reviewer, author")
 )
 
 func die(msg string, args ...any) {
@@ -58,10 +58,12 @@ func Execute() {
 	switch *modeFlag {
 	case "repos":
 		mode = ui.RepoMode
-	case "review":
-		mode = ui.ReviewMode
+	case "reviewer":
+		mode = ui.ReviewerMode
+	case "author":
+		mode = ui.AuthorMode
 	default:
-		die("unknown mode provided; possible values: repos, review")
+		die("unknown mode provided; possible values: repos, reviewer, author")
 	}
 
 	ui.RenderUI(config, mode)
