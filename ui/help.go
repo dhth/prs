@@ -25,36 +25,43 @@ var (
   - PR List View
   - PR Timeline List View
   - PR Review Comments View
-  - Repo List View
+  - Repo List View (only applicable when -mode=repos)
   - Help View (this one)
 `),
 		helpHeaderStyle.Render("Keyboard Shortcuts"),
 		helpHeaderStyle.Render("General"),
 		helpSectionStyle.Render(`
-      <tab>                       Switch focus between PR List and PR Timeline Pane
-      1                           Switch focus to PR List View
-      2                           Switch focus to PR Timeline List View
-      3                           Switch focus to PR Review Comments View
-      <ctrl+s>                    Switch focus to Repo List View
-      ?                           Switch focus to Help View
+      <tab>                               Switch focus between PR List and PR Timeline Pane
+      1                                   Switch focus to PR List View
+      2                                   Switch focus to PR Timeline List View
+      3                                   Switch focus to PR Review Comments View
+      <ctrl+s>                            Switch focus to Repo List View
+      ?                                   Switch focus to Help View
 `),
 		helpHeaderStyle.Render("PR List/Timeline List View"),
 		helpSectionStyle.Render(`
-      <ctrl+v>                    Show PR details
-      <ctrl+d>                    Show PR diff
+      <ctrl+v>                            Show PR details
+      <ctrl+d>                            Show PR diff
 `),
 		helpHeaderStyle.Render("PR List View"),
 		helpSectionStyle.Render(`
-      <ctrl+b>                    Open PR in the browser
-      <ctrl+r>                    Reload PR list
-      <enter>                     Switch focus to PR Timeline View for currently selected PR
-      <enter>                     Show commit/revision range
+      Indicators for current review
+      decision:
+
+      ±  implies                          CHANGES_REQUESTED                  
+      🟡 implies                          REVIEW_REQUIRED                  
+      ✅ implies                          APPROVED                  
+
+      <ctrl+b>                            Open PR in the browser
+      <ctrl+r>                            Reload PR list
+      <enter>                             Switch focus to PR Timeline View for currently selected PR
+      <enter>                             Show commit/revision range
 `),
 		helpHeaderStyle.Render("PR Timeline View"),
 		helpSectionStyle.Render(`
-      <ctrl+b>                    Open timeline item in browser
-      <ctrl+r>                    Reload timeline list
-      <enter>                     Switch focus to Review Comments View for currently selected item
+      <ctrl+b>                            Open timeline item in browser
+      <ctrl+r>                            Reload timeline list
+      <enter>                             Switch focus to Review Comments View for currently selected item
 `),
 	)
 )

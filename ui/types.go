@@ -12,6 +12,9 @@ const (
 	prStateOpen              = "OPEN"
 	prStateMerged            = "MERGED"
 	prStateClosed            = "CLOSED"
+	prRevDecChangesReq       = "CHANGES_REQUESTED"
+	prRevDecApproved         = "APPROVED"
+	prRevDecRevReq           = "REVIEW_REQUIRED"
 	tlItemPRCommit           = "PullRequestCommit"
 	tlItemPRReadyForReview   = "ReadyForReviewEvent"
 	tlItemPRReviewRequested  = "ReviewRequestedEvent"
@@ -25,6 +28,14 @@ const (
 	reviewDismissed          = "DISMISSED"
 
 	commitHashLen = 7
+)
+
+type prContext uint
+
+const (
+	prContextRepo prContext = iota
+	prContextReviewer
+	prContextAuthor
 )
 
 type SourceConfig struct {
@@ -49,6 +60,11 @@ type Config struct {
 	Repos     []Repo
 }
 
+type prResult struct {
+	context prContext
+	details pr
+}
+
 type pr struct {
 	Number     int
 	PRTitle    string `graphql:"prTitle: title"`
@@ -58,11 +74,12 @@ type pr struct {
 		}
 		Name string
 	}
-	State     string
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	ClosedAt  string
-	Author    struct {
+	State          string
+	ReviewDecision *string
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	ClosedAt       string
+	Author         struct {
 		Login string
 	}
 	Url       string
@@ -90,6 +107,23 @@ type prReviewComment struct {
 	DiffHunk  string
 	Path      string
 	Url       string
+}
+
+type userLoginQuery struct {
+	Viewer struct {
+		Login string
+	}
+}
+
+type prSearchQuery struct {
+	Search struct {
+		Edges []struct {
+			Node struct {
+				Type string `graphql:"type: __typename"`
+				pr   `graphql:"... on PullRequest"`
+			}
+		}
+	} `graphql:"search(query: $query, type: ISSUE, first: 50)"`
 }
 
 type prTLItem struct {
@@ -189,34 +223,64 @@ func (repo Repo) FilterValue() string {
 	return fmt.Sprintf("%s:::%s", repo.Owner, repo.Name)
 }
 
-func (pr pr) Title() string {
-	return fmt.Sprintf("#%2d %s", pr.Number, pr.PRTitle)
+func (pr prResult) Title() string {
+	var reviewDecision string
+
+	if pr.details.ReviewDecision != nil {
+		switch *pr.details.ReviewDecision {
+		case "CHANGES_REQUESTED":
+			reviewDecision = "± "
+		case "APPROVED":
+			reviewDecision = "✅ "
+		case "REVIEW_REQUIRED":
+			reviewDecision = "🟡 "
+		}
+	}
+	return fmt.Sprintf("%s#%2d %s", reviewDecision, pr.details.Number, pr.details.PRTitle)
 }
 
-func (pr pr) Description() string {
+func (pr prResult) Description() string {
 	var additions string
 	var deletions string
 	var reviews string
+	var desc string
 
-	author := authorStyle(pr.Author.Login).Render(RightPadTrim(pr.Author.Login, 80))
-	state := prStyle(pr.State).Render(pr.State)
-	updatedAt := dateStyle.Render(RightPadTrim("updated "+humanize.Time(pr.UpdatedAt), 24))
-
-	if pr.Additions > 0 {
-		additions = additionsStyle.Render(fmt.Sprintf("+%d", pr.Additions))
+	updatedAt := dateStyle.Render(RightPadTrim("updated "+humanize.Time(pr.details.UpdatedAt), 24))
+	if pr.details.Additions > 0 {
+		additions = additionsStyle.Render(fmt.Sprintf("+%d", pr.details.Additions))
 	}
-	if pr.Deletions > 0 {
-		deletions = deletionsStyle.Render(fmt.Sprintf("-%d", pr.Deletions))
+	if pr.details.Deletions > 0 {
+		deletions = deletionsStyle.Render(fmt.Sprintf("-%d", pr.details.Deletions))
 	}
 
-	if pr.Reviews.TotalCount > 0 {
-		reviews = numReviewsStyle.Render(fmt.Sprintf("%dr", pr.Reviews.TotalCount))
+	if pr.details.Reviews.TotalCount > 0 {
+		reviews = numReviewsStyle.Render(fmt.Sprintf("%dr", pr.details.Reviews.TotalCount))
 	}
-	return fmt.Sprintf("%s%s%s%s%s%s", author, updatedAt, state, additions, deletions, reviews)
+
+	switch pr.context {
+	case prContextRepo:
+		author := authorStyle(pr.details.Author.Login).Render(RightPadTrim(pr.details.Author.Login, 80))
+		state := prStyle(pr.details.State).Render(pr.details.State)
+
+		desc = fmt.Sprintf("%s%s%s%s%s%s", author, updatedAt, state, additions, deletions, reviews)
+
+	case prContextReviewer:
+		author := authorStyle(pr.details.Author.Login).Render(RightPadTrim(pr.details.Author.Login, 60))
+		repo := repoStyle.Render(RightPadTrim(pr.details.Repository.Name, 28))
+
+		desc = fmt.Sprintf("%s%s%s%s%s%s", author, repo, updatedAt, additions, deletions, reviews)
+
+	case prContextAuthor:
+		repo := repoStyle.Render(RightPadTrim(pr.details.Repository.Name, 88))
+
+		desc = fmt.Sprintf("%s%s%s%s%s", repo, updatedAt, additions, deletions, reviews)
+	}
+
+	return desc
 }
 
-func (pr pr) FilterValue() string {
-	return fmt.Sprintf("%d", pr.Number)
+func (pr prResult) FilterValue() string {
+	return fmt.Sprintf("%d", pr.details.Number)
 }
 
 func (item prTLItem) Title() string {
@@ -241,7 +305,8 @@ func (item prTLItem) Title() string {
 		if len(afterCommitHash) >= commitHashLen {
 			afterCommitHash = afterCommitHash[:commitHashLen]
 		}
-		title = fmt.Sprintf("%s force pushed head ref from %s to %s", actor, beforeCommitHash, afterCommitHash)
+		date = dateStyle.Render(humanize.Time(item.HeadRefForcePushed.CreatedAt))
+		title = fmt.Sprintf("%s force pushed head ref from %s to %s%s", actor, beforeCommitHash, afterCommitHash, date)
 	case tlItemPRReadyForReview:
 		actor := authorStyle(item.PullRequestReadyForReview.Actor.Login).Render(Trim(item.PullRequestReadyForReview.Actor.Login, 50))
 		title = fmt.Sprintf("%smarked PR as ready for review", actor)

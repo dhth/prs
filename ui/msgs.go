@@ -1,36 +1,47 @@
 package ui
 
-type HideHelpMsg struct{}
+type hideHelpMsg struct{}
 
-type RepoChosenMsg struct {
+type repoChosenMsg struct {
 	repo string
 }
 
-type PRChosenMsg struct {
+type prChosenMsg struct {
 	prNumber int
 	err      error
 }
 
-type PRsFetchedMsg struct {
+type prsFetchedMsg struct {
 	prs []pr
 	err error
 }
 
-type PRTLFetchedMsg struct {
+type reviewPRsFetchedMsg prsFetchedMsg
+
+type authoredPRsFetchedMsg prsFetchedMsg
+
+type viewerLoginFetched struct {
+	login string
+	err   error
+}
+
+type prTLFetchedMsg struct {
+	repoOwner string
+	repoName  string
 	prNumber  int
 	prTLItems []prTLItem
 	err       error
 }
 
-type URLOpenedinBrowserMsg struct {
+type urlOpenedinBrowserMsg struct {
 	url string
 	err error
 }
 
-type PRDiffDoneMsg struct {
+type prDiffDoneMsg struct {
 	err error
 }
 
-type PRViewDoneMsg struct {
+type prViewDoneMsg struct {
 	err error
 }
