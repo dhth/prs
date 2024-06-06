@@ -15,13 +15,6 @@ sources:
 `
 	helpText = `prs lets you stay updated on the PRs you care about without leaving the terminal.
 
-Keyboard shortcuts:
-- ctrl+r: change repo
-- ctrl+b: open PR in browser
-- ctrl+b: open PR in browser
-- ctrl+d: open diff using gh
-- ctrl+v: view PR using gh
-
 Usage: prs [flags]
 `
 )

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os/exec"
 	"runtime"
-	"strconv"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -14,13 +13,6 @@ import (
 func chooseRepo(repo string) tea.Cmd {
 	return func() tea.Msg {
 		return repoChosenMsg{repo}
-	}
-}
-
-func choosePR(prNumberStr string) tea.Cmd {
-	return func() tea.Msg {
-		prNumber, err := strconv.Atoi(prNumberStr)
-		return prChosenMsg{prNumber, err}
 	}
 }
 
@@ -111,9 +103,9 @@ func fetchAuthoredPRs(ghClient *ghapi.GraphQLClient, authorLogin string) tea.Cmd
 	}
 }
 
-func fetchPRTLItems(ghClient *ghapi.GraphQLClient, repoOwner string, repoName string, prNumber int, tlItemsCount int) tea.Cmd {
+func fetchPRTLItems(ghClient *ghapi.GraphQLClient, repoOwner string, repoName string, prNumber int, tlItemsCount int, setItems bool) tea.Cmd {
 	return func() tea.Msg {
 		prTLItems, err := getPRTL(ghClient, repoOwner, repoName, prNumber, tlItemsCount)
-		return prTLFetchedMsg{repoOwner, repoName, prNumber, prTLItems, err}
+		return prTLFetchedMsg{repoOwner, repoName, prNumber, prTLItems, setItems, err}
 	}
 }

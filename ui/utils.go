@@ -23,3 +23,7 @@ func Trim(s string, length int) string {
 	}
 	return s
 }
+
+func getFracInt(num int, frac float32) int {
+	return int(float32(num) * frac)
+}

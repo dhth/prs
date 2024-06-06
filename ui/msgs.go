@@ -30,6 +30,7 @@ type prTLFetchedMsg struct {
 	repoName  string
 	prNumber  int
 	prTLItems []prTLItem
+	setItems  bool
 	err       error
 }
 

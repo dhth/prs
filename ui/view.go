@@ -12,7 +12,7 @@ func (m model) View() string {
 
 	var statusBar string
 	if m.message != "" {
-		statusBar = RightPadTrim(m.message, m.terminalWidth)
+		statusBar = RightPadTrim(m.message, m.terminalDetails.width)
 	}
 
 	switch m.activePane {

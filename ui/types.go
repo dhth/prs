@@ -2,10 +2,7 @@ package ui
 
 import (
 	"fmt"
-	"strings"
 	"time"
-
-	humanize "github.com/dustin/go-humanize"
 )
 
 const (
@@ -38,6 +35,10 @@ const (
 	prContextAuthor
 )
 
+type terminalDetails struct {
+	width int
+}
+
 type SourceConfig struct {
 	DiffPager *string `yaml:"diff-pager"`
 	PRCount   int     `yaml:"pr-count"`
@@ -61,8 +62,15 @@ type Config struct {
 }
 
 type prResult struct {
-	context prContext
-	details pr
+	pr          *pr
+	title       string
+	description string
+}
+
+type prTLItemResult struct {
+	item        *prTLItem
+	title       string
+	description string
 }
 
 type pr struct {
@@ -224,140 +232,26 @@ func (repo Repo) FilterValue() string {
 }
 
 func (pr prResult) Title() string {
-	var reviewDecision string
-
-	if pr.details.ReviewDecision != nil {
-		switch *pr.details.ReviewDecision {
-		case "CHANGES_REQUESTED":
-			reviewDecision = "± "
-		case "APPROVED":
-			reviewDecision = "✅ "
-		case "REVIEW_REQUIRED":
-			reviewDecision = "🟡 "
-		}
-	}
-	return fmt.Sprintf("%s#%2d %s", reviewDecision, pr.details.Number, pr.details.PRTitle)
+	return pr.title
 }
 
 func (pr prResult) Description() string {
-	var additions string
-	var deletions string
-	var reviews string
-	var desc string
-
-	updatedAt := dateStyle.Render(RightPadTrim("updated "+humanize.Time(pr.details.UpdatedAt), 24))
-	if pr.details.Additions > 0 {
-		additions = additionsStyle.Render(fmt.Sprintf("+%d", pr.details.Additions))
-	}
-	if pr.details.Deletions > 0 {
-		deletions = deletionsStyle.Render(fmt.Sprintf("-%d", pr.details.Deletions))
-	}
-
-	if pr.details.Reviews.TotalCount > 0 {
-		reviews = numReviewsStyle.Render(fmt.Sprintf("%dr", pr.details.Reviews.TotalCount))
-	}
-
-	switch pr.context {
-	case prContextRepo:
-		author := authorStyle(pr.details.Author.Login).Render(RightPadTrim(pr.details.Author.Login, 80))
-		state := prStyle(pr.details.State).Render(pr.details.State)
-
-		desc = fmt.Sprintf("%s%s%s%s%s%s", author, updatedAt, state, additions, deletions, reviews)
-
-	case prContextReviewer:
-		author := authorStyle(pr.details.Author.Login).Render(RightPadTrim(pr.details.Author.Login, 60))
-		repo := repoStyle.Render(RightPadTrim(pr.details.Repository.Name, 28))
-
-		desc = fmt.Sprintf("%s%s%s%s%s%s", author, repo, updatedAt, additions, deletions, reviews)
-
-	case prContextAuthor:
-		repo := repoStyle.Render(RightPadTrim(pr.details.Repository.Name, 88))
-
-		desc = fmt.Sprintf("%s%s%s%s%s", repo, updatedAt, additions, deletions, reviews)
-	}
-
-	return desc
+	return pr.description
 }
 
 func (pr prResult) FilterValue() string {
-	return fmt.Sprintf("%d", pr.details.Number)
+	return fmt.Sprintf("%d", pr.pr.Number)
 }
 
-func (item prTLItem) Title() string {
-	var title string
-	var date string
-	switch item.Type {
-	case tlItemPRCommit:
-		if item.PullRequestCommit.Commit.Author.User != nil {
-			author := authorStyle(item.PullRequestCommit.Commit.Author.User.Login).Render(Trim(item.PullRequestCommit.Commit.Author.User.Login, 50))
-			date = dateStyle.Render(humanize.Time(item.PullRequestCommit.Commit.CommittedDate))
-			title = fmt.Sprintf("%spushed a commit%s", author, date)
-		} else {
-			title = fmt.Sprintf("%s pushed a commit", item.PullRequestCommit.Commit.Author.Name)
-		}
-	case tlItemHeadRefForcePushed:
-		actor := authorStyle(item.HeadRefForcePushed.Actor.Login).Render(Trim(item.HeadRefForcePushed.Actor.Login, 50))
-		beforeCommitHash := item.HeadRefForcePushed.BeforeCommit.Oid
-		afterCommitHash := item.HeadRefForcePushed.AfterCommit.Oid
-		if len(beforeCommitHash) >= commitHashLen {
-			beforeCommitHash = beforeCommitHash[:commitHashLen]
-		}
-		if len(afterCommitHash) >= commitHashLen {
-			afterCommitHash = afterCommitHash[:commitHashLen]
-		}
-		date = dateStyle.Render(humanize.Time(item.HeadRefForcePushed.CreatedAt))
-		title = fmt.Sprintf("%s force pushed head ref from %s to %s%s", actor, beforeCommitHash, afterCommitHash, date)
-	case tlItemPRReadyForReview:
-		actor := authorStyle(item.PullRequestReadyForReview.Actor.Login).Render(Trim(item.PullRequestReadyForReview.Actor.Login, 50))
-		title = fmt.Sprintf("%smarked PR as ready for review", actor)
-	case tlItemPRReviewRequested:
-		actor := authorStyle(item.PullRequestReviewRequested.Actor.Login).Render(Trim(item.PullRequestReviewRequested.Actor.Login, 50))
-		reviewer := authorStyle(item.PullRequestReviewRequested.RequestedReviewer.User.Login).Render(Trim(item.PullRequestReviewRequested.RequestedReviewer.User.Login, 50))
-		title = fmt.Sprintf("%srequested a review from %s", actor, reviewer)
-	case tlItemPRReview:
-		author := authorStyle(item.PullRequestReview.Author.Login).Render(Trim(item.PullRequestReview.Author.Login, 50))
-		date = dateStyle.Render(humanize.Time(item.PullRequestReview.CreatedAt))
-		var comments string
-		if item.PullRequestReview.Comments.TotalCount > 1 {
-			comments = numCommentsStyle.Render(fmt.Sprintf("with %d comments", item.PullRequestReview.Comments.TotalCount))
-		} else if item.PullRequestReview.Comments.TotalCount == 1 {
-			comments = numCommentsStyle.Render("with 1 comment")
-		}
-		title = fmt.Sprintf("%sreviewed%s%s", author, comments, date)
-	case tlItemMergedEvent:
-		author := authorStyle(item.MergedEvent.Actor.Login).Render(Trim(item.MergedEvent.Actor.Login, 50))
-		date = dateStyle.Render(humanize.Time(item.MergedEvent.CreatedAt))
-		title = fmt.Sprintf("%smerged the PR%s", author, date)
-	}
-	return title
+func (ir prTLItemResult) Title() string {
+	return ir.title
+}
+func (ir prTLItemResult) Description() string {
+	return ir.description
 }
 
-func (item prTLItem) Description() string {
-	var desc string
-	switch item.Type {
-	case tlItemPRCommit:
-		desc = fmt.Sprintf("📧 %s", item.PullRequestCommit.Commit.MessageHeadline)
-	case tlItemHeadRefForcePushed:
-		desc = fmt.Sprintf("💪 %s", item.HeadRefForcePushed.AfterCommit.MessageHeadline)
-	case tlItemPRReadyForReview:
-		desc = fmt.Sprintf("🚦%s", dateStyle.Render(humanize.Time(item.PullRequestReadyForReview.CreatedAt)))
-	case tlItemPRReviewRequested:
-		desc = fmt.Sprintf("🙏%s", dateStyle.Render(humanize.Time(item.PullRequestReviewRequested.CreatedAt)))
-	case tlItemPRReview:
-		reviewState := reviewStyle(item.PullRequestReview.State).Render(item.PullRequestReview.State)
-		var comment string
-		if item.PullRequestReview.Body != "" {
-			comment = fmt.Sprintf(" with comment: %s", Trim(strings.Split(item.PullRequestReview.Body, "\r")[0], 80))
-		}
-		desc = fmt.Sprintf("🔎 %s%s", reviewState, comment)
-	case tlItemMergedEvent:
-		desc = fmt.Sprintf("🚀 message: %s", item.MergedEvent.MergeCommit.MessageHeadline)
-	}
-	return desc
-}
-
-func (item prTLItem) FilterValue() string {
-	return item.Type
+func (ir prTLItemResult) FilterValue() string {
+	return ir.title
 }
 
 func (cmt prReviewComment) render() string {

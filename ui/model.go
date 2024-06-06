@@ -40,22 +40,22 @@ type model struct {
 	repoList        list.Model
 	prsList         list.Model
 	prTLList        list.Model
+	prCache         []*prResult
 	prRevCmtVP      viewport.Model
 	prRevCmtVPReady bool
-	prTLCache       map[string][]prTLItem
+	prTLCache       map[string][]*prTLItemResult
 	message         string
 	repoListStyle   lipgloss.Style
 	prListStyle     lipgloss.Style
 	prTLStyle       lipgloss.Style
 	helpVP          viewport.Model
 	helpVPReady     bool
-	terminalHeight  int
-	terminalWidth   int
 	activePane      Pane
 	lastPane        Pane
 	showHelp        bool
 	repoChosen      bool
 	userLogin       string
+	terminalDetails terminalDetails
 }
 
 func (m model) Init() tea.Cmd {

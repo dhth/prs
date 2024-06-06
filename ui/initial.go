@@ -11,10 +11,10 @@ import (
 
 func InitialModel(config Config, mode Mode) model {
 
-	repoListItems := make([]list.Item, 0, len(config.Repos))
+	repoListItems := make([]list.Item, len(config.Repos))
 	if mode == RepoMode {
-		for _, issue := range config.Repos {
-			repoListItems = append(repoListItems, issue)
+		for i, issue := range config.Repos {
+			repoListItems[i] = issue
 		}
 	}
 
@@ -48,20 +48,21 @@ func InitialModel(config Config, mode Mode) model {
 		log.Fatalf("err getting client: %s", err.Error())
 	}
 
-	prTLCache := make(map[string][]prTLItem)
+	prTLCache := make(map[string][]*prTLItemResult)
 
 	m := model{
-		mode:          mode,
-		config:        config,
-		ghClient:      client,
-		prCount:       config.PRCount,
-		prsList:       list.New(nil, prListDel, 0, 0),
-		prTLList:      list.New(nil, prTLListDel, 0, 0),
-		prTLCache:     prTLCache,
-		repoListStyle: repoListStyle,
-		prListStyle:   prListStyle,
-		prTLStyle:     prTLStyle,
-		showHelp:      true,
+		mode:            mode,
+		config:          config,
+		ghClient:        client,
+		prCount:         config.PRCount,
+		prsList:         list.New(nil, prListDel, 0, 0),
+		prTLList:        list.New(nil, prTLListDel, 0, 0),
+		prTLCache:       prTLCache,
+		repoListStyle:   repoListStyle,
+		prListStyle:     prListStyle,
+		prTLStyle:       prTLStyle,
+		showHelp:        true,
+		terminalDetails: terminalDetails{width: widthBudgetDefault},
 	}
 
 	switch m.mode {

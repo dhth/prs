@@ -29,7 +29,7 @@ brews:
     repository:
       owner: dhth
       name: homebrew-tap
-    folder: Formula
+    directory: Formula
     license: MIT
     homepage: "https://github.com/dhth/prs"
     description: "Stay updated on PRs without leaving the terminal"
