@@ -46,6 +46,13 @@ var (
 			Bold(true).
 			Background(lipgloss.Color("#b8bb26"))
 
+	listStyle = baseStyle.Copy().
+			PaddingTop(1).
+			PaddingRight(2).
+			PaddingLeft(1).
+			PaddingBottom(1).
+			Foreground(lipgloss.Color(defaultBackgroundColor))
+
 	viewPortStyle = lipgloss.NewStyle().
 			PaddingTop(1).
 			PaddingRight(2).

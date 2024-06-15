@@ -22,22 +22,6 @@ func InitialModel(config Config, mode Mode) model {
 	prListDel := newPRListItemDel()
 	prTLListDel := newPRTLListItemDel()
 
-	baseStyle = lipgloss.NewStyle().
-		PaddingLeft(1).
-		PaddingRight(1).
-		Foreground(lipgloss.Color(defaultBackgroundColor))
-
-	repoListStyle := baseStyle.Copy().
-		PaddingTop(1).
-		PaddingRight(2).
-		PaddingLeft(1).
-		PaddingBottom(1)
-
-	prListStyle := repoListStyle.Copy()
-
-	prTLStyle := repoListStyle.Copy().
-		PaddingRight(1)
-
 	opts := ghapi.ClientOptions{
 		EnableCache: true,
 		CacheTTL:    time.Second * 30,
@@ -58,9 +42,6 @@ func InitialModel(config Config, mode Mode) model {
 		prsList:         list.New(nil, prListDel, 0, 0),
 		prTLList:        list.New(nil, prTLListDel, 0, 0),
 		prTLCache:       prTLCache,
-		repoListStyle:   repoListStyle,
-		prListStyle:     prListStyle,
-		prTLStyle:       prTLStyle,
 		showHelp:        true,
 		terminalDetails: terminalDetails{width: widthBudgetDefault},
 	}

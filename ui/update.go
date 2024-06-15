@@ -85,7 +85,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							for _, cmt := range revCmts {
 								prReviewCmts += cmt.render()
 								prReviewCmts += "\n\n"
-								prReviewCmts += reviewCmtDividerStyle.Render(strings.Repeat("-", int(float64(m.terminalDetails.width)*0.6)))
+								prReviewCmts += reviewCmtDividerStyle.Render("---")
 								prReviewCmts += "\n\n"
 							}
 							prReviewCmts += "\n\n"
@@ -122,7 +122,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							for _, cmt := range revCmts {
 								prReviewCmts += cmt.render()
 								prReviewCmts += "\n\n"
-								prReviewCmts += reviewCmtDividerStyle.Render(strings.Repeat("*", int(float64(m.terminalDetails.width)*0.6)))
+								prReviewCmts += reviewCmtDividerStyle.Render("---")
 								prReviewCmts += "\n\n"
 							}
 							prReviewCmts += "\n\n"
@@ -239,23 +239,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case hideHelpMsg:
 		m.showHelp = false
 	case tea.WindowSizeMsg:
-		_, h1 := m.prListStyle.GetFrameSize()
-		_, h2 := m.prTLStyle.GetFrameSize()
+		w, h := listStyle.GetFrameSize()
 		m.terminalDetails.width = msg.Width
 
 		if m.mode == RepoMode {
-			m.repoList.SetHeight(msg.Height - h1 - 2)
-			m.repoList.SetWidth(msg.Width)
-			m.repoListStyle = m.repoListStyle.Width(msg.Width)
+			m.repoList.SetHeight(msg.Height - h - 2)
+			m.repoList.SetWidth(msg.Width - w)
 		}
 
-		m.prsList.SetHeight(msg.Height - h1 - 2)
-		m.prsList.SetWidth(msg.Width)
-		m.prListStyle = m.prListStyle.Width(msg.Width)
+		m.prsList.SetHeight(msg.Height - h - 2)
+		m.prsList.SetWidth(msg.Width - w)
 
-		m.prTLList.SetHeight(msg.Height - h2 - 2)
-		m.prTLList.SetWidth(msg.Width)
-		m.prTLStyle = m.prTLStyle.Width(msg.Width)
+		m.prTLList.SetHeight(msg.Height - h - 2)
+		m.prTLList.SetWidth(msg.Width - w)
 
 		if !m.prRevCmtVPReady {
 			m.prRevCmtVP = viewport.New(msg.Width-2, msg.Height-7)
@@ -278,7 +274,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		prs := make([]list.Item, len(m.prCache))
 		for i := 0; i < len(m.prCache); i++ {
-			m.prCache[i].title = getPRTitle(m.prCache[i].pr, m.terminalDetails)
+			m.prCache[i].title = getPRTitle(m.prCache[i].pr)
 			m.prCache[i].description = getPRDesc(m.prCache[i].pr, m.mode, m.terminalDetails)
 			prs[i] = m.prCache[i]
 		}
@@ -325,7 +321,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			for i, pr := range msg.prs {
 				prResults[i] = &prResult{
 					pr:          &pr,
-					title:       getPRTitle(&pr, m.terminalDetails),
+					title:       getPRTitle(&pr),
 					description: getPRDesc(&pr, RepoMode, m.terminalDetails),
 				}
 				prs[i] = prResults[i]
@@ -358,7 +354,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			for i, pr := range msg.prs {
 				prResults[i] = &prResult{
 					pr:          &pr,
-					title:       getPRTitle(&pr, m.terminalDetails),
+					title:       getPRTitle(&pr),
 					description: getPRDesc(&pr, m.mode, m.terminalDetails),
 				}
 				prs[i] = prResults[i]
@@ -385,7 +381,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			for i, pr := range msg.prs {
 				prResults[i] = &prResult{
 					pr:          &pr,
-					title:       getPRTitle(&pr, m.terminalDetails),
+					title:       getPRTitle(&pr),
 					description: getPRDesc(&pr, m.mode, m.terminalDetails),
 				}
 				prs[i] = prResults[i]
@@ -411,8 +407,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			for i, item := range msg.prTLItems {
 				tlItemsResult[i] = &prTLItemResult{
 					item:        &item,
-					title:       getPRTLItemTitle(&item, m.terminalDetails),
-					description: getPRTLItemDesc(&item, m.terminalDetails),
+					title:       getPRTLItemTitle(&item),
+					description: getPRTLItemDesc(&item),
 				}
 			}
 			m.prTLCache[fmt.Sprintf("%s/%s:%d", msg.repoOwner, msg.repoName, msg.prNumber)] = tlItemsResult
@@ -487,8 +483,8 @@ func (m *model) setTL() (tea.Cmd, bool) {
 	// this list always get rerendered as it seems to be preferrable over recomputing the string rep of every item in
 	// every list in m.prTLCache when the terminal window is resized
 	for i, result := range tlFromCache {
-		title := getPRTLItemTitle(result.item, m.terminalDetails)
-		description := getPRTLItemDesc(result.item, m.terminalDetails)
+		title := getPRTLItemTitle(result.item)
+		description := getPRTLItemDesc(result.item)
 
 		result.title = title
 		result.description = description

@@ -6,7 +6,6 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	ghapi "github.com/cli/go-gh/v2/pkg/api"
 )
 
@@ -35,7 +34,6 @@ type model struct {
 	ghClient        *ghapi.GraphQLClient
 	repoOwner       string
 	repoName        string
-	activePRNumber  int
 	prCount         int
 	repoList        list.Model
 	prsList         list.Model
@@ -45,9 +43,6 @@ type model struct {
 	prRevCmtVPReady bool
 	prTLCache       map[string][]*prTLItemResult
 	message         string
-	repoListStyle   lipgloss.Style
-	prListStyle     lipgloss.Style
-	prTLStyle       lipgloss.Style
 	helpVP          viewport.Model
 	helpVPReady     bool
 	activePane      Pane

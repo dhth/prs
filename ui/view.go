@@ -17,11 +17,11 @@ func (m model) View() string {
 
 	switch m.activePane {
 	case prList:
-		content = m.prListStyle.Render(m.prsList.View())
+		content = listStyle.Render(m.prsList.View())
 	case prTLList:
-		content = m.prTLStyle.Render(m.prTLList.View())
+		content = listStyle.Render(m.prTLList.View())
 	case repoList:
-		content = m.repoListStyle.Render(m.repoList.View())
+		content = listStyle.Render(m.repoList.View())
 	case prRevCmts:
 		var prRevCmtsVP string
 		if !m.prRevCmtVPReady {

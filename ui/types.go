@@ -27,14 +27,6 @@ const (
 	commitHashLen = 7
 )
 
-type prContext uint
-
-const (
-	prContextRepo prContext = iota
-	prContextReviewer
-	prContextAuthor
-)
-
 type terminalDetails struct {
 	width int
 }

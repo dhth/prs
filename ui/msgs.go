@@ -6,11 +6,6 @@ type repoChosenMsg struct {
 	repo string
 }
 
-type prChosenMsg struct {
-	prNumber int
-	err      error
-}
-
 type prsFetchedMsg struct {
 	prs []pr
 	err error
