@@ -54,9 +54,9 @@ func InitialModel(config Config, mode Mode) model {
 		m.repoList.DisableQuitKeybindings()
 		m.repoList.SetShowHelp(false)
 		m.repoList.SetFilteringEnabled(false)
-		m.repoList.Styles.Title.Background(lipgloss.Color(repoListColor))
-		m.repoList.Styles.Title.Foreground(lipgloss.Color(defaultBackgroundColor))
-		m.repoList.Styles.Title.Bold(true)
+		m.repoList.Styles.Title = m.repoList.Styles.Title.Background(lipgloss.Color(repoListColor)).
+			Foreground(lipgloss.Color(defaultBackgroundColor)).
+			Bold(true)
 	case ReviewerMode, AuthorMode:
 		m.activePane = prList
 	}
@@ -66,18 +66,18 @@ func InitialModel(config Config, mode Mode) model {
 	m.prsList.DisableQuitKeybindings()
 	m.prsList.SetShowHelp(false)
 	m.prsList.SetFilteringEnabled(false)
-	m.prsList.Styles.Title.Background(lipgloss.Color(prListColor))
-	m.prsList.Styles.Title.Foreground(lipgloss.Color(defaultBackgroundColor))
-	m.prsList.Styles.Title.Bold(true)
+	m.prsList.Styles.Title = m.prsList.Styles.Title.Background(lipgloss.Color(prListColor)).
+		Foreground(lipgloss.Color(defaultBackgroundColor)).
+		Bold(true)
 
 	m.prTLList.Title = "PR Timeline"
 	m.prTLList.SetStatusBarItemName("item", "items")
 	m.prTLList.DisableQuitKeybindings()
 	m.prTLList.SetShowHelp(false)
 	m.prTLList.SetFilteringEnabled(false)
-	m.prTLList.Styles.Title.Background(lipgloss.Color(prTLListColor))
-	m.prTLList.Styles.Title.Foreground(lipgloss.Color(defaultBackgroundColor))
-	m.prTLList.Styles.Title.Bold(true)
+	m.prTLList.Styles.Title = m.prTLList.Styles.Title.Background(lipgloss.Color(prTLListColor)).
+		Foreground(lipgloss.Color(defaultBackgroundColor)).
+		Bold(true)
 
 	return m
 }

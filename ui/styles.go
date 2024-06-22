@@ -30,9 +30,12 @@ const (
 	diffColor                   = "#83a598"
 	revCmtColor                 = "#d3869b"
 	revCmtDividerColor          = "#665c54"
+	footerColor                 = "#7c6f64"
+	helpMsgColor                = "#83a598"
 	helpViewTitleColor          = "#83a598"
 	helpHeaderColor             = "#83a598"
 	helpSectionColor            = "#fabd2f"
+	toolNameColor               = "#b8bb26"
 )
 
 var (
@@ -41,12 +44,12 @@ var (
 			PaddingRight(1).
 			Foreground(lipgloss.Color(defaultBackgroundColor))
 
-	modeStyle = baseStyle.Copy().
+	toolNameStyle = baseStyle.
 			Align(lipgloss.Center).
 			Bold(true).
-			Background(lipgloss.Color("#b8bb26"))
+			Background(lipgloss.Color(toolNameColor))
 
-	listStyle = baseStyle.Copy().
+	listStyle = baseStyle.
 			PaddingTop(1).
 			PaddingRight(2).
 			PaddingLeft(1).
@@ -59,9 +62,9 @@ var (
 			PaddingLeft(1).
 			PaddingBottom(1)
 
-	helpMsgStyle = baseStyle.Copy().
+	helpMsgStyle = baseStyle.
 			Bold(true).
-			Foreground(lipgloss.Color("#83a598"))
+			Foreground(lipgloss.Color(helpMsgColor))
 
 	dateStyle = lipgloss.NewStyle().
 			PaddingLeft(1).
@@ -95,11 +98,11 @@ var (
 	linesChangedStyle = lipgloss.NewStyle().
 				PaddingLeft(1)
 
-	additionsStyle = linesChangedStyle.Copy().
+	additionsStyle = linesChangedStyle.
 			PaddingLeft(2).
 			Foreground(lipgloss.Color(additionsColor))
 
-	deletionsStyle = linesChangedStyle.Copy().
+	deletionsStyle = linesChangedStyle.
 			Foreground(lipgloss.Color(deletionsColor))
 
 	authorColors = []string{
@@ -163,7 +166,11 @@ var (
 		return st
 	}
 
-	helpVPTitleStyle = baseStyle.Copy().
+	footerStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color(defaultBackgroundColor)).
+			Background(lipgloss.Color(footerColor))
+
+	helpVPTitleStyle = baseStyle.
 				Bold(true).
 				Background(lipgloss.Color(helpViewTitleColor)).
 				Align(lipgloss.Left)

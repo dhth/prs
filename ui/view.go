@@ -44,17 +44,13 @@ func (m model) View() string {
 		content = helpVP
 	}
 
-	footerStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color(defaultBackgroundColor)).
-		Background(lipgloss.Color("#7c6f64"))
-
 	var helpMsg string
 	if m.showHelp {
 		helpMsg = " " + helpMsgStyle.Render("Press ? for help")
 	}
 
 	footerStr := fmt.Sprintf("%s%s",
-		modeStyle.Render("prs"),
+		toolNameStyle.Render("prs"),
 		helpMsg,
 	)
 	footer = footerStyle.Render(footerStr)
