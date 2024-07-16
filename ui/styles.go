@@ -136,15 +136,16 @@ var (
 			Align(lipgloss.Center).
 			Foreground(lipgloss.Color(defaultBackgroundColor))
 
+		var bgColor string
 		switch state {
 		case prStateOpen:
-			st.Background(lipgloss.Color(prOpenColor))
+			bgColor = prOpenColor
 		case prStateMerged:
-			st.Background(lipgloss.Color(prMergedColor))
+			bgColor = prMergedColor
 		default:
-			st.Background(lipgloss.Color(prClosedColor))
+			bgColor = prClosedColor
 		}
-		return st
+		return st.Background(lipgloss.Color(bgColor))
 	}
 
 	reviewStyle = func(state string) lipgloss.Style {
@@ -153,17 +154,18 @@ var (
 			Bold(true).
 			Align(lipgloss.Center)
 
+		var bgColor string
 		switch state {
 		case reviewCommented:
-			st.Foreground(lipgloss.Color(reviewCommentedColor))
+			bgColor = reviewCommentedColor
 		case reviewApproved:
-			st.Foreground(lipgloss.Color(reviewApprovedColor))
+			bgColor = reviewApprovedColor
 		case reviewChangesRequested:
-			st.Foreground(lipgloss.Color(reviewChangesRequestedColor))
+			bgColor = reviewChangesRequestedColor
 		default:
-			st.Foreground(lipgloss.Color(reviewDismissedColor))
+			bgColor = reviewDismissedColor
 		}
-		return st
+		return st.Foreground(lipgloss.Color(bgColor))
 	}
 
 	footerStyle = lipgloss.NewStyle().
