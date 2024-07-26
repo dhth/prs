@@ -23,18 +23,11 @@ const (
 	reviewDismissedColor        = "#928374"
 	dateColor                   = "#928374"
 	repoColor                   = "#bdae93"
-	filePathColor               = "#d3869b"
-	outdatedColor               = "#fabd2f"
 	numReviewsColor             = "#665c54"
 	numCommentsColor            = "#83a598"
-	diffColor                   = "#83a598"
-	revCmtColor                 = "#d3869b"
-	revCmtDividerColor          = "#665c54"
 	footerColor                 = "#7c6f64"
 	helpMsgColor                = "#83a598"
 	helpViewTitleColor          = "#83a598"
-	helpHeaderColor             = "#83a598"
-	helpSectionColor            = "#fabd2f"
 	toolNameColor               = "#b8bb26"
 )
 
@@ -73,17 +66,6 @@ var (
 	repoStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color(repoColor))
 
-	reviewCmtBodyStyle = lipgloss.NewStyle()
-
-	filePathStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color(filePathColor))
-
-	outdatedStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color(outdatedColor))
-
-	reviewCmtDividerStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color(revCmtDividerColor))
-
 	numReviewsStyle = lipgloss.NewStyle().
 			PaddingLeft(1).
 			Foreground(lipgloss.Color(numReviewsColor))
@@ -91,9 +73,6 @@ var (
 	numCommentsStyle = lipgloss.NewStyle().
 				PaddingLeft(1).
 				Foreground(lipgloss.Color(numCommentsColor))
-
-	diffStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color(diffColor))
 
 	linesChangedStyle = lipgloss.NewStyle().
 				PaddingLeft(1)
@@ -176,11 +155,4 @@ var (
 				Bold(true).
 				Background(lipgloss.Color(helpViewTitleColor)).
 				Align(lipgloss.Left)
-
-	helpHeaderStyle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color(helpHeaderColor))
-
-	helpSectionStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color(helpSectionColor))
 )

@@ -6,6 +6,10 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+const (
+	contextWordWrapUpperLimit = 160
+)
+
 func (m model) View() string {
 	var content string
 	var footer string
