@@ -6,6 +6,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/glamour"
 	ghapi "github.com/cli/go-gh/v2/pkg/api"
 )
 
@@ -51,6 +52,7 @@ type model struct {
 	repoChosen      bool
 	userLogin       string
 	terminalDetails terminalDetails
+	mdRenderer      *glamour.TermRenderer
 }
 
 func (m model) Init() tea.Cmd {

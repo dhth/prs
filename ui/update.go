@@ -1,15 +1,25 @@
 package ui
 
 import (
+	_ "embed"
 	"fmt"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/dhth/prs/internal/utils"
 )
 
-const useHighPerformanceRenderer = false
+const (
+	useHighPerformanceRenderer = false
+	viewPortMoveLineCount      = 3
+)
+
+var (
+	//go:embed assets/help.md
+	helpStr string
+)
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
@@ -80,18 +90,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if ok {
 					if item.item.Type == tlItemPRReview {
 						revCmts := item.item.PullRequestReview.Comments.Nodes
-						if len(revCmts) > 0 {
-							var prReviewCmts string
-							for _, cmt := range revCmts {
-								prReviewCmts += cmt.render()
-								prReviewCmts += "\n\n"
-								prReviewCmts += reviewCmtDividerStyle.Render("---")
-								prReviewCmts += "\n\n"
-							}
-							prReviewCmts += "\n\n"
-							m.prRevCmtVP.SetContent(prReviewCmts)
-							m.activePane = prRevCmts
+						if len(revCmts) == 0 {
+							break
 						}
+
+						m.setPRTLContent(revCmts)
+						m.activePane = prRevCmts
 					}
 				}
 			case repoList:
@@ -117,21 +121,52 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if ok {
 					if item.item.Type == tlItemPRReview {
 						revCmts := item.item.PullRequestReview.Comments.Nodes
-						if len(revCmts) > 0 {
-							var prReviewCmts string
-							for _, cmt := range revCmts {
-								prReviewCmts += cmt.render()
-								prReviewCmts += "\n\n"
-								prReviewCmts += reviewCmtDividerStyle.Render("---")
-								prReviewCmts += "\n\n"
-							}
-							prReviewCmts += "\n\n"
-							m.prRevCmtVP.SetContent(prReviewCmts)
-							m.activePane = prRevCmts
+						if len(revCmts) == 0 {
+							break
 						}
+
+						m.setPRTLContent(revCmts)
+						m.activePane = prRevCmts
 					}
 				}
 			}
+
+		case "j", "down":
+			if m.activePane != prRevCmts && m.activePane != helpView {
+				break
+			}
+
+			switch m.activePane {
+			case prRevCmts:
+				if m.prRevCmtVP.AtBottom() {
+					break
+				}
+				m.prRevCmtVP.LineDown(viewPortMoveLineCount)
+			case helpView:
+				if m.helpVP.AtBottom() {
+					break
+				}
+				m.helpVP.LineDown(viewPortMoveLineCount)
+			}
+
+		case "k", "up":
+			if m.activePane != prRevCmts && m.activePane != helpView {
+				break
+			}
+
+			switch m.activePane {
+			case prRevCmts:
+				if m.prRevCmtVP.AtTop() {
+					break
+				}
+				m.prRevCmtVP.LineUp(viewPortMoveLineCount)
+			case helpView:
+				if m.helpVP.AtTop() {
+					break
+				}
+				m.helpVP.LineUp(viewPortMoveLineCount)
+			}
+
 		case "tab", "shift+tab":
 			if m.activePane == prList {
 				setTlCmd, ok := m.setTL()
@@ -257,15 +292,39 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.prRevCmtVP = viewport.New(msg.Width-2, msg.Height-7)
 			m.prRevCmtVP.HighPerformanceRendering = useHighPerformanceRenderer
 			m.prRevCmtVPReady = true
+			m.prRevCmtVP.KeyMap.HalfPageDown.SetKeys("ctrl+d")
+			m.prRevCmtVP.KeyMap.Up.SetEnabled(false)
+			m.prRevCmtVP.KeyMap.Down.SetEnabled(false)
 		} else {
 			m.prRevCmtVP.Width = msg.Width - 2
 			m.prRevCmtVP.Height = msg.Height - 7
 		}
 
+		crWrap := (msg.Width - 4)
+		if crWrap > contextWordWrapUpperLimit {
+			crWrap = contextWordWrapUpperLimit
+		}
+
+		m.mdRenderer, _ = utils.GetMarkDownRenderer(crWrap)
+
+		helpToRender := helpStr
+		switch m.mdRenderer {
+		case nil:
+			break
+		default:
+			helpStrGl, err := m.mdRenderer.Render(helpStr)
+			if err != nil {
+				break
+			}
+			helpToRender = helpStrGl
+		}
+
 		if !m.helpVPReady {
 			m.helpVP = viewport.New(msg.Width, msg.Height-7)
 			m.helpVP.HighPerformanceRendering = useHighPerformanceRenderer
-			m.helpVP.SetContent(helpText)
+			m.helpVP.SetContent(helpToRender)
+			m.helpVP.KeyMap.Up.SetEnabled(false)
+			m.helpVP.KeyMap.Down.SetEnabled(false)
 			m.helpVPReady = true
 		} else {
 			m.helpVP.Width = msg.Width
@@ -497,4 +556,30 @@ func (m *model) setTL() (tea.Cmd, bool) {
 	m.activePane = prTLList
 
 	return nil, true
+}
+
+func (m *model) setPRTLContent(revCmts []prReviewComment) {
+	prReviewCmts := make([]string, len(revCmts))
+	for i, cmt := range revCmts {
+		var outdated string
+		if cmt.Outdated {
+			outdated = " `(outdated)`"
+		}
+
+		prReviewCmt := fmt.Sprintf("### %s%s\n%s\n```diff\n%s\n```", cmt.Path, outdated, cmt.Body, cmt.DiffHunk)
+		prReviewCmts[i] = prReviewCmt
+	}
+
+	content := strings.Join(prReviewCmts, "\n---\n")
+	glErr := true
+	if m.mdRenderer != nil {
+		contentGl, err := m.mdRenderer.Render(content)
+		if err == nil {
+			m.prRevCmtVP.SetContent(contentGl)
+			glErr = false
+		}
+	}
+	if glErr {
+		m.prRevCmtVP.SetContent(content)
+	}
 }

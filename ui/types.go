@@ -245,17 +245,3 @@ func (ir prTLItemResult) Description() string {
 func (ir prTLItemResult) FilterValue() string {
 	return ir.title
 }
-
-func (cmt prReviewComment) render() string {
-	var s string
-	s += filePathStyle.Render("file: " + cmt.Path)
-	s += "\n\n"
-	if cmt.Outdated {
-		s += outdatedStyle.Render("outdated")
-		s += "\n\n"
-	}
-	s += reviewCmtBodyStyle.Render(cmt.Body)
-	s += "\n\n"
-	s += diffStyle.Render(cmt.DiffHunk)
-	return s
-}
