@@ -563,7 +563,7 @@ func (m *model) setPRTLContent(revCmts []prReviewComment) {
 	for i, cmt := range revCmts {
 		var outdated string
 		if cmt.Outdated {
-			outdated = "\n*outdated*\n"
+			outdated = " `(outdated)`"
 		}
 
 		prReviewCmt := fmt.Sprintf("### %s%s\n%s\n```diff\n%s\n```", cmt.Path, outdated, cmt.Body, cmt.DiffHunk)
