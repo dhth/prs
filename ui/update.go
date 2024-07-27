@@ -131,7 +131,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 
-		case "j":
+		case "j", "down":
 			if m.activePane != prRevCmts && m.activePane != helpView {
 				break
 			}
@@ -149,7 +149,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.helpVP.LineDown(viewPortMoveLineCount)
 			}
 
-		case "k":
+		case "k", "up":
 			if m.activePane != prRevCmts && m.activePane != helpView {
 				break
 			}
