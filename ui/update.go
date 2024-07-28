@@ -34,7 +34,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if !m.repoChosen {
 					return m, tea.Quit
 				}
-				m.repoList.ResetSelected()
 				m.activePane = m.lastPane
 			} else if m.activePane == helpView {
 				m.activePane = m.lastPane
@@ -44,6 +43,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			} else if m.activePane == prTLList {
 				m.prTLList.ResetSelected()
 				m.activePane = prList
+			} else if m.mode == RepoMode && m.activePane == prList {
+				m.activePane = repoList
+				m.repoChosen = false
 			} else {
 				return m, tea.Quit
 			}
@@ -54,11 +56,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.prTLList.ResetSelected()
 				switch m.mode {
 				case RepoMode:
-					cmds = append(cmds, fetchPRS(m.ghClient, m.repoOwner, m.repoName, m.prCount))
+					cmds = append(cmds, fetchPRSForRepo(m.ghClient, m.repoOwner, m.repoName, m.config.PRCount))
+				case QueryMode:
+					cmds = append(cmds, fetchPRSFromQuery(m.ghClient, *m.config.Query, m.config.PRCount))
 				case ReviewerMode:
-					cmds = append(cmds, fetchPRsToReview(m.ghClient, m.userLogin))
+					cmds = append(cmds, fetchPRsToReview(m.ghClient, m.userLogin, m.config.PRCount))
 				case AuthorMode:
-					cmds = append(cmds, fetchAuthoredPRs(m.ghClient, m.userLogin))
+					cmds = append(cmds, fetchAuthoredPRs(m.ghClient, m.userLogin, m.config.PRCount))
 				}
 			case prTLList:
 				pr, ok := m.prsList.SelectedItem().(*prResult)
@@ -194,7 +198,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case prList:
 				var url string
 				switch m.mode {
-				case RepoMode:
+				case RepoMode, QueryMode:
 					pr, ok := m.prsList.SelectedItem().(*prResult)
 					if ok {
 						url = pr.pr.Url
@@ -229,6 +233,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					if ok {
 						cmds = append(cmds, showDiff(m.repoOwner,
 							m.repoName,
+							pr.pr.Number,
+							m.config.DiffPager))
+					}
+				case QueryMode:
+					pr, ok := m.prsList.SelectedItem().(*prResult)
+					if ok {
+						cmds = append(cmds, showDiff(pr.pr.Repository.Owner.Login,
+							pr.pr.Repository.Name,
 							pr.pr.Number,
 							m.config.DiffPager))
 					}
@@ -355,7 +367,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.activePane = prList
 			m.prsList.ResetSelected()
 			m.prTLList.ResetSelected()
-			cmds = append(cmds, fetchPRS(m.ghClient, m.repoOwner, m.repoName, m.prCount))
+			cmds = append(cmds, fetchPRSForRepo(m.ghClient, m.repoOwner, m.repoName, m.config.PRCount))
 		}
 	case viewerLoginFetched:
 		if msg.err != nil {
@@ -364,9 +376,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.userLogin = msg.login
 			switch m.mode {
 			case ReviewerMode:
-				cmds = append(cmds, fetchPRsToReview(m.ghClient, m.userLogin))
+				cmds = append(cmds, fetchPRsToReview(m.ghClient, m.userLogin, m.config.PRCount))
 			case AuthorMode:
-				cmds = append(cmds, fetchAuthoredPRs(m.ghClient, m.userLogin))
+				cmds = append(cmds, fetchAuthoredPRs(m.ghClient, m.userLogin, m.config.PRCount))
 			}
 		}
 	case prsFetchedMsg:
@@ -381,14 +393,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				prResults[i] = &prResult{
 					pr:          &pr,
 					title:       getPRTitle(&pr),
-					description: getPRDesc(&pr, RepoMode, m.terminalDetails),
+					description: getPRDesc(&pr, m.mode, m.terminalDetails),
 				}
 				prs[i] = prResults[i]
 			}
 
 			m.prCache = prResults
 			m.prsList.SetItems(prs)
-			m.prsList.Title = fmt.Sprintf("PRs (%s)", m.repoName)
+			switch m.mode {
+			case RepoMode:
+				m.prsList.Title = fmt.Sprintf("PRs (%s)", m.repoName)
+			case QueryMode:
+				m.prsList.Title = "Results"
+			}
 
 			if len(msg.prs) > 0 {
 				for _, pr := range msg.prs {
@@ -421,7 +438,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			m.prCache = prResults
 			m.prsList.SetItems(prs)
-			m.prsList.Title = "PRs requesting your review"
+			m.prsList.Title = "Open PRs requesting your review"
 
 			if len(msg.prs) > 0 {
 				for _, pr := range msg.prs {

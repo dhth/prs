@@ -25,6 +25,7 @@ type Mode uint
 
 const (
 	RepoMode Mode = iota
+	QueryMode
 	ReviewerMode
 	AuthorMode
 )
@@ -35,7 +36,6 @@ type model struct {
 	ghClient        *ghapi.GraphQLClient
 	repoOwner       string
 	repoName        string
-	prCount         int
 	repoList        list.Model
 	prsList         list.Model
 	prTLList        list.Model
@@ -58,6 +58,10 @@ type model struct {
 func (m model) Init() tea.Cmd {
 	var cmds []tea.Cmd
 	cmds = append(cmds, hideHelp(time.Minute*1))
+
+	if m.mode == QueryMode {
+		cmds = append(cmds, fetchPRSFromQuery(m.ghClient, *m.config.Query, m.config.PRCount))
+	}
 
 	if m.mode == ReviewerMode || m.mode == AuthorMode {
 		cmds = append(cmds, fetchViewerLogin(m.ghClient))

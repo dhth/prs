@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/user"
+	"strings"
 
 	"flag"
 
@@ -11,7 +12,8 @@ import (
 )
 
 var (
-	modeFlag = flag.String("mode", "repos", "mode to run prs in; values: repos, reviewer, author")
+	modeFlag  = flag.String("mode", "repos", "mode to run prs in; values: repos, query, reviewer, author")
+	queryFlag = flag.String("query", "", "query to filter PRs by")
 )
 
 func die(msg string, args ...any) {
@@ -42,28 +44,44 @@ func Execute() {
 
 	_, err = os.Stat(configFilePathExp)
 	if os.IsNotExist(err) {
-		die(cfgErrSuggestion(fmt.Sprintf("Error: file doesn't exist at %q", configFilePathExp)))
+		die(fmt.Sprintf("Error: file doesn't exist at %q", configFilePathExp))
 	}
 
 	config, err := readConfig(configFilePathExp)
 	if err != nil {
-		die(cfgErrSuggestion(fmt.Sprintf("Error reading config: %s", err.Error())))
+		die(fmt.Sprintf("Error reading config: %s", err.Error()))
 	}
 
-	if len(config.Repos) == 0 {
-		die(cfgErrSuggestion("Error: no repos found in config file"))
+	if *queryFlag != "" {
+		config.Query = queryFlag
+	}
+
+	if config.Query != nil {
+		if strings.Contains(*config.Query, "type:issue") || strings.Contains(*config.Query, "type: issue") {
+			die("type:issue cannot be used in the query")
+		}
 	}
 
 	var mode ui.Mode
 	switch *modeFlag {
 	case "repos":
 		mode = ui.RepoMode
+	case "query":
+		mode = ui.QueryMode
 	case "reviewer":
 		mode = ui.ReviewerMode
 	case "author":
 		mode = ui.AuthorMode
 	default:
 		die("unknown mode provided; possible values: repos, reviewer, author")
+	}
+
+	if mode == ui.RepoMode && len(config.Repos) == 0 {
+		die("Error: no repos found in config file")
+	}
+
+	if mode == ui.QueryMode && config.Query == nil {
+		die("Error: no query provided")
 	}
 
 	ui.RenderUI(config, mode)

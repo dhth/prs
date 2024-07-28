@@ -38,7 +38,6 @@ func InitialModel(config Config, mode Mode) model {
 		mode:            mode,
 		config:          config,
 		ghClient:        client,
-		prCount:         config.PRCount,
 		prsList:         list.New(nil, prListDel, 0, 0),
 		prTLList:        list.New(nil, prTLListDel, 0, 0),
 		prTLCache:       prTLCache,
@@ -57,7 +56,7 @@ func InitialModel(config Config, mode Mode) model {
 		m.repoList.Styles.Title = m.repoList.Styles.Title.Background(lipgloss.Color(repoListColor)).
 			Foreground(lipgloss.Color(defaultBackgroundColor)).
 			Bold(true)
-	case ReviewerMode, AuthorMode:
+	case QueryMode, ReviewerMode, AuthorMode:
 		m.activePane = prList
 	}
 

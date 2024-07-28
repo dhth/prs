@@ -9,6 +9,10 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+const (
+	maxPRCount = 100
+)
+
 func expandTilde(path string) string {
 	if strings.HasPrefix(path, "~") {
 		usr, err := user.Current()
@@ -32,19 +36,26 @@ func readConfig(configFilePath string) (ui.Config, error) {
 	}
 
 	var repos []ui.Repo
-	for _, source := range srcCfg.Sources {
-		for _, repo := range source.Repos {
-			repos = append(repos, ui.Repo{
-				Owner: source.Owner,
-				Name:  repo.Name,
-			})
+	if srcCfg.Sources != nil {
+		for _, source := range *srcCfg.Sources {
+			for _, repo := range source.Repos {
+				repos = append(repos, ui.Repo{
+					Owner: source.Owner,
+					Name:  repo.Name,
+				})
+			}
 		}
 	}
+
 	var prCount = srcCfg.PRCount
+	if prCount > maxPRCount {
+		prCount = maxPRCount
+	}
 	cfg := ui.Config{
 		DiffPager: srcCfg.DiffPager,
 		PRCount:   prCount,
 		Repos:     repos,
+		Query:     srcCfg.Query,
 	}
 	return cfg, nil
 

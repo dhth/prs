@@ -34,12 +34,13 @@ type terminalDetails struct {
 type SourceConfig struct {
 	DiffPager *string `yaml:"diff-pager"`
 	PRCount   int     `yaml:"pr-count"`
-	Sources   []struct {
+	Sources   *[]struct {
 		Owner string `yaml:"owner"`
 		Repos []struct {
 			Name string `yaml:"name"`
 		} `yaml:"repos"`
 	} `yaml:"sources"`
+	Query *string `yaml:"query"`
 }
 
 type Repo struct {
@@ -51,6 +52,7 @@ type Config struct {
 	DiffPager *string
 	PRCount   int
 	Repos     []Repo
+	Query     *string
 }
 
 type prResult struct {
@@ -123,7 +125,7 @@ type prSearchQuery struct {
 				pr   `graphql:"... on PullRequest"`
 			}
 		}
-	} `graphql:"search(query: $query, type: ISSUE, first: 50)"`
+	} `graphql:"search(query: $query, type: ISSUE, first: $count)"`
 }
 
 type prTLItem struct {
