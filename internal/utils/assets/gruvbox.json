@@ -6,7 +6,8 @@
     "margin": 2
   },
   "block_quote": {
-    "indent": 2
+    "indent": 1,
+    "indent_token": "┃ "
   },
   "paragraph": {},
   "list": {

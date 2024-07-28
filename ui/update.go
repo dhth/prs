@@ -29,7 +29,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "ctrl+c", "q":
+		case "Q":
+			return m, tea.Quit
+		case "ctrl+c", "q", "esc":
 			if m.activePane == repoList {
 				if !m.repoChosen {
 					return m, tea.Quit
@@ -172,6 +174,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case "tab", "shift+tab":
+			if m.activePane == helpView {
+				break
+			}
+
 			if m.activePane == prList {
 				setTlCmd, ok := m.setTL()
 				if !ok {
@@ -280,8 +286,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.prRevCmtVP.GotoBottom()
 			}
 		case "?":
-			m.lastPane = m.activePane
-			m.activePane = helpView
+			switch m.activePane {
+			case helpView:
+				m.activePane = m.lastPane
+			default:
+				m.lastPane = m.activePane
+				m.activePane = helpView
+			}
 		}
 	case hideHelpMsg:
 		m.showHelp = false

@@ -33,26 +33,23 @@ const (
 
 var (
 	baseStyle = lipgloss.NewStyle().
-			PaddingLeft(1).
-			PaddingRight(1).
 			Foreground(lipgloss.Color(defaultBackgroundColor))
 
 	toolNameStyle = baseStyle.
 			Align(lipgloss.Center).
+			PaddingLeft(1).
+			PaddingRight(1).
 			Bold(true).
 			Background(lipgloss.Color(toolNameColor))
 
 	listStyle = baseStyle.
 			PaddingTop(1).
-			PaddingRight(2).
-			PaddingLeft(1).
 			PaddingBottom(1).
 			Foreground(lipgloss.Color(defaultBackgroundColor))
 
 	viewPortStyle = lipgloss.NewStyle().
 			PaddingTop(1).
 			PaddingRight(2).
-			PaddingLeft(1).
 			PaddingBottom(1)
 
 	helpMsgStyle = baseStyle.
@@ -151,8 +148,12 @@ var (
 			Foreground(lipgloss.Color(defaultBackgroundColor)).
 			Background(lipgloss.Color(footerColor))
 
-	helpVPTitleStyle = baseStyle.
-				Bold(true).
-				Background(lipgloss.Color(helpViewTitleColor)).
-				Align(lipgloss.Left)
+	titleStyle = lipgloss.NewStyle().
+			PaddingLeft(1).
+			PaddingRight(1).
+			Bold(true).
+			Foreground(lipgloss.Color(defaultBackgroundColor))
+
+	helpVPTitleStyle = titleStyle.
+				Background(lipgloss.Color(helpViewTitleColor))
 )
