@@ -10,7 +10,8 @@ import (
 )
 
 const (
-	maxPRCount = 100
+	defaultPRCount = 30
+	maxPRCount     = 100
 )
 
 func expandTilde(path string) string {
@@ -47,7 +48,12 @@ func readConfig(configFilePath string) (ui.Config, error) {
 		}
 	}
 
-	var prCount = srcCfg.PRCount
+	prCount := defaultPRCount
+
+	if srcCfg.PRCount != nil {
+		prCount = *srcCfg.PRCount
+	}
+
 	if prCount > maxPRCount {
 		prCount = maxPRCount
 	}

@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/dhth/prs/internal/utils"
 )
 
@@ -54,8 +55,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+r":
 			switch m.activePane {
 			case prList:
-				m.prsList.ResetSelected()
-				m.prTLList.ResetSelected()
+
 				switch m.mode {
 				case RepoMode:
 					cmds = append(cmds, fetchPRSForRepo(m.ghClient, m.repoOwner, m.repoName, m.config.PRCount))
@@ -66,15 +66,21 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				case AuthorMode:
 					cmds = append(cmds, fetchAuthoredPRs(m.ghClient, m.userLogin, m.config.PRCount))
 				}
+				m.prsList.Title = "fetching PRs..."
+				m.prsList.Styles.Title = m.prsList.Styles.Title.Background(lipgloss.Color(fetchingColor))
+
 			case prTLList:
 				pr, ok := m.prsList.SelectedItem().(*prResult)
-				if ok {
-					repoOwner := pr.pr.Repository.Owner.Login
-					repoName := pr.pr.Repository.Name
-					prNumber := pr.pr.Number
-					cmds = append(cmds, fetchPRTLItems(m.ghClient, repoOwner, repoName, prNumber, 100, false))
-					m.prTLList.ResetSelected()
+				if !ok {
+					break
 				}
+
+				repoOwner := pr.pr.Repository.Owner.Login
+				repoName := pr.pr.Repository.Name
+				prNumber := pr.pr.Number
+				cmds = append(cmds, fetchPRTLItems(m.ghClient, repoOwner, repoName, prNumber, 100, true))
+				m.prTLList.Title = "fetching timeline..."
+				m.prTLList.Styles.Title = m.prTLList.Styles.Title.Background(lipgloss.Color(fetchingColor))
 			}
 		case "1":
 			if m.activePane != prList {
@@ -232,34 +238,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 		case "ctrl+d":
-			if m.activePane == prList || m.activePane == prTLList {
-				switch m.mode {
-				case RepoMode:
-					pr, ok := m.prsList.SelectedItem().(*prResult)
-					if ok {
-						cmds = append(cmds, showDiff(m.repoOwner,
-							m.repoName,
-							pr.pr.Number,
-							m.config.DiffPager))
-					}
-				case QueryMode:
-					pr, ok := m.prsList.SelectedItem().(*prResult)
-					if ok {
-						cmds = append(cmds, showDiff(pr.pr.Repository.Owner.Login,
-							pr.pr.Repository.Name,
-							pr.pr.Number,
-							m.config.DiffPager))
-					}
-				case ReviewerMode:
-					pr, ok := m.prsList.SelectedItem().(*prResult)
-					if ok {
-						cmds = append(cmds, showDiff(pr.pr.Repository.Owner.Login,
-							pr.pr.Repository.Name,
-							pr.pr.Number,
-							m.config.DiffPager))
-					}
-				}
+			if m.activePane != prList && m.activePane != prTLList {
+				break
 			}
+
+			pr, ok := m.prsList.SelectedItem().(*prResult)
+			if !ok {
+				break
+			}
+
+			cmds = append(cmds, showDiff(pr.pr.Repository.Owner.Login,
+				pr.pr.Repository.Name,
+				pr.pr.Number,
+				m.config.DiffPager))
+
 		case "ctrl+v":
 			if m.activePane == prList || m.activePane == prTLList {
 				switch m.mode {
@@ -372,7 +364,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.message = "Something went horribly wrong. Let @dhth know about this failure."
 		} else {
 			m.repoChosen = true
-			m.prsList.Title = "fetching..."
+			m.prsList.Title = "fetching PRs..."
+			m.prsList.Styles.Title = m.prsList.Styles.Title.Background(lipgloss.Color(fetchingColor))
 			m.repoOwner = repoDetails[0]
 			m.repoName = repoDetails[1]
 			m.activePane = prList
@@ -396,65 +389,72 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.err != nil {
 			m.message = msg.err.Error()
 			m.prsList.Title = "error"
-		} else {
-			prs := make([]list.Item, len(msg.prs))
-			prResults := make([]*prResult, len(msg.prs))
-
-			for i, pr := range msg.prs {
-				prResults[i] = &prResult{
-					pr:          &pr,
-					title:       getPRTitle(&pr),
-					description: getPRDesc(&pr, m.mode, m.terminalDetails),
-				}
-				prs[i] = prResults[i]
-			}
-
-			m.prCache = prResults
-			m.prsList.SetItems(prs)
-			switch m.mode {
-			case RepoMode:
-				m.prsList.Title = fmt.Sprintf("PRs (%s)", m.repoName)
-			case QueryMode:
-				m.prsList.Title = "Results"
-			}
-
-			if len(msg.prs) > 0 {
-				for _, pr := range msg.prs {
-					cmds = append(cmds, fetchPRTLItems(m.ghClient,
-						pr.Repository.Owner.Login,
-						pr.Repository.Name,
-						pr.Number,
-						100,
-						false,
-					))
-				}
-			}
+			break
 		}
+
+		prs := make([]list.Item, len(msg.prs))
+		prResults := make([]*prResult, len(msg.prs))
+
+		for i, pr := range msg.prs {
+			prResults[i] = &prResult{
+				pr:          &pr,
+				title:       getPRTitle(&pr),
+				description: getPRDesc(&pr, m.mode, m.terminalDetails),
+			}
+			prs[i] = prResults[i]
+		}
+
+		m.prCache = prResults
+		m.prsList.SetItems(prs)
+
+		switch m.mode {
+		case RepoMode:
+			m.prsList.Title = fmt.Sprintf("PRs (%s)", m.repoName)
+		case QueryMode:
+			m.prsList.Title = "Results"
+		}
+
+		m.prsList.ResetSelected()
+		m.prsList.Styles.Title = m.prsList.Styles.Title.Background(lipgloss.Color(prListColor))
+
+		for _, pr := range msg.prs {
+			cmds = append(cmds, fetchPRTLItems(m.ghClient,
+				pr.Repository.Owner.Login,
+				pr.Repository.Name,
+				pr.Number,
+				100,
+				false,
+			))
+		}
+
 	case reviewPRsFetchedMsg:
 		if msg.err != nil {
 			m.message = msg.err.Error()
-		} else {
-			prs := make([]list.Item, len(msg.prs))
+			break
+		}
 
-			prResults := make([]*prResult, len(msg.prs))
+		prs := make([]list.Item, len(msg.prs))
 
-			for i, pr := range msg.prs {
-				prResults[i] = &prResult{
-					pr:          &pr,
-					title:       getPRTitle(&pr),
-					description: getPRDesc(&pr, m.mode, m.terminalDetails),
-				}
-				prs[i] = prResults[i]
+		prResults := make([]*prResult, len(msg.prs))
+
+		for i, pr := range msg.prs {
+			prResults[i] = &prResult{
+				pr:          &pr,
+				title:       getPRTitle(&pr),
+				description: getPRDesc(&pr, m.mode, m.terminalDetails),
 			}
+			prs[i] = prResults[i]
+		}
 
-			m.prCache = prResults
-			m.prsList.SetItems(prs)
-			m.prsList.Title = "Open PRs requesting your review"
+		m.prCache = prResults
+		m.prsList.SetItems(prs)
+		m.prsList.ResetSelected()
+		m.prsList.Title = "Open PRs requesting your review"
+		m.prsList.Styles.Title = m.prsList.Styles.Title.Background(lipgloss.Color(prListColor))
 
-			if len(msg.prs) > 0 {
-				for _, pr := range msg.prs {
-					cmds = append(cmds, fetchPRTLItems(m.ghClient, pr.Repository.Owner.Login, pr.Repository.Name, pr.Number, 100, false))
-				}
+		if len(msg.prs) > 0 {
+			for _, pr := range msg.prs {
+				cmds = append(cmds, fetchPRTLItems(m.ghClient, pr.Repository.Owner.Login, pr.Repository.Name, pr.Number, 100, false))
 			}
 		}
 	case authoredPRsFetchedMsg:
@@ -477,6 +477,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.prCache = prResults
 			m.prsList.SetItems(prs)
 			m.prsList.Title = "Open PRs authored by you"
+			m.prsList.ResetSelected()
+			m.prsList.Styles.Title = m.prsList.Styles.Title.Background(lipgloss.Color(prListColor))
 
 			if len(msg.prs) > 0 {
 				for _, pr := range msg.prs {
@@ -487,29 +489,33 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case prTLFetchedMsg:
 		if msg.err != nil {
 			m.message = msg.err.Error()
-		} else {
+			break
+		}
 
-			tlItemsResult := make([]*prTLItemResult, len(msg.prTLItems))
+		tlItemsResult := make([]*prTLItemResult, len(msg.prTLItems))
 
-			for i, item := range msg.prTLItems {
-				tlItemsResult[i] = &prTLItemResult{
-					item:        &item,
-					title:       getPRTLItemTitle(&item),
-					description: getPRTLItemDesc(&item),
-				}
-			}
-			m.prTLCache[fmt.Sprintf("%s/%s:%d", msg.repoOwner, msg.repoName, msg.prNumber)] = tlItemsResult
-
-			if msg.setItems {
-				prTLItems := make([]list.Item, len(msg.prTLItems))
-				for i, result := range tlItemsResult {
-					prTLItems[i] = result
-				}
-				m.prTLList.SetItems(prTLItems)
-				m.prTLList.Title = fmt.Sprintf("PR #%d Timeline", msg.prNumber)
-				m.activePane = prTLList
+		for i, item := range msg.prTLItems {
+			tlItemsResult[i] = &prTLItemResult{
+				item:        &item,
+				title:       getPRTLItemTitle(&item),
+				description: getPRTLItemDesc(&item),
 			}
 		}
+		m.prTLCache[fmt.Sprintf("%s/%s:%d", msg.repoOwner, msg.repoName, msg.prNumber)] = tlItemsResult
+
+		if msg.setItems {
+			prTLItems := make([]list.Item, len(msg.prTLItems))
+			for i, result := range tlItemsResult {
+				prTLItems[i] = result
+			}
+			m.prTLList.SetItems(prTLItems)
+			m.prTLList.Title = fmt.Sprintf("PR #%d Timeline", msg.prNumber)
+			m.prTLList.Styles.Title = m.prTLList.Styles.Title.Background(lipgloss.Color(prTLListColor))
+			m.activePane = prTLList
+		}
+
+		m.prTLList.ResetSelected()
+
 	case urlOpenedinBrowserMsg:
 		if msg.err != nil {
 			m.message = fmt.Sprintf("Error opening url: %s", msg.err.Error())
@@ -550,14 +556,14 @@ func (m *model) setTL() (tea.Cmd, bool) {
 	var repoOwner, repoName string
 	var prNumber int
 
-	pr, prOk := m.prsList.SelectedItem().(*prResult)
+	prItem, prOk := m.prsList.SelectedItem().(*prResult)
 	if !prOk {
 		return nil, false
 	}
 
-	repoOwner = pr.pr.Repository.Owner.Login
-	repoName = pr.pr.Repository.Name
-	prNumber = pr.pr.Number
+	repoOwner = prItem.pr.Repository.Owner.Login
+	repoName = prItem.pr.Repository.Name
+	prNumber = prItem.pr.Number
 
 	tlFromCache, ok := m.prTLCache[fmt.Sprintf("%s/%s:%d", repoOwner, repoName, prNumber)]
 	if !ok {

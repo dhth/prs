@@ -24,8 +24,8 @@ const (
 type Mode uint
 
 const (
-	RepoMode Mode = iota
-	QueryMode
+	QueryMode Mode = iota
+	RepoMode
 	ReviewerMode
 	AuthorMode
 )

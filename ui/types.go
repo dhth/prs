@@ -33,7 +33,7 @@ type terminalDetails struct {
 
 type SourceConfig struct {
 	DiffPager *string `yaml:"diff-pager"`
-	PRCount   int     `yaml:"pr-count"`
+	PRCount   *int    `yaml:"pr-count"`
 	Sources   *[]struct {
 		Owner string `yaml:"owner"`
 		Repos []struct {
@@ -90,16 +90,6 @@ type pr struct {
 	Reviews   struct {
 		TotalCount int
 	}
-}
-
-type prsQuery struct {
-	RepositoryOwner struct {
-		Repository struct {
-			PullRequests struct {
-				Nodes []pr
-			} `graphql:"pullRequests(first: $pullRequestCount, states: [OPEN, MERGED, CLOSED], orderBy: {field: UPDATED_AT, direction: DESC})"`
-		} `graphql:"repository(name: $repositoryName)"`
-	} `graphql:"repositoryOwner(login: $repositoryOwner)"`
 }
 
 type prReviewComment struct {

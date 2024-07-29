@@ -75,10 +75,10 @@ func hideHelp(interval time.Duration) tea.Cmd {
 	})
 }
 
-func fetchPRSForRepo(ghClient *ghapi.GraphQLClient, repoOwner string, repoName string, prCount int) tea.Cmd {
+func fetchViewerLogin(ghClient *ghapi.GraphQLClient) tea.Cmd {
 	return func() tea.Msg {
-		prs, err := getPRDataForRepo(ghClient, repoOwner, repoName, prCount)
-		return prsFetchedMsg{prs, err}
+		login, err := getViewerLoginData(ghClient)
+		return viewerLoginFetched{login, err}
 	}
 }
 
@@ -89,10 +89,11 @@ func fetchPRSFromQuery(ghClient *ghapi.GraphQLClient, queryStr string, prCount i
 	}
 }
 
-func fetchViewerLogin(ghClient *ghapi.GraphQLClient) tea.Cmd {
+func fetchPRSForRepo(ghClient *ghapi.GraphQLClient, repoOwner string, repoName string, prCount int) tea.Cmd {
 	return func() tea.Msg {
-		login, err := getViewerLoginData(ghClient)
-		return viewerLoginFetched{login, err}
+		queryStr := fmt.Sprintf("is:pr repo:%s/%s sort:updated-desc", repoOwner, repoName)
+		prs, err := getPRDataFromQuery(ghClient, queryStr, prCount)
+		return prsFetchedMsg{prs, err}
 	}
 }
 

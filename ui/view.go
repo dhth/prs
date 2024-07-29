@@ -50,7 +50,7 @@ func (m model) View() string {
 
 	var helpMsg string
 	if m.showHelp {
-		helpMsg = " " + helpMsgStyle.Render("Press ? for help")
+		helpMsg = helpMsgStyle.Render("Press ? for help")
 	}
 
 	footerStr := fmt.Sprintf("%s%s",

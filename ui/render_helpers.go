@@ -80,29 +80,30 @@ func getPRDesc(pr *pr, mode Mode, terminalDetails terminalDetails) string {
 	switch mode {
 	case RepoMode:
 		updatedAt := dateStyle.Render(RightPadTrim("updated "+humanize.Time(pr.UpdatedAt), getFracInt(widthBudget, 0.3)))
-		author := authorStyle(pr.Author.Login).Render(RightPadTrim(pr.Author.Login, getFracInt(widthBudget, 0.7)))
+		author := getDynamicStyle(pr.Author.Login).Render(RightPadTrim(pr.Author.Login, getFracInt(widthBudget, 0.7)))
 		state := prStyle(pr.State).Render(pr.State)
 
 		desc = fmt.Sprintf("%s%s%s%s%s%s", author, updatedAt, state, additions, deletions, reviews)
 
 	case QueryMode:
+		repoStr := fmt.Sprintf("%s/%s", pr.Repository.Owner.Login, pr.Repository.Name)
 		updatedAt := dateStyle.Render(RightPadTrim("updated "+humanize.Time(pr.UpdatedAt), getFracInt(widthBudget, 0.3)))
-		author := authorStyle(pr.Author.Login).Render(RightPadTrim(pr.Author.Login, getFracInt(widthBudget, 0.4)))
+		author := getDynamicStyle(pr.Author.Login).Render(RightPadTrim(pr.Author.Login, getFracInt(widthBudget, 0.4)))
 		state := prStyle(pr.State).Render(pr.State)
-		repo := repoStyle.Render(RightPadTrim(fmt.Sprintf("%s/%s", pr.Repository.Owner.Login, pr.Repository.Name), getFracInt(widthBudget, 0.3)))
+		repo := getDynamicStyle(repoStr).Render(RightPadTrim(repoStr, getFracInt(widthBudget, 0.3)))
 
 		desc = fmt.Sprintf("%s%s%s%s%s%s%s", author, repo, updatedAt, state, additions, deletions, reviews)
 
 	case ReviewerMode:
 		updatedAt := dateStyle.Render(RightPadTrim("updated "+humanize.Time(pr.UpdatedAt), getFracInt(widthBudget, 0.3)))
-		author := authorStyle(pr.Author.Login).Render(RightPadTrim(pr.Author.Login, getFracInt(widthBudget, 0.4)))
-		repo := repoStyle.Render(RightPadTrim(pr.Repository.Name, getFracInt(widthBudget, 0.3)))
+		author := getDynamicStyle(pr.Author.Login).Render(RightPadTrim(pr.Author.Login, getFracInt(widthBudget, 0.4)))
+		repo := getDynamicStyle(pr.Repository.Name).Render(RightPadTrim(pr.Repository.Name, getFracInt(widthBudget, 0.3)))
 
 		desc = fmt.Sprintf("%s%s%s%s%s%s", author, repo, updatedAt, additions, deletions, reviews)
 
 	case AuthorMode:
 		updatedAt := dateStyle.Render(RightPadTrim("updated "+humanize.Time(pr.UpdatedAt), getFracInt(widthBudget, 0.3)))
-		repo := repoStyle.Render(RightPadTrim(pr.Repository.Name, getFracInt(widthBudget, 0.7)))
+		repo := getDynamicStyle(pr.Repository.Name).Render(RightPadTrim(pr.Repository.Name, getFracInt(widthBudget, 0.7)))
 
 		desc = fmt.Sprintf("%s%s%s%s%s", repo, updatedAt, additions, deletions, reviews)
 	}
@@ -117,14 +118,14 @@ func getPRTLItemTitle(item *prTLItem) string {
 	switch item.Type {
 	case tlItemPRCommit:
 		if item.PullRequestCommit.Commit.Author.User != nil {
-			author := authorStyle(item.PullRequestCommit.Commit.Author.User.Login).Render(item.PullRequestCommit.Commit.Author.User.Login)
+			author := getDynamicStyle(item.PullRequestCommit.Commit.Author.User.Login).Render(item.PullRequestCommit.Commit.Author.User.Login)
 			date = dateStyle.Render(humanize.Time(item.PullRequestCommit.Commit.CommittedDate))
 			title = fmt.Sprintf("%spushed a commit%s", author, date)
 		} else {
 			title = fmt.Sprintf("%s pushed a commit", item.PullRequestCommit.Commit.Author.Name)
 		}
 	case tlItemHeadRefForcePushed:
-		actor := authorStyle(item.HeadRefForcePushed.Actor.Login).Render(item.HeadRefForcePushed.Actor.Login)
+		actor := getDynamicStyle(item.HeadRefForcePushed.Actor.Login).Render(item.HeadRefForcePushed.Actor.Login)
 		beforeCommitHash := item.HeadRefForcePushed.BeforeCommit.Oid
 		afterCommitHash := item.HeadRefForcePushed.AfterCommit.Oid
 		if len(beforeCommitHash) >= commitHashLen {
@@ -136,14 +137,14 @@ func getPRTLItemTitle(item *prTLItem) string {
 		date = dateStyle.Render(humanize.Time(item.HeadRefForcePushed.CreatedAt))
 		title = fmt.Sprintf("%sforce pushed head ref from %s to %s%s", actor, beforeCommitHash, afterCommitHash, date)
 	case tlItemPRReadyForReview:
-		actor := authorStyle(item.PullRequestReadyForReview.Actor.Login).Render(item.PullRequestReadyForReview.Actor.Login)
+		actor := getDynamicStyle(item.PullRequestReadyForReview.Actor.Login).Render(item.PullRequestReadyForReview.Actor.Login)
 		title = fmt.Sprintf("%smarked PR as ready for review", actor)
 	case tlItemPRReviewRequested:
-		actor := authorStyle(item.PullRequestReviewRequested.Actor.Login).Render(item.PullRequestReviewRequested.Actor.Login)
-		reviewer := authorStyle(item.PullRequestReviewRequested.RequestedReviewer.User.Login).Render(item.PullRequestReviewRequested.RequestedReviewer.User.Login)
+		actor := getDynamicStyle(item.PullRequestReviewRequested.Actor.Login).Render(item.PullRequestReviewRequested.Actor.Login)
+		reviewer := getDynamicStyle(item.PullRequestReviewRequested.RequestedReviewer.User.Login).Render(item.PullRequestReviewRequested.RequestedReviewer.User.Login)
 		title = fmt.Sprintf("%srequested a review from %s", actor, reviewer)
 	case tlItemPRReview:
-		author := authorStyle(item.PullRequestReview.Author.Login).Render(item.PullRequestReview.Author.Login)
+		author := getDynamicStyle(item.PullRequestReview.Author.Login).Render(item.PullRequestReview.Author.Login)
 		date = dateStyle.Render(humanize.Time(item.PullRequestReview.CreatedAt))
 		var comments string
 		if item.PullRequestReview.Comments.TotalCount > 1 {
@@ -153,7 +154,7 @@ func getPRTLItemTitle(item *prTLItem) string {
 		}
 		title = fmt.Sprintf("%sreviewed%s%s", author, comments, date)
 	case tlItemMergedEvent:
-		author := authorStyle(item.MergedEvent.Actor.Login).Render(item.MergedEvent.Actor.Login)
+		author := getDynamicStyle(item.MergedEvent.Actor.Login).Render(item.MergedEvent.Actor.Login)
 		date = dateStyle.Render(humanize.Time(item.MergedEvent.CreatedAt))
 		title = fmt.Sprintf("%smerged the PR%s", author, date)
 	}

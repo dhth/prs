@@ -5,21 +5,6 @@ import (
 	ghgql "github.com/cli/shurcooL-graphql"
 )
 
-func getPRDataForRepo(ghClient *ghapi.GraphQLClient, repoOwner string, repoName string, prCount int) ([]pr, error) {
-	var query prsQuery
-
-	variables := map[string]interface{}{
-		"repositoryOwner":  ghgql.String(repoOwner),
-		"repositoryName":   ghgql.String(repoName),
-		"pullRequestCount": ghgql.Int(prCount),
-	}
-	err := ghClient.Query("PullRequests", &query, variables)
-	if err != nil {
-		return nil, err
-	}
-	return query.RepositoryOwner.Repository.PullRequests.Nodes, nil
-}
-
 func getPRDataFromQuery(ghClient *ghapi.GraphQLClient, queryStr string, prCount int) ([]pr, error) {
 	var query prSearchQuery
 

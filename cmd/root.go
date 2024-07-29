@@ -5,14 +5,16 @@ import (
 	"os"
 	"os/user"
 	"strings"
+	"time"
 
 	"flag"
 
+	ghapi "github.com/cli/go-gh/v2/pkg/api"
 	"github.com/dhth/prs/ui"
 )
 
 var (
-	modeFlag  = flag.String("mode", "repos", "mode to run prs in; values: repos, query, reviewer, author")
+	modeFlag  = flag.String("mode", "query", "mode to run prs in; values: query, repos, reviewer, author")
 	queryFlag = flag.String("query", "", "query to filter PRs by")
 )
 
@@ -44,7 +46,7 @@ func Execute() {
 
 	_, err = os.Stat(configFilePathExp)
 	if os.IsNotExist(err) {
-		die(fmt.Sprintf("Error: file doesn't exist at %q", configFilePathExp))
+		die(fmt.Sprintf("Error: config file doesn't exist at %q", configFilePathExp))
 	}
 
 	config, err := readConfig(configFilePathExp)
@@ -86,8 +88,23 @@ func Execute() {
 	}
 
 	if mode == ui.QueryMode && config.Query == nil {
-		die("Error: no query provided")
+		sampleQuery := "is:pr repo:neovim/neovim sort:updated-desc"
+		config.Query = &sampleQuery
 	}
 
-	ui.RenderUI(config, mode)
+	opts := ghapi.ClientOptions{
+		EnableCache: true,
+		CacheTTL:    time.Minute * 1,
+		Timeout:     5 * time.Second,
+	}
+
+	ghClient, err := ghapi.NewGraphQLClient(opts)
+	if err != nil {
+		die(`Couldn't get a Github client. Is gh (https://github.com/cli/cli) installed and configured?
+prs depends on gh for communicating with Github.
+
+Error: %s`, err.Error())
+	}
+
+	ui.RenderUI(ghClient, config, mode)
 }
