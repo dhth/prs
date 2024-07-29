@@ -29,42 +29,52 @@ const (
 	helpMsgColor                = "#83a598"
 	helpViewTitleColor          = "#83a598"
 	toolNameColor               = "#b8bb26"
+	fetchingColor               = "#928374"
 )
+
+func getDynamicStyle(author string) lipgloss.Style {
+	h := fnv.New32()
+	h.Write([]byte(author))
+	hash := h.Sum32()
+
+	color := colors[int(hash)%len(colors)]
+
+	st := lipgloss.NewStyle().
+		PaddingRight(1).
+		Foreground(lipgloss.Color(color))
+
+	return st
+}
 
 var (
 	baseStyle = lipgloss.NewStyle().
-			PaddingLeft(1).
-			PaddingRight(1).
 			Foreground(lipgloss.Color(defaultBackgroundColor))
 
 	toolNameStyle = baseStyle.
 			Align(lipgloss.Center).
+			PaddingLeft(1).
+			PaddingRight(1).
 			Bold(true).
 			Background(lipgloss.Color(toolNameColor))
 
 	listStyle = baseStyle.
 			PaddingTop(1).
-			PaddingRight(2).
-			PaddingLeft(1).
 			PaddingBottom(1).
 			Foreground(lipgloss.Color(defaultBackgroundColor))
 
 	viewPortStyle = lipgloss.NewStyle().
 			PaddingTop(1).
 			PaddingRight(2).
-			PaddingLeft(1).
 			PaddingBottom(1)
 
 	helpMsgStyle = baseStyle.
+			PaddingLeft(2).
 			Bold(true).
 			Foreground(lipgloss.Color(helpMsgColor))
 
 	dateStyle = lipgloss.NewStyle().
 			PaddingLeft(1).
 			Foreground(lipgloss.Color(dateColor))
-
-	repoStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color(repoColor))
 
 	numReviewsStyle = lipgloss.NewStyle().
 			PaddingLeft(1).
@@ -83,28 +93,6 @@ var (
 
 	deletionsStyle = linesChangedStyle.
 			Foreground(lipgloss.Color(deletionsColor))
-
-	authorColors = []string{
-		"#ccccff", // Lavender Blue
-		"#ffa87d", // Light orange
-		"#7385D8", // Light blue
-		"#fabd2f", // Bright Yellow
-		"#00abe5", // Deep Sky
-		"#d3691e", // Chocolate
-	}
-	authorStyle = func(author string) lipgloss.Style {
-		h := fnv.New32()
-		h.Write([]byte(author))
-		hash := h.Sum32()
-
-		color := authorColors[int(hash)%len(authorColors)]
-
-		st := lipgloss.NewStyle().
-			PaddingRight(1).
-			Foreground(lipgloss.Color(color))
-
-		return st
-	}
 
 	prStyle = func(state string) lipgloss.Style {
 		st := lipgloss.NewStyle().
@@ -151,8 +139,12 @@ var (
 			Foreground(lipgloss.Color(defaultBackgroundColor)).
 			Background(lipgloss.Color(footerColor))
 
-	helpVPTitleStyle = baseStyle.
-				Bold(true).
-				Background(lipgloss.Color(helpViewTitleColor)).
-				Align(lipgloss.Left)
+	titleStyle = lipgloss.NewStyle().
+			PaddingLeft(1).
+			PaddingRight(1).
+			Bold(true).
+			Foreground(lipgloss.Color(defaultBackgroundColor))
+
+	helpVPTitleStyle = titleStyle.
+				Background(lipgloss.Color(helpViewTitleColor))
 )

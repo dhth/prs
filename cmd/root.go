@@ -4,14 +4,18 @@ import (
 	"fmt"
 	"os"
 	"os/user"
+	"strings"
+	"time"
 
 	"flag"
 
+	ghapi "github.com/cli/go-gh/v2/pkg/api"
 	"github.com/dhth/prs/ui"
 )
 
 var (
-	modeFlag = flag.String("mode", "repos", "mode to run prs in; values: repos, reviewer, author")
+	modeFlag  = flag.String("mode", "query", "mode to run prs in; values: query, repos, reviewer, author")
+	queryFlag = flag.String("query", "", "query to filter PRs by")
 )
 
 func die(msg string, args ...any) {
@@ -42,22 +46,35 @@ func Execute() {
 
 	_, err = os.Stat(configFilePathExp)
 	if os.IsNotExist(err) {
-		die(cfgErrSuggestion(fmt.Sprintf("Error: file doesn't exist at %q", configFilePathExp)))
+		die(fmt.Sprintf("Error: config file doesn't exist at %q", configFilePathExp))
 	}
 
 	config, err := readConfig(configFilePathExp)
 	if err != nil {
-		die(cfgErrSuggestion(fmt.Sprintf("Error reading config: %s", err.Error())))
+		die(fmt.Sprintf("Error reading config: %s", err.Error()))
 	}
 
-	if len(config.Repos) == 0 {
-		die(cfgErrSuggestion("Error: no repos found in config file"))
+	if *queryFlag != "" {
+		config.Query = queryFlag
+	}
+
+	if config.Query != nil {
+		if strings.Contains(*config.Query, "type:issue") || strings.Contains(*config.Query, "type: issue") {
+			die("type:issue cannot be used in the query")
+		}
+
+		if !strings.Contains(*config.Query, "type:pr") && !strings.Contains(*config.Query, "type: pr") {
+			updatedQuery := fmt.Sprintf("type: pr %s", *config.Query)
+			config.Query = &updatedQuery
+		}
 	}
 
 	var mode ui.Mode
 	switch *modeFlag {
 	case "repos":
 		mode = ui.RepoMode
+	case "query":
+		mode = ui.QueryMode
 	case "reviewer":
 		mode = ui.ReviewerMode
 	case "author":
@@ -66,5 +83,28 @@ func Execute() {
 		die("unknown mode provided; possible values: repos, reviewer, author")
 	}
 
-	ui.RenderUI(config, mode)
+	if mode == ui.RepoMode && len(config.Repos) == 0 {
+		die("Error: no repos found in config file")
+	}
+
+	if mode == ui.QueryMode && config.Query == nil {
+		sampleQuery := "is:pr repo:neovim/neovim sort:updated-desc"
+		config.Query = &sampleQuery
+	}
+
+	opts := ghapi.ClientOptions{
+		EnableCache: true,
+		CacheTTL:    time.Minute * 1,
+		Timeout:     5 * time.Second,
+	}
+
+	ghClient, err := ghapi.NewGraphQLClient(opts)
+	if err != nil {
+		die(`Couldn't get a Github client. Is gh (https://github.com/cli/cli) installed and configured?
+prs depends on gh for communicating with Github.
+
+Error: %s`, err.Error())
+	}
+
+	ui.RenderUI(ghClient, config, mode)
 }

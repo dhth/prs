@@ -1,15 +1,12 @@
 package ui
 
 import (
-	"log"
-	"time"
-
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/lipgloss"
 	ghapi "github.com/cli/go-gh/v2/pkg/api"
 )
 
-func InitialModel(config Config, mode Mode) model {
+func InitialModel(ghClient *ghapi.GraphQLClient, config Config, mode Mode) model {
 
 	repoListItems := make([]list.Item, len(config.Repos))
 	if mode == RepoMode {
@@ -22,23 +19,12 @@ func InitialModel(config Config, mode Mode) model {
 	prListDel := newPRListItemDel()
 	prTLListDel := newPRTLListItemDel()
 
-	opts := ghapi.ClientOptions{
-		EnableCache: true,
-		CacheTTL:    time.Second * 30,
-		Timeout:     5 * time.Second,
-	}
-	client, err := ghapi.NewGraphQLClient(opts)
-	if err != nil {
-		log.Fatalf("err getting client: %s", err.Error())
-	}
-
 	prTLCache := make(map[string][]*prTLItemResult)
 
 	m := model{
 		mode:            mode,
 		config:          config,
-		ghClient:        client,
-		prCount:         config.PRCount,
+		ghClient:        ghClient,
 		prsList:         list.New(nil, prListDel, 0, 0),
 		prTLList:        list.New(nil, prTLListDel, 0, 0),
 		prTLCache:       prTLCache,
@@ -57,20 +43,20 @@ func InitialModel(config Config, mode Mode) model {
 		m.repoList.Styles.Title = m.repoList.Styles.Title.Background(lipgloss.Color(repoListColor)).
 			Foreground(lipgloss.Color(defaultBackgroundColor)).
 			Bold(true)
-	case ReviewerMode, AuthorMode:
+	case QueryMode, ReviewerMode, AuthorMode:
 		m.activePane = prList
 	}
 
-	m.prsList.Title = "fetching..."
+	m.prsList.Title = "fetching PRs..."
 	m.prsList.SetStatusBarItemName("PR", "PRs")
 	m.prsList.DisableQuitKeybindings()
 	m.prsList.SetShowHelp(false)
 	m.prsList.SetFilteringEnabled(false)
-	m.prsList.Styles.Title = m.prsList.Styles.Title.Background(lipgloss.Color(prListColor)).
+	m.prsList.Styles.Title = m.prsList.Styles.Title.Background(lipgloss.Color(fetchingColor)).
 		Foreground(lipgloss.Color(defaultBackgroundColor)).
 		Bold(true)
 
-	m.prTLList.Title = "PR Timeline"
+	m.prTLList.Title = "fetching timeline..."
 	m.prTLList.SetStatusBarItemName("item", "items")
 	m.prTLList.DisableQuitKeybindings()
 	m.prTLList.SetShowHelp(false)

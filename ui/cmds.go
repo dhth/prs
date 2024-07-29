@@ -75,37 +75,47 @@ func hideHelp(interval time.Duration) tea.Cmd {
 	})
 }
 
-func fetchPRS(ghClient *ghapi.GraphQLClient, repoOwner string, repoName string, prCount int) tea.Cmd {
-	return func() tea.Msg {
-		prs, err := getPRs(ghClient, repoOwner, repoName, prCount)
-		return prsFetchedMsg{prs, err}
-	}
-}
-
 func fetchViewerLogin(ghClient *ghapi.GraphQLClient) tea.Cmd {
 	return func() tea.Msg {
-		login, err := getViewerLogin(ghClient)
+		login, err := getViewerLoginData(ghClient)
 		return viewerLoginFetched{login, err}
 	}
 }
 
-func fetchPRsToReview(ghClient *ghapi.GraphQLClient, authorLogin string) tea.Cmd {
+func fetchPRSFromQuery(ghClient *ghapi.GraphQLClient, queryStr string, prCount int) tea.Cmd {
 	return func() tea.Msg {
-		prs, err := getPRsToReview(ghClient, authorLogin)
+		prs, err := getPRDataFromQuery(ghClient, queryStr, prCount)
+		return prsFetchedMsg{prs, err}
+	}
+}
+
+func fetchPRSForRepo(ghClient *ghapi.GraphQLClient, repoOwner string, repoName string, prCount int) tea.Cmd {
+	return func() tea.Msg {
+		queryStr := fmt.Sprintf("is:pr repo:%s/%s sort:updated-desc", repoOwner, repoName)
+		prs, err := getPRDataFromQuery(ghClient, queryStr, prCount)
+		return prsFetchedMsg{prs, err}
+	}
+}
+
+func fetchPRsToReview(ghClient *ghapi.GraphQLClient, authorLogin string, prCount int) tea.Cmd {
+	return func() tea.Msg {
+		queryStr := fmt.Sprintf("is:pr state:open review-requested:%s sort:updated-desc", authorLogin)
+		prs, err := getPRDataFromQuery(ghClient, queryStr, prCount)
 		return reviewPRsFetchedMsg{prs, err}
 	}
 }
 
-func fetchAuthoredPRs(ghClient *ghapi.GraphQLClient, authorLogin string) tea.Cmd {
+func fetchAuthoredPRs(ghClient *ghapi.GraphQLClient, authorLogin string, prCount int) tea.Cmd {
 	return func() tea.Msg {
-		prs, err := getAuthoredPRs(ghClient, authorLogin)
+		queryStr := fmt.Sprintf("is:pr is:open author:%s sort:updated-desc", authorLogin)
+		prs, err := getPRDataFromQuery(ghClient, queryStr, prCount)
 		return authoredPRsFetchedMsg{prs, err}
 	}
 }
 
 func fetchPRTLItems(ghClient *ghapi.GraphQLClient, repoOwner string, repoName string, prNumber int, tlItemsCount int, setItems bool) tea.Cmd {
 	return func() tea.Msg {
-		prTLItems, err := getPRTL(ghClient, repoOwner, repoName, prNumber, tlItemsCount)
+		prTLItems, err := getPRTLData(ghClient, repoOwner, repoName, prNumber, tlItemsCount)
 		return prTLFetchedMsg{repoOwner, repoName, prNumber, prTLItems, setItems, err}
 	}
 }
