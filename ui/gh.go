@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"log"
+
 	ghapi "github.com/cli/go-gh/v2/pkg/api"
 	ghgql "github.com/cli/shurcooL-graphql"
 )
@@ -39,9 +41,11 @@ func getPRMetadata(ghClient *ghapi.GraphQLClient, repoOwner string, repoName str
 		"issuesCount":       ghgql.Int(issuesCount),
 		"participantsCount": ghgql.Int(participantsCount),
 		"commentsCount":     ghgql.Int(commentsCount),
+		"commitsCount":      ghgql.Int(commitsCount),
 	}
 	err := ghClient.Query("PRTL", &query, variables)
 	if err != nil {
+		log.Printf("error: %s\n", err)
 		return prDetails{}, err
 	}
 	return query.RepositoryOwner.Repository.PullRequest, nil

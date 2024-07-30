@@ -44,7 +44,7 @@ prs has 6 views:
   ✅ implies                        APPROVED
 
   d                                 Open PR Details View
-  ctrl+b                            Open PR in the browser
+  ctrl+b                            Open PR in browser
   ctrl+r                            Reload PR list
   enter                             Switch focus to PR Timeline View for currently selected PR
   enter                             Show commit/revision range
@@ -61,5 +61,11 @@ prs has 6 views:
 ### PR Details View
 
 ```text
+  h/N/←                             Go to previous section
+  l/n/→                             Go to next section
+  1/2/3...                          Go to specific section
+  J/]                               Go to next PR
+  K/[                               Go to previous PR
   d                                 Go back to PR List View
+  ctrl+b                            Open PR in browser
 ```

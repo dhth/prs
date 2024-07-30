@@ -37,6 +37,7 @@ const (
 	issuesCount       = 10
 	participantsCount = 30
 	commentsCount     = 10
+	commitsCount      = 30
 )
 
 type terminalDetails struct {
@@ -174,9 +175,42 @@ type prDetails struct {
 			}
 		}
 	} `graphql:"comments (first: $commentsCount)"`
+	Commits struct {
+		TotalCount int
+		Nodes      []struct {
+			Commit struct {
+				Oid             string
+				MessageHeadline string
+				AuthoredDate    time.Time
+				Author          struct {
+					Name string
+				}
+			}
+		}
+	} `graphql:"commits (last: $commitsCount)"`
 	MergedBy *struct {
 		Login string
 	}
+}
+
+type PRDetailSection uint
+
+const (
+	PRMetadata PRDetailSection = iota
+	PRReferences
+	PRDescription
+	PRFilesChanged
+	PRCommits
+	PRComments
+)
+
+var PRDetailsSectionList = []PRDetailSection{
+	PRMetadata,
+	PRReferences,
+	PRDescription,
+	PRFilesChanged,
+	PRCommits,
+	PRComments,
 }
 
 type prReviewComment struct {
@@ -298,8 +332,7 @@ type prTLQuery struct {
 	} `graphql:"repositoryOwner(login: $repositoryOwner)"`
 }
 
-func (pr prDetails) DetailsMd() string {
-	// metadata
+func (pr prDetails) Metadata() string {
 	var metadata []string
 	metadata = append(metadata, fmt.Sprintf("- %s `@%s`",
 		RightPadTrim("Author", prDetailsMetadataKeyPadding),
@@ -369,6 +402,13 @@ func (pr prDetails) DetailsMd() string {
 		))
 	}
 
+	if pr.Commits.TotalCount > 0 {
+		metadata = append(metadata, fmt.Sprintf("- %s %d",
+			RightPadTrim("Commits", prDetailsMetadataKeyPadding),
+			pr.Commits.TotalCount,
+		))
+	}
+
 	if pr.Comments.TotalCount > 0 {
 		metadata = append(metadata, fmt.Sprintf("- %s %d",
 			RightPadTrim("Comments", prDetailsMetadataKeyPadding),
@@ -388,95 +428,101 @@ func (pr prDetails) DetailsMd() string {
 			prDetailsMetadataKeyPadding),
 		))
 	}
+	return fmt.Sprintf(`
+## Metadata
 
-	// issues
-	var issueReferences string
-	if len(pr.IssueReferences.Nodes) > 0 {
-		issues := make([]string, len(pr.IssueReferences.Nodes))
-		for i, iss := range pr.IssueReferences.Nodes {
-			issues[i] = fmt.Sprintf("- `#%d`: %s (%s)", iss.Number, iss.Title, iss.Url)
-		}
-		metadata = append(metadata, fmt.Sprintf(`
----
+%s`, strings.Join(metadata, "\n"))
+}
 
-## Referenced by
-
-%s
-`, strings.Join(issues, "\n")))
-	}
-
-	// body
-	var body string
-	if pr.Body != "" {
-		body = fmt.Sprintf(`
----
-
+func (pr prDetails) Description() string {
+	return fmt.Sprintf(`
 ## Description
 
-%s
-        `, pr.Body)
+%s`, pr.Body)
+}
+
+func (pr prDetails) References() string {
+	issues := make([]string, len(pr.IssueReferences.Nodes))
+	for i, iss := range pr.IssueReferences.Nodes {
+		issues[i] = fmt.Sprintf("- `#%d`: %s (%s)", iss.Number, iss.Title, iss.Url)
 	}
+	return fmt.Sprintf(`
+## Referenced by
 
-	// files changed
-	var fcStr string
-	if len(pr.Files.Nodes) > 0 {
-		fc := make([]string, len(pr.Files.Nodes))
-		for i, f := range pr.Files.Nodes {
-			var additions string
-			var deletions string
+%s`, strings.Join(issues, "\n"))
+}
 
-			if f.Additions > 0 {
-				additions = fmt.Sprintf(" `+%d`", f.Additions)
-			}
+func (pr prDetails) FilesChanged() string {
+	fc := make([]string, len(pr.Files.Nodes))
+	for i, f := range pr.Files.Nodes {
+		var additions string
+		var deletions string
 
-			if f.Deletions > 0 {
-				deletions = fmt.Sprintf(" `-%d`", f.Deletions)
-			}
-
-			fc[i] = fmt.Sprintf("- %s%s%s", f.Path, additions, deletions)
+		if f.Additions > 0 {
+			additions = fmt.Sprintf(" `+%d`", f.Additions)
 		}
-		fcStr = fmt.Sprintf(`
----
 
+		if f.Deletions > 0 {
+			deletions = fmt.Sprintf(" `-%d`", f.Deletions)
+		}
+
+		fc[i] = fmt.Sprintf("- %s%s%s", f.Path, additions, deletions)
+	}
+	return fmt.Sprintf(`
 ## Files changed
 
-%s
-`, strings.Join(fc, "\n"))
+%s`, strings.Join(fc, "\n"))
+}
+
+func (pr prDetails) CommitsList() string {
+	var commitsStr string
+
+	commits := make([]string, len(pr.Commits.Nodes))
+	for i, c := range pr.Commits.Nodes {
+		hash := c.Commit.Oid
+		if len(hash) >= commitHashLen {
+			hash = hash[:commitHashLen]
+		}
+
+		commits[i] = fmt.Sprintf("- `%s`: %s **(%s)** `<%s>`",
+			hash,
+			c.Commit.MessageHeadline,
+			humanize.Time(c.Commit.AuthoredDate),
+			c.Commit.Author.Name,
+		)
 	}
 
-	// comments
-	var commentsStr string
+	var commitsNumStr string
+	if len(pr.Commits.Nodes) < pr.Commits.TotalCount {
+		commitsNumStr = fmt.Sprintf(" (last %d out of %d)", len(pr.Comments.Nodes), pr.Comments.TotalCount)
+	}
 
-	if len(pr.Comments.Nodes) > 0 {
-		comments := make([]string, len(pr.Comments.Nodes))
-		for i, c := range pr.Comments.Nodes {
-			comments[i] = fmt.Sprintf("`@%s` (%s):\n\n%s", c.Author.Login, humanize.Time(c.UpdatedAt), c.Body)
-		}
+	commitsStr = fmt.Sprintf(`
+## Commits%s
 
-		var commentsNumStr string
-		if len(pr.Comments.Nodes) < pr.Comments.TotalCount {
-			commentsNumStr = fmt.Sprintf(" (first %d out of %d)", len(pr.Comments.Nodes), pr.Comments.TotalCount)
-		}
+%s
+`, commitsNumStr, strings.Join(commits, "\n"))
 
-		commentsStr = fmt.Sprintf(`
----
+	return commitsStr
+}
 
+func (pr prDetails) CommentsList() string {
+
+	comments := make([]string, len(pr.Comments.Nodes))
+	for i, c := range pr.Comments.Nodes {
+		comments[i] = fmt.Sprintf("`@%s` (%s):\n\n%s", c.Author.Login, humanize.Time(c.UpdatedAt), c.Body)
+	}
+
+	var commentsNumStr string
+	if len(pr.Comments.Nodes) < pr.Comments.TotalCount {
+		commentsNumStr = fmt.Sprintf(" (first %d out of %d)", len(pr.Comments.Nodes), pr.Comments.TotalCount)
+	}
+
+	return fmt.Sprintf(`
 ## Comments%s
 
 %s
 `, commentsNumStr, strings.Join(comments, "\n\n▬▬▬▬▬▬\n\n"))
-
-	}
-
-	details := fmt.Sprintf(`# %d: %s
-
-%s
-%s
-%s
-%s
-%s`, pr.Number, pr.PRTitle, strings.Join(metadata, "\n"), issueReferences, body, fcStr, commentsStr)
-
-	return details
 }
 
 func (repo Repo) Title() string {
