@@ -26,22 +26,23 @@ func getPRDataFromQuery(ghClient *ghapi.GraphQLClient, queryStr string, prCount 
 	return prs, nil
 }
 
-func getPRMetadata(ghClient *ghapi.GraphQLClient, repoOwner string, repoName string, prNumber int) (prMetadata, error) {
-	var query prMetadataQuery
+func getPRMetadata(ghClient *ghapi.GraphQLClient, repoOwner string, repoName string, prNumber int) (prDetails, error) {
+	var query prDetailsQuery
 
 	variables := map[string]interface{}{
 		"repositoryOwner":   ghgql.String(repoOwner),
 		"repositoryName":    ghgql.String(repoName),
 		"pullRequestNumber": ghgql.Int(prNumber),
-		"filesCount":        ghgql.Int(50),
-		"labelsCount":       ghgql.Int(50),
-		"assigneesCount":    ghgql.Int(10),
-		"issuesCount":       ghgql.Int(10),
-		"participantsCount": ghgql.Int(30),
+		"filesCount":        ghgql.Int(filesCount),
+		"labelsCount":       ghgql.Int(labelsCount),
+		"assigneesCount":    ghgql.Int(assigneesCount),
+		"issuesCount":       ghgql.Int(issuesCount),
+		"participantsCount": ghgql.Int(participantsCount),
+		"commentsCount":     ghgql.Int(commentsCount),
 	}
 	err := ghClient.Query("PRTL", &query, variables)
 	if err != nil {
-		return prMetadata{}, err
+		return prDetails{}, err
 	}
 	return query.RepositoryOwner.Repository.PullRequest, nil
 }

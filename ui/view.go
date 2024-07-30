@@ -20,13 +20,13 @@ func (m model) View() string {
 	}
 
 	switch m.activePane {
-	case prList:
+	case prListView:
 		content = listStyle.Render(m.prsList.View())
-	case prTLList:
+	case prTLListView:
 		content = listStyle.Render(m.prTLList.View())
-	case repoList:
+	case repoListView:
 		content = listStyle.Render(m.repoList.View())
-	case prDetails:
+	case prDetailsView:
 		if !m.prRevCmtVPReady {
 			content = "\n  Initializing..."
 		} else {
@@ -34,7 +34,7 @@ func (m model) View() string {
 				prDetailsTitleStyle.Render(m.prDetailsTitle),
 				m.prDetailsVP.View()))
 		}
-	case prRevCmts:
+	case prRevCmtsView:
 		var prRevCmtsVP string
 		if !m.prRevCmtVPReady {
 			prRevCmtsVP = "\n  Initializing..."

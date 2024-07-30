@@ -13,12 +13,12 @@ import (
 type Pane uint
 
 const (
-	repoList Pane = iota
-	prList
-	prDetails
-	reviewPRList
-	prTLList
-	prRevCmts
+	repoListView Pane = iota
+	prListView
+	prDetailsView
+	reviewPRListView
+	prTLListView
+	prRevCmtsView
 	helpView
 )
 
@@ -46,7 +46,7 @@ type model struct {
 	prDetailsTitle   string
 	prDetailsVP      viewport.Model
 	prDetailsVPReady bool
-	prDetailsCache   map[string]prMetadata
+	prDetailsCache   map[string]prDetails
 	prTLCache        map[string][]*prTLItemResult
 	message          string
 	helpVP           viewport.Model

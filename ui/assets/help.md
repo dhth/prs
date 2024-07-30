@@ -4,12 +4,13 @@
 
 ## Views
 
-prs has 5 views:
+prs has 6 views:
 
 - PR List View
+- PR Details View
 - PR Timeline List View
 - PR Review Comments View
-- Repo List View (only applicable when -mode=repos)
+- Repo List View (only applicable when --mode=repos)
 - Help View (this one)
 
 ## Keyboard Shortcuts
@@ -17,7 +18,7 @@ prs has 5 views:
 ### General
 
 ```text
-  tab                               Switch focus between PR List and PR Timeline Pane
+  tab/shift+tab                     Switch focus between PR List and PR Timeline Pane
   1                                 Switch focus to PR List View
   2                                 Switch focus to PR Timeline List View
   3                                 Switch focus to PR Review Comments View
@@ -42,6 +43,7 @@ prs has 5 views:
   🟡 implies                        REVIEW_REQUIRED
   ✅ implies                        APPROVED
 
+  d                                 Open PR Details View
   ctrl+b                            Open PR in the browser
   ctrl+r                            Reload PR list
   enter                             Switch focus to PR Timeline View for currently selected PR
@@ -52,6 +54,12 @@ prs has 5 views:
 
 ```text
   ctrl+b                            Open timeline item in browser
-  ctrl+r                            Reload timeline list
+  ctrl+r                            Reload timeline list and PR details
   enter                             Switch focus to Review Comments View for currently selected item
+```
+
+### PR Details View
+
+```text
+  d                                 Go back to PR List View
 ```

@@ -15,7 +15,7 @@ type prMetadataFetchedMsg struct {
 	repoOwner string
 	repoName  string
 	prNumber  int
-	metadata  prMetadata
+	metadata  prDetails
 	err       error
 }
 

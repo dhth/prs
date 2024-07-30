@@ -37,26 +37,27 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case "ctrl+c", "q", "esc":
 			switch m.activePane {
-			case repoList:
+			case repoListView:
 				if !m.repoChosen {
 					return m, tea.Quit
 				}
 				m.activePane = m.lastPane
 			case helpView:
 				m.activePane = m.lastPane
-			case prRevCmts:
+			case prRevCmtsView:
 				m.prRevCmtVP.GotoTop()
-				m.activePane = prTLList
-			case prTLList:
+				m.activePane = prTLListView
+			case prTLListView:
 				m.prTLList.ResetSelected()
-				m.activePane = prList
-			case prDetails:
-				m.activePane = prList
-				m.lastPane = prList
-			case prList:
+				m.activePane = prListView
+			case prDetailsView:
+				m.activePane = prListView
+				m.lastPane = prListView
+			case prListView:
 				if m.mode == RepoMode {
-					m.activePane = repoList
+					m.activePane = repoListView
 					m.repoChosen = false
+					break
 				}
 				return m, tea.Quit
 			default:
@@ -65,7 +66,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "ctrl+r":
 			switch m.activePane {
-			case prList:
+			case prListView:
 
 				switch m.mode {
 				case RepoMode:
@@ -80,7 +81,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.prsList.Title = "fetching PRs..."
 				m.prsList.Styles.Title = m.prsList.Styles.Title.Background(lipgloss.Color(fetchingColor))
 
-			case prTLList:
+			case prTLListView:
 				pr, ok := m.prsList.SelectedItem().(*prResult)
 				if !ok {
 					break
@@ -94,12 +95,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.prTLList.Styles.Title = m.prTLList.Styles.Title.Background(lipgloss.Color(fetchingColor))
 			}
 		case "1":
-			if m.activePane != prList {
-				m.activePane = prList
+			if m.activePane != prListView {
+				m.activePane = prListView
 			}
 		case "enter":
 			switch m.activePane {
-			case prList:
+			case prListView:
 				setTlCmd, ok := m.setTL()
 				if !ok {
 					m.message = "Could't get repo/pr details. Inform @dhth on github."
@@ -108,7 +109,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						cmds = append(cmds, setTlCmd)
 					}
 				}
-			case prTLList:
+			case prTLListView:
 				item, ok := m.prTLList.SelectedItem().(*prTLItemResult)
 				if ok {
 					if item.item.Type == tlItemPRReview {
@@ -118,17 +119,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						}
 
 						m.setPRTLContent(revCmts)
-						m.activePane = prRevCmts
+						m.activePane = prRevCmtsView
 					}
 				}
-			case repoList:
+			case repoListView:
 				selected := m.repoList.SelectedItem()
 				if selected != nil {
 					cmds = append(cmds, chooseRepo(selected.FilterValue()))
 				}
 			}
 		case "2":
-			if m.activePane != prTLList {
+			if m.activePane != prTLListView {
 				setTlCmd, ok := m.setTL()
 				if !ok {
 					m.message = "Could't get repo/pr details. Inform @dhth on github."
@@ -139,7 +140,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 		case "3":
-			if m.activePane == prTLList {
+			if m.activePane == prTLListView {
 				item, ok := m.prTLList.SelectedItem().(*prTLItemResult)
 				if ok {
 					if item.item.Type == tlItemPRReview {
@@ -149,23 +150,23 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						}
 
 						m.setPRTLContent(revCmts)
-						m.activePane = prRevCmts
+						m.activePane = prRevCmtsView
 					}
 				}
 			}
 
 		case "j", "down":
-			if m.activePane != prRevCmts && m.activePane != helpView && m.activePane != prDetails {
+			if m.activePane != prRevCmtsView && m.activePane != helpView && m.activePane != prDetailsView {
 				break
 			}
 
 			switch m.activePane {
-			case prRevCmts:
+			case prRevCmtsView:
 				if m.prRevCmtVP.AtBottom() {
 					break
 				}
 				m.prRevCmtVP.LineDown(viewPortMoveLineCount)
-			case prDetails:
+			case prDetailsView:
 				if m.prDetailsVP.AtBottom() {
 					break
 				}
@@ -178,17 +179,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case "k", "up":
-			if m.activePane != prRevCmts && m.activePane != helpView && m.activePane != prDetails {
+			if m.activePane != prRevCmtsView && m.activePane != helpView && m.activePane != prDetailsView {
 				break
 			}
 
 			switch m.activePane {
-			case prRevCmts:
+			case prRevCmtsView:
 				if m.prRevCmtVP.AtTop() {
 					break
 				}
 				m.prRevCmtVP.LineUp(viewPortMoveLineCount)
-			case prDetails:
+			case prDetailsView:
 				if m.prDetailsVP.AtTop() {
 					break
 				}
@@ -201,11 +202,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case "tab", "shift+tab":
-			if m.activePane == helpView || m.activePane == prDetails {
+			if m.activePane == helpView || m.activePane == prDetailsView {
 				break
 			}
 
-			if m.activePane == prList {
+			if m.activePane == prListView {
 				setTlCmd, ok := m.setTL()
 				if !ok {
 					m.message = "Could't get repo/pr details. Inform @dhth on github."
@@ -215,13 +216,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 				}
 			} else {
-				m.activePane = prList
+				m.activePane = prListView
 			}
 		case "ctrl+s":
 			if m.mode == RepoMode {
-				if m.activePane != repoList {
+				if m.activePane != repoListView {
 					m.lastPane = m.activePane
-					m.activePane = repoList
+					m.activePane = repoListView
 				} else {
 					m.activePane = m.lastPane
 				}
@@ -229,14 +230,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "ctrl+b":
 			switch m.activePane {
-			case prList, prDetails:
+			case prListView, prDetailsView:
 				pr, ok := m.prsList.SelectedItem().(*prResult)
 				if !ok {
 					break
 				}
 
 				cmds = append(cmds, openURLInBrowser(pr.pr.Url))
-			case prTLList, prRevCmts:
+			case prTLListView, prRevCmtsView:
 				item, ok := m.prTLList.SelectedItem().(*prTLItemResult)
 				if !ok {
 					break
@@ -255,7 +256,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case "ctrl+d":
-			if m.activePane != prList && m.activePane != prTLList {
+			if m.activePane != prListView && m.activePane != prTLListView {
 				break
 			}
 
@@ -270,7 +271,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.config.DiffPager))
 
 		case "ctrl+v":
-			if m.activePane == prList || m.activePane == prTLList {
+			if m.activePane == prListView || m.activePane == prTLListView {
 				switch m.mode {
 				case RepoMode:
 					pr, ok := m.prsList.SelectedItem().(*prResult)
@@ -287,16 +288,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 		case "g":
-			if m.activePane == prRevCmts {
+			if m.activePane == prRevCmtsView {
 				m.prRevCmtVP.GotoTop()
 			}
 		case "G":
-			if m.activePane == prRevCmts {
+			if m.activePane == prRevCmtsView {
 				m.prRevCmtVP.GotoBottom()
 			}
 
 		case "h":
-			if m.activePane != prDetails {
+			if m.activePane != prDetailsView {
 				break
 			}
 
@@ -314,7 +315,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case "l":
-			if m.activePane != prDetails {
+			if m.activePane != prDetailsView {
 				break
 			}
 
@@ -332,11 +333,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case "d":
-			if m.activePane != prList && m.activePane != prDetails {
+			if m.activePane != prListView && m.activePane != prDetailsView {
 				break
 			}
 
-			if m.activePane == prDetails {
+			if m.activePane == prDetailsView {
 				m.activePane = m.lastPane
 				break
 			}
@@ -353,7 +354,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			m.lastPane = m.activePane
-			m.activePane = prDetails
+			m.activePane = prDetailsView
 
 		case "?":
 			switch m.activePane {
@@ -444,7 +445,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.prsList.SetItems(prs)
 
-		if m.activePane == prTLList {
+		if m.activePane == prTLListView {
 			m.setTL()
 		}
 
@@ -458,7 +459,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.prsList.Styles.Title = m.prsList.Styles.Title.Background(lipgloss.Color(fetchingColor))
 			m.repoOwner = repoDetails[0]
 			m.repoName = repoDetails[1]
-			m.activePane = prList
+			m.activePane = prListView
 			m.prsList.ResetSelected()
 			m.prTLList.ResetSelected()
 			cmds = append(cmds, fetchPRSForRepo(m.ghClient, m.repoOwner, m.repoName, m.config.PRCount))
@@ -625,7 +626,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.prTLList.SetItems(prTLItems)
 			m.prTLList.Title = fmt.Sprintf("PR #%d Timeline", msg.prNumber)
 			m.prTLList.Styles.Title = m.prTLList.Styles.Title.Background(lipgloss.Color(prTLListColor))
-			m.activePane = prTLList
+			m.activePane = prTLListView
 		}
 
 		m.prTLList.ResetSelected()
@@ -645,19 +646,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	switch m.activePane {
-	case prList:
+	case prListView:
 		m.prsList, cmd = m.prsList.Update(msg)
 		cmds = append(cmds, cmd)
-	case prTLList:
+	case prTLListView:
 		m.prTLList, cmd = m.prTLList.Update(msg)
 		cmds = append(cmds, cmd)
-	case prDetails:
+	case prDetailsView:
 		m.prDetailsVP, cmd = m.prDetailsVP.Update(msg)
 		cmds = append(cmds, cmd)
-	case prRevCmts:
+	case prRevCmtsView:
 		m.prRevCmtVP, cmd = m.prRevCmtVP.Update(msg)
 		cmds = append(cmds, cmd)
-	case repoList:
+	case repoListView:
 		m.repoList, cmd = m.repoList.Update(msg)
 		cmds = append(cmds, cmd)
 	case helpView:
@@ -704,7 +705,7 @@ func (m *model) setTL() (tea.Cmd, bool) {
 
 	m.prTLList.SetItems(tlItems)
 	m.prTLList.Title = fmt.Sprintf("PR #%d Timeline", prNumber)
-	m.activePane = prTLList
+	m.activePane = prTLListView
 
 	return nil, true
 }

@@ -19,7 +19,7 @@ func InitialModel(ghClient *ghapi.GraphQLClient, config Config, mode Mode) model
 	prListDel := newPRListItemDel()
 	prTLListDel := newPRTLListItemDel()
 
-	prDetailsCache := make(map[string]prMetadata)
+	prDetailsCache := make(map[string]prDetails)
 	prTLCache := make(map[string][]*prTLItemResult)
 
 	m := model{
@@ -48,7 +48,7 @@ func InitialModel(ghClient *ghapi.GraphQLClient, config Config, mode Mode) model
 		m.repoList.KeyMap.PrevPage.SetKeys("left", "h", "pgup")
 		m.repoList.KeyMap.NextPage.SetKeys("right", "l", "pgdown")
 	case QueryMode, ReviewerMode, AuthorMode:
-		m.activePane = prList
+		m.activePane = prListView
 	}
 
 	m.prsList.Title = "fetching PRs..."

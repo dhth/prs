@@ -30,6 +30,13 @@ const (
 	commitHashLen               = 7
 	timeFormat                  = "2006/01/02 15:04"
 	prDetailsMetadataKeyPadding = 20
+
+	filesCount        = 50
+	labelsCount       = 10
+	assigneesCount    = 10
+	issuesCount       = 10
+	participantsCount = 30
+	commentsCount     = 10
 )
 
 type terminalDetails struct {
@@ -99,42 +106,9 @@ type pr struct {
 	Reviews   struct {
 		TotalCount int
 	}
-	// Body  string
-	// Files struct {
-	// 	Nodes []struct {
-	// 		Path      string
-	// 		Additions int
-	// 		Deletions int
-	// 	}
-	// } `graphql:"files (first: $filesCount)"`
-	// Labels struct {
-	// 	Nodes []struct {
-	// 		Name string
-	// 	}
-	// } `graphql:"labels (first: $labelsCount)"`
-	// Assignees struct {
-	// 	Nodes []struct {
-	// 		Login string
-	// 	}
-	// } `graphql:"assignees (first: $assigneesCount)"`
-	// IssueReferences struct {
-	// 	Nodes []struct {
-	// 		Number int
-	// 		Title  string
-	// 		Url    string
-	// 	}
-	// } `graphql:"closingIssuesReferences (first: $issuesCount)"`
-	// Participants struct {
-	// 	Nodes []struct {
-	// 		Login string
-	// 	}
-	// } `graphql:"participants (first: $participantsCount)"`
-	// MergedBy *struct {
-	// 	Login string
-	// }
 }
 
-type prMetadata struct {
+type prDetails struct {
 	Number     int
 	PRTitle    string `graphql:"prTitle: title"`
 	Repository struct {
@@ -190,6 +164,16 @@ type prMetadata struct {
 			Login string
 		}
 	} `graphql:"participants (first: $participantsCount)"`
+	Comments struct {
+		TotalCount int
+		Nodes      []struct {
+			Body      string
+			UpdatedAt time.Time
+			Author    struct {
+				Login string
+			}
+		}
+	} `graphql:"comments (first: $commentsCount)"`
 	MergedBy *struct {
 		Login string
 	}
@@ -221,10 +205,10 @@ type prSearchQuery struct {
 	} `graphql:"search(query: $query, type: ISSUE, first: $count)"`
 }
 
-type prMetadataQuery struct {
+type prDetailsQuery struct {
 	RepositoryOwner struct {
 		Repository struct {
-			PullRequest prMetadata `graphql:"pullRequest(number: $pullRequestNumber)"`
+			PullRequest prDetails `graphql:"pullRequest(number: $pullRequestNumber)"`
 		} `graphql:"repository(name: $repositoryName)"`
 	} `graphql:"repositoryOwner(login: $repositoryOwner)"`
 }
@@ -284,7 +268,7 @@ type prTLItem struct {
 		Comments  struct {
 			TotalCount int
 			Nodes      []prReviewComment
-		} `graphql:"comments(last: 100)"`
+		} `graphql:"comments(first: 100)"`
 		Author struct {
 			Login string
 		}
@@ -314,7 +298,7 @@ type prTLQuery struct {
 	} `graphql:"repositoryOwner(login: $repositoryOwner)"`
 }
 
-func (pr prMetadata) DetailsMd() string {
+func (pr prDetails) DetailsMd() string {
 	// metadata
 	var metadata []string
 	metadata = append(metadata, fmt.Sprintf("- %s `@%s`",
@@ -382,6 +366,13 @@ func (pr prMetadata) DetailsMd() string {
 		metadata = append(metadata, fmt.Sprintf("- %s %s",
 			RightPadTrim("Labels", prDetailsMetadataKeyPadding),
 			strings.Join(labels, " "),
+		))
+	}
+
+	if pr.Comments.TotalCount > 0 {
+		metadata = append(metadata, fmt.Sprintf("- %s %d",
+			RightPadTrim("Comments", prDetailsMetadataKeyPadding),
+			pr.Comments.TotalCount,
 		))
 	}
 
@@ -453,12 +444,37 @@ func (pr prMetadata) DetailsMd() string {
 `, strings.Join(fc, "\n"))
 	}
 
+	// comments
+	var commentsStr string
+
+	if len(pr.Comments.Nodes) > 0 {
+		comments := make([]string, len(pr.Comments.Nodes))
+		for i, c := range pr.Comments.Nodes {
+			comments[i] = fmt.Sprintf("`@%s` (%s):\n\n%s", c.Author.Login, humanize.Time(c.UpdatedAt), c.Body)
+		}
+
+		var commentsNumStr string
+		if len(pr.Comments.Nodes) < pr.Comments.TotalCount {
+			commentsNumStr = fmt.Sprintf(" (first %d out of %d)", len(pr.Comments.Nodes), pr.Comments.TotalCount)
+		}
+
+		commentsStr = fmt.Sprintf(`
+---
+
+## Comments%s
+
+%s
+`, commentsNumStr, strings.Join(comments, "\n\n▬▬▬▬▬▬\n\n"))
+
+	}
+
 	details := fmt.Sprintf(`# %d: %s
 
 %s
 %s
 %s
-%s`, pr.Number, pr.PRTitle, strings.Join(metadata, "\n"), issueReferences, body, fcStr)
+%s
+%s`, pr.Number, pr.PRTitle, strings.Join(metadata, "\n"), issueReferences, body, fcStr, commentsStr)
 
 	return details
 }
