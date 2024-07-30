@@ -9,29 +9,27 @@ import (
 )
 
 const (
-	prStateOpen              = "OPEN"
-	prStateMerged            = "MERGED"
-	prStateClosed            = "CLOSED"
-	prRevDecChangesReq       = "CHANGES_REQUESTED"
-	prRevDecApproved         = "APPROVED"
-	prRevDecRevReq           = "REVIEW_REQUIRED"
-	tlItemPRCommit           = "PullRequestCommit"
-	tlItemPRReadyForReview   = "ReadyForReviewEvent"
-	tlItemPRReviewRequested  = "ReviewRequestedEvent"
-	tlItemPRReview           = "PullRequestReview"
-	tlItemMergedEvent        = "MergedEvent"
-	tlItemHeadRefForcePushed = "HeadRefForcePushedEvent"
-	reviewPending            = "PENDING"
-	reviewCommented          = "COMMENTED"
-	reviewApproved           = "APPROVED"
-	reviewChangesRequested   = "CHANGES_REQUESTED"
-	reviewDismissed          = "DISMISSED"
-
-	mergeableConflicting = "CONFLICTING"
-
-	commitHashLen = 7
-
-	timeFormat = "2006/01/02 15:04"
+	prStateOpen                 = "OPEN"
+	prStateMerged               = "MERGED"
+	prStateClosed               = "CLOSED"
+	prRevDecChangesReq          = "CHANGES_REQUESTED"
+	prRevDecApproved            = "APPROVED"
+	prRevDecRevReq              = "REVIEW_REQUIRED"
+	tlItemPRCommit              = "PullRequestCommit"
+	tlItemPRReadyForReview      = "ReadyForReviewEvent"
+	tlItemPRReviewRequested     = "ReviewRequestedEvent"
+	tlItemPRReview              = "PullRequestReview"
+	tlItemMergedEvent           = "MergedEvent"
+	tlItemHeadRefForcePushed    = "HeadRefForcePushedEvent"
+	reviewPending               = "PENDING"
+	reviewCommented             = "COMMENTED"
+	reviewApproved              = "APPROVED"
+	reviewChangesRequested      = "CHANGES_REQUESTED"
+	reviewDismissed             = "DISMISSED"
+	mergeableConflicting        = "CONFLICTING"
+	commitHashLen               = 7
+	timeFormat                  = "2006/01/02 15:04"
+	prDetailsMetadataKeyPadding = 20
 )
 
 type terminalDetails struct {
@@ -91,10 +89,72 @@ type pr struct {
 	UpdatedAt      time.Time
 	ClosedAt       *time.Time
 	MergedAt       *time.Time
+	LastEditedAt   *time.Time
 	Author         struct {
 		Login string
 	}
 	Url       string
+	Additions int
+	Deletions int
+	Reviews   struct {
+		TotalCount int
+	}
+	// Body  string
+	// Files struct {
+	// 	Nodes []struct {
+	// 		Path      string
+	// 		Additions int
+	// 		Deletions int
+	// 	}
+	// } `graphql:"files (first: $filesCount)"`
+	// Labels struct {
+	// 	Nodes []struct {
+	// 		Name string
+	// 	}
+	// } `graphql:"labels (first: $labelsCount)"`
+	// Assignees struct {
+	// 	Nodes []struct {
+	// 		Login string
+	// 	}
+	// } `graphql:"assignees (first: $assigneesCount)"`
+	// IssueReferences struct {
+	// 	Nodes []struct {
+	// 		Number int
+	// 		Title  string
+	// 		Url    string
+	// 	}
+	// } `graphql:"closingIssuesReferences (first: $issuesCount)"`
+	// Participants struct {
+	// 	Nodes []struct {
+	// 		Login string
+	// 	}
+	// } `graphql:"participants (first: $participantsCount)"`
+	// MergedBy *struct {
+	// 	Login string
+	// }
+}
+
+type prMetadata struct {
+	Number     int
+	PRTitle    string `graphql:"prTitle: title"`
+	Repository struct {
+		Owner struct {
+			Login string
+		}
+		Name string
+	}
+	State          string
+	Mergeable      string
+	IsDraft        bool
+	ReviewDecision *string
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	ClosedAt       *time.Time
+	MergedAt       *time.Time
+	LastEditedAt   *time.Time
+	Author         struct {
+		Login string
+	}
 	Additions int
 	Deletions int
 	Reviews   struct {
@@ -113,6 +173,23 @@ type pr struct {
 			Name string
 		}
 	} `graphql:"labels (first: $labelsCount)"`
+	Assignees struct {
+		Nodes []struct {
+			Login string
+		}
+	} `graphql:"assignees (first: $assigneesCount)"`
+	IssueReferences struct {
+		Nodes []struct {
+			Number int
+			Title  string
+			Url    string
+		}
+	} `graphql:"closingIssuesReferences (first: $issuesCount)"`
+	Participants struct {
+		Nodes []struct {
+			Login string
+		}
+	} `graphql:"participants (first: $participantsCount)"`
 	MergedBy *struct {
 		Login string
 	}
@@ -142,6 +219,14 @@ type prSearchQuery struct {
 			}
 		}
 	} `graphql:"search(query: $query, type: ISSUE, first: $count)"`
+}
+
+type prMetadataQuery struct {
+	RepositoryOwner struct {
+		Repository struct {
+			PullRequest prMetadata `graphql:"pullRequest(number: $pullRequestNumber)"`
+		} `graphql:"repository(name: $repositoryName)"`
+	} `graphql:"repositoryOwner(login: $repositoryOwner)"`
 }
 
 type prTLItem struct {
@@ -229,18 +314,64 @@ type prTLQuery struct {
 	} `graphql:"repositoryOwner(login: $repositoryOwner)"`
 }
 
-func (pr pr) DetailsMd() string {
+func (pr prMetadata) DetailsMd() string {
+	// metadata
 	var metadata []string
-	metadata = append(metadata, fmt.Sprintf("- Author      :  `@%s`", pr.Author.Login))
-	metadata = append(metadata, fmt.Sprintf("- Created at  :  %s (%s)", pr.CreatedAt.Format(timeFormat), humanize.Time(pr.CreatedAt)))
+	metadata = append(metadata, fmt.Sprintf("- %s `@%s`",
+		RightPadTrim("Author", prDetailsMetadataKeyPadding),
+		pr.Author.Login,
+	))
+	metadata = append(metadata, fmt.Sprintf("- %s %s (%s)",
+		RightPadTrim("Created at", prDetailsMetadataKeyPadding),
+		pr.CreatedAt.Format(timeFormat),
+		humanize.Time(pr.CreatedAt),
+	))
+	if pr.LastEditedAt != nil && *pr.LastEditedAt != pr.CreatedAt {
+		metadata = append(metadata, fmt.Sprintf("- %s %s (%s)",
+			RightPadTrim("Last edited at", prDetailsMetadataKeyPadding),
+			pr.LastEditedAt.Format(timeFormat),
+			humanize.Time(*pr.LastEditedAt),
+		))
+	}
+
+	if len(pr.Assignees.Nodes) > 0 {
+		assignees := make([]string, len(pr.Assignees.Nodes))
+		for i, l := range pr.Assignees.Nodes {
+			assignees[i] = fmt.Sprintf("`@%s`", l.Login)
+		}
+		metadata = append(metadata, fmt.Sprintf("- %s %s",
+			RightPadTrim("Assignees", prDetailsMetadataKeyPadding),
+			strings.Join(assignees, ", "),
+		))
+	}
+
+	if len(pr.Participants.Nodes) > 0 {
+		participants := make([]string, len(pr.Participants.Nodes))
+		for i, l := range pr.Participants.Nodes {
+			participants[i] = fmt.Sprintf("`@%s`", l.Login)
+		}
+		metadata = append(metadata, fmt.Sprintf("- %s %s",
+			RightPadTrim("Participants", prDetailsMetadataKeyPadding),
+			strings.Join(participants, ", "),
+		))
+	}
 
 	switch pr.State {
 	case prStateClosed:
 		if pr.ClosedAt != nil {
-			metadata = append(metadata, fmt.Sprintf("- Closed at   :  %s (%s)", pr.ClosedAt.Format(timeFormat), humanize.Time(*pr.ClosedAt)))
+			metadata = append(metadata, fmt.Sprintf("- %s %s (%s)",
+				RightPadTrim("Closed at", prDetailsMetadataKeyPadding),
+				pr.ClosedAt.Format(timeFormat),
+				humanize.Time(*pr.ClosedAt),
+			))
 		}
 	case prStateMerged:
-		metadata = append(metadata, fmt.Sprintf("- Merged at   :  %s (%s) by `@%s`", pr.MergedAt.Format(timeFormat), humanize.Time(*pr.MergedAt), pr.MergedBy.Login))
+		metadata = append(metadata, fmt.Sprintf("- %s %s (%s) by `@%s`",
+			RightPadTrim("Merged at", prDetailsMetadataKeyPadding),
+			pr.MergedAt.Format(timeFormat),
+			humanize.Time(*pr.MergedAt),
+			pr.MergedBy.Login,
+		))
 	}
 
 	if len(pr.Labels.Nodes) > 0 {
@@ -248,17 +379,54 @@ func (pr pr) DetailsMd() string {
 		for i, l := range pr.Labels.Nodes {
 			labels[i] = fmt.Sprintf("*%s*", l.Name)
 		}
-		metadata = append(metadata, fmt.Sprintf("- Labels      :  %s", strings.Join(labels, " ")))
+		metadata = append(metadata, fmt.Sprintf("- %s %s",
+			RightPadTrim("Labels", prDetailsMetadataKeyPadding),
+			strings.Join(labels, " "),
+		))
 	}
 
 	if pr.IsDraft {
-		metadata = append(metadata, "- Draft")
+		metadata = append(metadata, fmt.Sprintf("- %s `true`",
+			RightPadTrim("Is draft",
+				prDetailsMetadataKeyPadding),
+		))
 	}
 
 	if pr.Mergeable == mergeableConflicting {
-		metadata = append(metadata, "- Has conflicts")
+		metadata = append(metadata, fmt.Sprintf("- %s `true`", RightPadTrim("Has conflicts",
+			prDetailsMetadataKeyPadding),
+		))
 	}
 
+	// issues
+	var issueReferences string
+	if len(pr.IssueReferences.Nodes) > 0 {
+		issues := make([]string, len(pr.IssueReferences.Nodes))
+		for i, iss := range pr.IssueReferences.Nodes {
+			issues[i] = fmt.Sprintf("- `#%d`: %s (%s)", iss.Number, iss.Title, iss.Url)
+		}
+		metadata = append(metadata, fmt.Sprintf(`
+---
+
+## Referenced by
+
+%s
+`, strings.Join(issues, "\n")))
+	}
+
+	// body
+	var body string
+	if pr.Body != "" {
+		body = fmt.Sprintf(`
+---
+
+## Description
+
+%s
+        `, pr.Body)
+	}
+
+	// files changed
 	var fcStr string
 	if len(pr.Files.Nodes) > 0 {
 		fc := make([]string, len(pr.Files.Nodes))
@@ -277,6 +445,8 @@ func (pr pr) DetailsMd() string {
 			fc[i] = fmt.Sprintf("- %s%s%s", f.Path, additions, deletions)
 		}
 		fcStr = fmt.Sprintf(`
+---
+
 ## Files changed
 
 %s
@@ -286,15 +456,9 @@ func (pr pr) DetailsMd() string {
 	details := fmt.Sprintf(`# %d: %s
 
 %s
-
----
-
-## Description
-
 %s
-
----
-%s`, pr.Number, pr.PRTitle, strings.Join(metadata, "\n"), pr.Body, fcStr)
+%s
+%s`, pr.Number, pr.PRTitle, strings.Join(metadata, "\n"), issueReferences, body, fcStr)
 
 	return details
 }

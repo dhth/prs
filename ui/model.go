@@ -43,8 +43,10 @@ type model struct {
 	prCache          []*prResult
 	prRevCmtVP       viewport.Model
 	prRevCmtVPReady  bool
+	prDetailsTitle   string
 	prDetailsVP      viewport.Model
 	prDetailsVPReady bool
+	prDetailsCache   map[string]prMetadata
 	prTLCache        map[string][]*prTLItemResult
 	message          string
 	helpVP           viewport.Model

@@ -113,6 +113,13 @@ func fetchAuthoredPRs(ghClient *ghapi.GraphQLClient, authorLogin string, prCount
 	}
 }
 
+func fetchPRMetadata(ghClient *ghapi.GraphQLClient, repoOwner, repoName string, prNumber int) tea.Cmd {
+	return func() tea.Msg {
+		metadata, err := getPRMetadata(ghClient, repoOwner, repoName, prNumber)
+		return prMetadataFetchedMsg{repoOwner, repoName, prNumber, metadata, err}
+	}
+}
+
 func fetchPRTLItems(ghClient *ghapi.GraphQLClient, repoOwner string, repoName string, prNumber int, tlItemsCount int, setItems bool) tea.Cmd {
 	return func() tea.Msg {
 		prTLItems, err := getPRTLData(ghClient, repoOwner, repoName, prNumber, tlItemsCount)

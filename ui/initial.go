@@ -19,6 +19,7 @@ func InitialModel(ghClient *ghapi.GraphQLClient, config Config, mode Mode) model
 	prListDel := newPRListItemDel()
 	prTLListDel := newPRTLListItemDel()
 
+	prDetailsCache := make(map[string]prMetadata)
 	prTLCache := make(map[string][]*prTLItemResult)
 
 	m := model{
@@ -27,6 +28,7 @@ func InitialModel(ghClient *ghapi.GraphQLClient, config Config, mode Mode) model
 		ghClient:        ghClient,
 		prsList:         list.New(nil, prListDel, 0, 0),
 		prTLList:        list.New(nil, prTLListDel, 0, 0),
+		prDetailsCache:  prDetailsCache,
 		prTLCache:       prTLCache,
 		showHelp:        true,
 		terminalDetails: terminalDetails{width: widthBudgetDefault},

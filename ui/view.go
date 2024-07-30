@@ -31,7 +31,7 @@ func (m model) View() string {
 			content = "\n  Initializing..."
 		} else {
 			content = viewPortStyle.Render(fmt.Sprintf("  %s\n\n%s\n",
-				prDetailsTitleStyle.Render("PR Details"),
+				prDetailsTitleStyle.Render(m.prDetailsTitle),
 				m.prDetailsVP.View()))
 		}
 	case prRevCmts:

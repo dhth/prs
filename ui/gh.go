@@ -9,10 +9,8 @@ func getPRDataFromQuery(ghClient *ghapi.GraphQLClient, queryStr string, prCount 
 	var query prSearchQuery
 
 	variables := map[string]interface{}{
-		"query":       ghgql.String(queryStr),
-		"count":       ghgql.Int(prCount),
-		"filesCount":  ghgql.Int(50),
-		"labelsCount": ghgql.Int(50),
+		"query": ghgql.String(queryStr),
+		"count": ghgql.Int(prCount),
 	}
 	err := ghClient.Query("PRQuery", &query, variables)
 	if err != nil {
@@ -26,6 +24,26 @@ func getPRDataFromQuery(ghClient *ghapi.GraphQLClient, queryStr string, prCount 
 		prs = append(prs, edge.Node.pr)
 	}
 	return prs, nil
+}
+
+func getPRMetadata(ghClient *ghapi.GraphQLClient, repoOwner string, repoName string, prNumber int) (prMetadata, error) {
+	var query prMetadataQuery
+
+	variables := map[string]interface{}{
+		"repositoryOwner":   ghgql.String(repoOwner),
+		"repositoryName":    ghgql.String(repoName),
+		"pullRequestNumber": ghgql.Int(prNumber),
+		"filesCount":        ghgql.Int(50),
+		"labelsCount":       ghgql.Int(50),
+		"assigneesCount":    ghgql.Int(10),
+		"issuesCount":       ghgql.Int(10),
+		"participantsCount": ghgql.Int(30),
+	}
+	err := ghClient.Query("PRTL", &query, variables)
+	if err != nil {
+		return prMetadata{}, err
+	}
+	return query.RepositoryOwner.Repository.PullRequest, nil
 }
 
 func getViewerLoginData(ghClient *ghapi.GraphQLClient) (string, error) {

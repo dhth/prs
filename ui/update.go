@@ -2,6 +2,7 @@ package ui
 
 import (
 	_ "embed"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -20,6 +21,8 @@ const (
 var (
 	//go:embed assets/help.md
 	helpStr string
+
+	ErrPRDetailsNotCached = errors.New("PR details were not saved")
 )
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -223,38 +226,34 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.activePane = m.lastPane
 				}
 			}
+
 		case "ctrl+b":
 			switch m.activePane {
-			case prList:
-				var url string
-				switch m.mode {
-				case RepoMode, QueryMode:
-					pr, ok := m.prsList.SelectedItem().(*prResult)
-					if ok {
-						url = pr.pr.Url
-					}
-				case ReviewerMode:
-					pr, ok := m.prsList.SelectedItem().(*prResult)
-					if ok {
-						url = pr.pr.Url
-					}
+			case prList, prDetails:
+				pr, ok := m.prsList.SelectedItem().(*prResult)
+				if !ok {
+					break
 				}
-				cmds = append(cmds, openURLInBrowser(url))
+
+				cmds = append(cmds, openURLInBrowser(pr.pr.Url))
 			case prTLList, prRevCmts:
 				item, ok := m.prTLList.SelectedItem().(*prTLItemResult)
-				if ok {
-					switch item.item.Type {
-					case tlItemPRCommit:
-						cmds = append(cmds, openURLInBrowser(item.item.PullRequestCommit.Url))
-					case tlItemHeadRefForcePushed:
-						cmds = append(cmds, openURLInBrowser(item.item.HeadRefForcePushed.AfterCommit.Url))
-					case tlItemPRReview:
-						cmds = append(cmds, openURLInBrowser(item.item.PullRequestReview.Url))
-					case tlItemMergedEvent:
-						cmds = append(cmds, openURLInBrowser(item.item.MergedEvent.Url))
-					}
+				if !ok {
+					break
+				}
+
+				switch item.item.Type {
+				case tlItemPRCommit:
+					cmds = append(cmds, openURLInBrowser(item.item.PullRequestCommit.Url))
+				case tlItemHeadRefForcePushed:
+					cmds = append(cmds, openURLInBrowser(item.item.HeadRefForcePushed.AfterCommit.Url))
+				case tlItemPRReview:
+					cmds = append(cmds, openURLInBrowser(item.item.PullRequestReview.Url))
+				case tlItemMergedEvent:
+					cmds = append(cmds, openURLInBrowser(item.item.MergedEvent.Url))
 				}
 			}
+
 		case "ctrl+d":
 			if m.activePane != prList && m.activePane != prTLList {
 				break
@@ -308,7 +307,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			m.prDetailsVP.GotoTop()
-			m.setPRDetailsContent(pr)
+			err := m.setPRDetailsContent(pr)
+			if err != nil {
+				m.message = fmt.Sprintf("Error: %s. Try reloading with ctrl+r", err.Error())
+				break
+			}
 
 		case "l":
 			if m.activePane != prDetails {
@@ -322,7 +325,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			m.prDetailsVP.GotoTop()
-			m.setPRDetailsContent(pr)
+			err := m.setPRDetailsContent(pr)
+			if err != nil {
+				m.message = fmt.Sprintf("Error: %s. Try reloading with ctrl+r", err.Error())
+				break
+			}
 
 		case "d":
 			if m.activePane != prList && m.activePane != prDetails {
@@ -339,7 +346,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				break
 			}
 
-			m.setPRDetailsContent(pr)
+			err := m.setPRDetailsContent(pr)
+			if err != nil {
+				m.message = fmt.Sprintf("Error: %s. Try reloading with ctrl+r", err.Error())
+				break
+			}
+
 			m.lastPane = m.activePane
 			m.activePane = prDetails
 
@@ -503,6 +515,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				100,
 				false,
 			))
+			cmds = append(cmds, fetchPRMetadata(m.ghClient,
+				pr.Repository.Owner.Login,
+				pr.Repository.Name,
+				pr.Number,
+			))
 		}
 
 	case reviewPRsFetchedMsg:
@@ -533,6 +550,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if len(msg.prs) > 0 {
 			for _, pr := range msg.prs {
 				cmds = append(cmds, fetchPRTLItems(m.ghClient, pr.Repository.Owner.Login, pr.Repository.Name, pr.Number, 100, false))
+				cmds = append(cmds, fetchPRMetadata(m.ghClient,
+					pr.Repository.Owner.Login,
+					pr.Repository.Name,
+					pr.Number,
+				))
 			}
 		}
 	case authoredPRsFetchedMsg:
@@ -561,9 +583,23 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if len(msg.prs) > 0 {
 				for _, pr := range msg.prs {
 					cmds = append(cmds, fetchPRTLItems(m.ghClient, pr.Repository.Owner.Login, pr.Repository.Name, pr.Number, 100, false))
+					cmds = append(cmds, fetchPRMetadata(m.ghClient,
+						pr.Repository.Owner.Login,
+						pr.Repository.Name,
+						pr.Number,
+					))
 				}
 			}
 		}
+
+	case prMetadataFetchedMsg:
+		if msg.err != nil {
+			m.message = msg.err.Error()
+			break
+		}
+
+		m.prDetailsCache[fmt.Sprintf("%s/%s:%d", msg.repoOwner, msg.repoName, msg.prNumber)] = msg.metadata
+
 	case prTLFetchedMsg:
 		if msg.err != nil {
 			m.message = msg.err.Error()
@@ -699,9 +735,13 @@ func (m *model) setPRTLContent(revCmts []prReviewComment) {
 	}
 }
 
-func (m *model) setPRDetailsContent(prRes *prResult) {
+func (m *model) setPRDetailsContent(prRes *prResult) error {
 
-	details := prRes.pr.DetailsMd()
+	metadata, ok := m.prDetailsCache[fmt.Sprintf("%s/%s:%d", prRes.pr.Repository.Owner.Login, prRes.pr.Repository.Name, prRes.pr.Number)]
+	if !ok {
+		return ErrPRDetailsNotCached
+	}
+	details := metadata.DetailsMd()
 	glErr := true
 	if m.mdRenderer != nil {
 		detailsGl, err := m.mdRenderer.Render(details)
@@ -713,4 +753,7 @@ func (m *model) setPRDetailsContent(prRes *prResult) {
 	if glErr {
 		m.prDetailsVP.SetContent(details)
 	}
+	m.prDetailsTitle = fmt.Sprintf("PR #%d Details (%s/%s)", prRes.pr.Number, prRes.pr.Repository.Owner.Login, prRes.pr.Repository.Name)
+
+	return nil
 }

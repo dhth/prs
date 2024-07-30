@@ -51,7 +51,9 @@
   },
   "emph": {
     "color": "#83a598",
-    "italic": true
+    "italic": true,
+    "prefix": " ",
+    "suffix": " "
   },
   "strong": {
     "color": "#fe8019",

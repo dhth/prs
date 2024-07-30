@@ -88,7 +88,7 @@ func Execute() {
 	}
 
 	if mode == ui.QueryMode && config.Query == nil {
-		sampleQuery := "is:pr repo:neovim/neovim sort:updated-desc"
+		sampleQuery := "is:pr author:@me sort:updated-desc state:open"
 		config.Query = &sampleQuery
 	}
 
