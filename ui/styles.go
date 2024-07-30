@@ -11,6 +11,7 @@ const (
 	repoListColor               = "#b8bb26"
 	prListColor                 = "#fe8019"
 	prTLListColor               = "#d3869b"
+	prDetailsTitleColor         = "#fabd2f"
 	revCmtListColor             = "#8ec07c"
 	prOpenColor                 = "#fabd2f"
 	prMergedColor               = "#b8bb26"
@@ -64,7 +65,6 @@ var (
 
 	viewPortStyle = lipgloss.NewStyle().
 			PaddingTop(1).
-			PaddingRight(2).
 			PaddingBottom(1)
 
 	helpMsgStyle = baseStyle.
@@ -147,4 +147,7 @@ var (
 
 	helpVPTitleStyle = titleStyle.
 				Background(lipgloss.Color(helpViewTitleColor))
+
+	prDetailsTitleStyle = titleStyle.
+				Background(lipgloss.Color(prDetailsTitleColor))
 )

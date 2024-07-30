@@ -2,7 +2,10 @@ package ui
 
 import (
 	"fmt"
+	"strings"
 	"time"
+
+	"github.com/dustin/go-humanize"
 )
 
 const (
@@ -24,7 +27,11 @@ const (
 	reviewChangesRequested   = "CHANGES_REQUESTED"
 	reviewDismissed          = "DISMISSED"
 
+	mergeableConflicting = "CONFLICTING"
+
 	commitHashLen = 7
+
+	timeFormat = "2006/01/02 15:04"
 )
 
 type terminalDetails struct {
@@ -77,10 +84,13 @@ type pr struct {
 		Name string
 	}
 	State          string
+	Mergeable      string
+	IsDraft        bool
 	ReviewDecision *string
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
-	ClosedAt       string
+	ClosedAt       *time.Time
+	MergedAt       *time.Time
 	Author         struct {
 		Login string
 	}
@@ -89,6 +99,22 @@ type pr struct {
 	Deletions int
 	Reviews   struct {
 		TotalCount int
+	}
+	Body  string
+	Files struct {
+		Nodes []struct {
+			Path      string
+			Additions int
+			Deletions int
+		}
+	} `graphql:"files (first: $filesCount)"`
+	Labels struct {
+		Nodes []struct {
+			Name string
+		}
+	} `graphql:"labels (first: $labelsCount)"`
+	MergedBy *struct {
+		Login string
 	}
 }
 
@@ -201,6 +227,76 @@ type prTLQuery struct {
 			} `graphql:"pullRequest(number: $pullRequestNumber)"`
 		} `graphql:"repository(name: $repositoryName)"`
 	} `graphql:"repositoryOwner(login: $repositoryOwner)"`
+}
+
+func (pr pr) DetailsMd() string {
+	var metadata []string
+	metadata = append(metadata, fmt.Sprintf("- Author      :  `@%s`", pr.Author.Login))
+	metadata = append(metadata, fmt.Sprintf("- Created at  :  %s (%s)", pr.CreatedAt.Format(timeFormat), humanize.Time(pr.CreatedAt)))
+
+	switch pr.State {
+	case prStateClosed:
+		if pr.ClosedAt != nil {
+			metadata = append(metadata, fmt.Sprintf("- Closed at   :  %s (%s)", pr.ClosedAt.Format(timeFormat), humanize.Time(*pr.ClosedAt)))
+		}
+	case prStateMerged:
+		metadata = append(metadata, fmt.Sprintf("- Merged at   :  %s (%s) by `@%s`", pr.MergedAt.Format(timeFormat), humanize.Time(*pr.MergedAt), pr.MergedBy.Login))
+	}
+
+	if len(pr.Labels.Nodes) > 0 {
+		labels := make([]string, len(pr.Labels.Nodes))
+		for i, l := range pr.Labels.Nodes {
+			labels[i] = fmt.Sprintf("*%s*", l.Name)
+		}
+		metadata = append(metadata, fmt.Sprintf("- Labels      :  %s", strings.Join(labels, " ")))
+	}
+
+	if pr.IsDraft {
+		metadata = append(metadata, "- Draft")
+	}
+
+	if pr.Mergeable == mergeableConflicting {
+		metadata = append(metadata, "- Has conflicts")
+	}
+
+	var fcStr string
+	if len(pr.Files.Nodes) > 0 {
+		fc := make([]string, len(pr.Files.Nodes))
+		for i, f := range pr.Files.Nodes {
+			var additions string
+			var deletions string
+
+			if f.Additions > 0 {
+				additions = fmt.Sprintf(" `+%d`", f.Additions)
+			}
+
+			if f.Deletions > 0 {
+				deletions = fmt.Sprintf(" `-%d`", f.Deletions)
+			}
+
+			fc[i] = fmt.Sprintf("- %s%s%s", f.Path, additions, deletions)
+		}
+		fcStr = fmt.Sprintf(`
+## Files changed
+
+%s
+`, strings.Join(fc, "\n"))
+	}
+
+	details := fmt.Sprintf(`# %d: %s
+
+%s
+
+---
+
+## Description
+
+%s
+
+---
+%s`, pr.Number, pr.PRTitle, strings.Join(metadata, "\n"), pr.Body, fcStr)
+
+	return details
 }
 
 func (repo Repo) Title() string {

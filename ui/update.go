@@ -33,25 +33,33 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "Q":
 			return m, tea.Quit
 		case "ctrl+c", "q", "esc":
-			if m.activePane == repoList {
+			switch m.activePane {
+			case repoList:
 				if !m.repoChosen {
 					return m, tea.Quit
 				}
 				m.activePane = m.lastPane
-			} else if m.activePane == helpView {
+			case helpView:
 				m.activePane = m.lastPane
-			} else if m.activePane == prRevCmts {
+			case prRevCmts:
 				m.prRevCmtVP.GotoTop()
 				m.activePane = prTLList
-			} else if m.activePane == prTLList {
+			case prTLList:
 				m.prTLList.ResetSelected()
 				m.activePane = prList
-			} else if m.mode == RepoMode && m.activePane == prList {
-				m.activePane = repoList
-				m.repoChosen = false
-			} else {
+			case prDetails:
+				m.activePane = prList
+				m.lastPane = prList
+			case prList:
+				if m.mode == RepoMode {
+					m.activePane = repoList
+					m.repoChosen = false
+				}
+				return m, tea.Quit
+			default:
 				return m, tea.Quit
 			}
+
 		case "ctrl+r":
 			switch m.activePane {
 			case prList:
@@ -144,7 +152,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case "j", "down":
-			if m.activePane != prRevCmts && m.activePane != helpView {
+			if m.activePane != prRevCmts && m.activePane != helpView && m.activePane != prDetails {
 				break
 			}
 
@@ -154,6 +162,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					break
 				}
 				m.prRevCmtVP.LineDown(viewPortMoveLineCount)
+			case prDetails:
+				if m.prDetailsVP.AtBottom() {
+					break
+				}
+				m.prDetailsVP.LineDown(viewPortMoveLineCount)
 			case helpView:
 				if m.helpVP.AtBottom() {
 					break
@@ -162,7 +175,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case "k", "up":
-			if m.activePane != prRevCmts && m.activePane != helpView {
+			if m.activePane != prRevCmts && m.activePane != helpView && m.activePane != prDetails {
 				break
 			}
 
@@ -172,6 +185,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					break
 				}
 				m.prRevCmtVP.LineUp(viewPortMoveLineCount)
+			case prDetails:
+				if m.prDetailsVP.AtTop() {
+					break
+				}
+				m.prDetailsVP.LineUp(viewPortMoveLineCount)
 			case helpView:
 				if m.helpVP.AtTop() {
 					break
@@ -180,7 +198,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case "tab", "shift+tab":
-			if m.activePane == helpView {
+			if m.activePane == helpView || m.activePane == prDetails {
 				break
 			}
 
@@ -277,6 +295,54 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.activePane == prRevCmts {
 				m.prRevCmtVP.GotoBottom()
 			}
+
+		case "h":
+			if m.activePane != prDetails {
+				break
+			}
+
+			m.prsList.CursorUp()
+			pr, ok := m.prsList.SelectedItem().(*prResult)
+			if !ok {
+				break
+			}
+
+			m.prDetailsVP.GotoTop()
+			m.setPRDetailsContent(pr)
+
+		case "l":
+			if m.activePane != prDetails {
+				break
+			}
+
+			m.prsList.CursorDown()
+			pr, ok := m.prsList.SelectedItem().(*prResult)
+			if !ok {
+				break
+			}
+
+			m.prDetailsVP.GotoTop()
+			m.setPRDetailsContent(pr)
+
+		case "d":
+			if m.activePane != prList && m.activePane != prDetails {
+				break
+			}
+
+			if m.activePane == prDetails {
+				m.activePane = m.lastPane
+				break
+			}
+
+			pr, ok := m.prsList.SelectedItem().(*prResult)
+			if !ok {
+				break
+			}
+
+			m.setPRDetailsContent(pr)
+			m.lastPane = m.activePane
+			m.activePane = prDetails
+
 		case "?":
 			switch m.activePane {
 			case helpView:
@@ -315,12 +381,24 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.prRevCmtVP.Height = msg.Height - 7
 		}
 
-		crWrap := (msg.Width - 4)
-		if crWrap > contextWordWrapUpperLimit {
-			crWrap = contextWordWrapUpperLimit
+		if !m.prDetailsVPReady {
+			m.prDetailsVP = viewport.New(msg.Width-2, msg.Height-7)
+			m.prDetailsVP.HighPerformanceRendering = useHighPerformanceRenderer
+			m.prDetailsVPReady = true
+			m.prDetailsVP.KeyMap.HalfPageDown.SetKeys("ctrl+d")
+			m.prDetailsVP.KeyMap.Up.SetEnabled(false)
+			m.prDetailsVP.KeyMap.Down.SetEnabled(false)
+		} else {
+			m.prDetailsVP.Width = msg.Width - 2
+			m.prDetailsVP.Height = msg.Height - 7
 		}
 
-		m.mdRenderer, _ = utils.GetMarkDownRenderer(crWrap)
+		vpWrap := (msg.Width - 4)
+		if vpWrap > viewPortWrapUpperLimit {
+			vpWrap = viewPortWrapUpperLimit
+		}
+
+		m.mdRenderer, _ = utils.GetMarkDownRenderer(vpWrap)
 
 		helpToRender := helpStr
 		switch m.mdRenderer {
@@ -537,6 +615,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case prTLList:
 		m.prTLList, cmd = m.prTLList.Update(msg)
 		cmds = append(cmds, cmd)
+	case prDetails:
+		m.prDetailsVP, cmd = m.prDetailsVP.Update(msg)
+		cmds = append(cmds, cmd)
 	case prRevCmts:
 		m.prRevCmtVP, cmd = m.prRevCmtVP.Update(msg)
 		cmds = append(cmds, cmd)
@@ -615,5 +696,21 @@ func (m *model) setPRTLContent(revCmts []prReviewComment) {
 	}
 	if glErr {
 		m.prRevCmtVP.SetContent(content)
+	}
+}
+
+func (m *model) setPRDetailsContent(prRes *prResult) {
+
+	details := prRes.pr.DetailsMd()
+	glErr := true
+	if m.mdRenderer != nil {
+		detailsGl, err := m.mdRenderer.Render(details)
+		if err == nil {
+			m.prDetailsVP.SetContent(detailsGl)
+			glErr = false
+		}
+	}
+	if glErr {
+		m.prDetailsVP.SetContent(details)
 	}
 }

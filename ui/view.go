@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	contextWordWrapUpperLimit = 160
+	viewPortWrapUpperLimit = 160
 )
 
 func (m model) View() string {
@@ -26,6 +26,14 @@ func (m model) View() string {
 		content = listStyle.Render(m.prTLList.View())
 	case repoList:
 		content = listStyle.Render(m.repoList.View())
+	case prDetails:
+		if !m.prRevCmtVPReady {
+			content = "\n  Initializing..."
+		} else {
+			content = viewPortStyle.Render(fmt.Sprintf("  %s\n\n%s\n",
+				prDetailsTitleStyle.Render("PR Details"),
+				m.prDetailsVP.View()))
+		}
 	case prRevCmts:
 		var prRevCmtsVP string
 		if !m.prRevCmtVPReady {

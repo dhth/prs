@@ -9,8 +9,10 @@ func getPRDataFromQuery(ghClient *ghapi.GraphQLClient, queryStr string, prCount 
 	var query prSearchQuery
 
 	variables := map[string]interface{}{
-		"query": ghgql.String(queryStr),
-		"count": ghgql.Int(prCount),
+		"query":       ghgql.String(queryStr),
+		"count":       ghgql.Int(prCount),
+		"filesCount":  ghgql.Int(50),
+		"labelsCount": ghgql.Int(50),
 	}
 	err := ghClient.Query("PRQuery", &query, variables)
 	if err != nil {

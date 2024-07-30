@@ -15,6 +15,7 @@ type Pane uint
 const (
 	repoList Pane = iota
 	prList
+	prDetails
 	reviewPRList
 	prTLList
 	prRevCmts
@@ -31,28 +32,30 @@ const (
 )
 
 type model struct {
-	mode            Mode
-	config          Config
-	ghClient        *ghapi.GraphQLClient
-	repoOwner       string
-	repoName        string
-	repoList        list.Model
-	prsList         list.Model
-	prTLList        list.Model
-	prCache         []*prResult
-	prRevCmtVP      viewport.Model
-	prRevCmtVPReady bool
-	prTLCache       map[string][]*prTLItemResult
-	message         string
-	helpVP          viewport.Model
-	helpVPReady     bool
-	activePane      Pane
-	lastPane        Pane
-	showHelp        bool
-	repoChosen      bool
-	userLogin       string
-	terminalDetails terminalDetails
-	mdRenderer      *glamour.TermRenderer
+	mode             Mode
+	config           Config
+	ghClient         *ghapi.GraphQLClient
+	repoOwner        string
+	repoName         string
+	repoList         list.Model
+	prsList          list.Model
+	prTLList         list.Model
+	prCache          []*prResult
+	prRevCmtVP       viewport.Model
+	prRevCmtVPReady  bool
+	prDetailsVP      viewport.Model
+	prDetailsVPReady bool
+	prTLCache        map[string][]*prTLItemResult
+	message          string
+	helpVP           viewport.Model
+	helpVPReady      bool
+	activePane       Pane
+	lastPane         Pane
+	showHelp         bool
+	repoChosen       bool
+	userLogin        string
+	terminalDetails  terminalDetails
+	mdRenderer       *glamour.TermRenderer
 }
 
 func (m model) Init() tea.Cmd {
