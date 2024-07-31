@@ -147,12 +147,14 @@ func getPRTLItemTitle(item *prTLItem) string {
 		author := getDynamicStyle(item.PullRequestReview.Author.Login).Render(item.PullRequestReview.Author.Login)
 		date = dateStyle.Render(humanize.Time(item.PullRequestReview.CreatedAt))
 		var comments string
+		var more string
 		if item.PullRequestReview.Comments.TotalCount > 1 {
 			comments = numCommentsStyle.Render(fmt.Sprintf("with %d comments", item.PullRequestReview.Comments.TotalCount))
 		} else if item.PullRequestReview.Comments.TotalCount == 1 {
 			comments = numCommentsStyle.Render("with 1 comment")
+			more = " ⏎"
 		}
-		title = fmt.Sprintf("%sreviewed%s%s", author, comments, date)
+		title = fmt.Sprintf("%sreviewed%s%s%s", author, comments, date, more)
 	case tlItemMergedEvent:
 		author := getDynamicStyle(item.MergedEvent.Actor.Login).Render(item.MergedEvent.Actor.Login)
 		date = dateStyle.Render(humanize.Time(item.MergedEvent.CreatedAt))

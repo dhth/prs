@@ -51,8 +51,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.prTLList.ResetSelected()
 				m.activePane = prListView
 			case prDetailsView:
-				m.activePane = prListView
-				m.lastPane = prListView
+				if m.lastPane == m.activePane {
+					m.activePane = m.secondLastActivePane
+					m.lastPane = prDetailsView
+					break
+				}
+				m.activePane = m.lastPane
+				m.lastPane = prDetailsView
 			case prListView:
 				if m.mode == RepoMode {
 					m.activePane = repoListView
@@ -305,7 +310,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case "ctrl+d":
-			if m.activePane != prListView && m.activePane != prTLListView {
+			if m.activePane != prListView && m.activePane != prTLListView && m.activePane != prRevCmtsView {
 				break
 			}
 
@@ -320,22 +325,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.config.DiffPager))
 
 		case "ctrl+v":
-			if m.activePane == prListView || m.activePane == prTLListView {
-				switch m.mode {
-				case RepoMode:
-					pr, ok := m.prsList.SelectedItem().(*prResult)
-					if ok {
-						cmds = append(cmds, showPR(m.repoOwner, m.repoName, pr.pr.Number))
-					}
-				case ReviewerMode:
-					pr, ok := m.prsList.SelectedItem().(*prResult)
-					if ok {
-						cmds = append(cmds, showPR(pr.pr.Repository.Owner.Login,
-							pr.pr.Repository.Name,
-							pr.pr.Number))
-					}
-				}
+			if m.activePane == helpView {
+				break
 			}
+			pr, ok := m.prsList.SelectedItem().(*prResult)
+			if !ok {
+				break
+			}
+
+			cmds = append(cmds, showPR(pr.pr.Repository.Owner.Login,
+				pr.pr.Repository.Name,
+				pr.pr.Number))
+
 		case "g":
 			switch m.activePane {
 			case prRevCmtsView:
@@ -394,7 +395,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.prDetailsCurrentSection = 0
 
 		case "d":
-			if m.activePane != prListView && m.activePane != prDetailsView {
+			if m.activePane != prListView && m.activePane != prDetailsView && m.activePane != prTLListView && m.activePane != prRevCmtsView {
 				break
 			}
 
@@ -551,13 +552,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.prDetailsCurrentSection = prevSection
 
 		case "?":
-			switch m.activePane {
-			case helpView:
+			if m.activePane == helpView {
 				m.activePane = m.lastPane
-			default:
-				m.lastPane = m.activePane
-				m.activePane = helpView
+				break
 			}
+			if m.activePane == prDetailsView {
+				m.secondLastActivePane = m.lastPane
+			}
+
+			m.lastPane = m.activePane
+			m.activePane = helpView
 		}
 	case hideHelpMsg:
 		m.showHelp = false

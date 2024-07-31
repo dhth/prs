@@ -53,6 +53,7 @@ type model struct {
 	helpVPReady             bool
 	activePane              Pane
 	lastPane                Pane
+	secondLastActivePane    Pane
 	showHelp                bool
 	repoChosen              bool
 	userLogin               string
