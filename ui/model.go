@@ -44,6 +44,7 @@ type model struct {
 	prRevCmtVP              viewport.Model
 	prRevCmtVPReady         bool
 	prDetailsTitle          string
+	prTLItemDetailTitle     string
 	prDetailsVP             viewport.Model
 	prDetailsVPReady        bool
 	prDetailsCache          map[string]prDetails
@@ -60,6 +61,7 @@ type model struct {
 	terminalDetails         terminalDetails
 	mdRenderer              *glamour.TermRenderer
 	prDetailsCurrentSection uint
+	prRevCurCmtNum          uint
 }
 
 func (m model) Init() tea.Cmd {

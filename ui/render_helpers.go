@@ -124,6 +124,7 @@ func getPRTLItemTitle(item *prTLItem) string {
 		} else {
 			title = fmt.Sprintf("%s pushed a commit", item.PullRequestCommit.Commit.Author.Name)
 		}
+
 	case tlItemHeadRefForcePushed:
 		actor := getDynamicStyle(item.HeadRefForcePushed.Actor.Login).Render(item.HeadRefForcePushed.Actor.Login)
 		beforeCommitHash := item.HeadRefForcePushed.BeforeCommit.Oid
@@ -136,25 +137,31 @@ func getPRTLItemTitle(item *prTLItem) string {
 		}
 		date = dateStyle.Render(humanize.Time(item.HeadRefForcePushed.CreatedAt))
 		title = fmt.Sprintf("%sforce pushed head ref from %s to %s%s", actor, beforeCommitHash, afterCommitHash, date)
+
 	case tlItemPRReadyForReview:
 		actor := getDynamicStyle(item.PullRequestReadyForReview.Actor.Login).Render(item.PullRequestReadyForReview.Actor.Login)
 		title = fmt.Sprintf("%smarked PR as ready for review", actor)
+
 	case tlItemPRReviewRequested:
 		actor := getDynamicStyle(item.PullRequestReviewRequested.Actor.Login).Render(item.PullRequestReviewRequested.Actor.Login)
 		reviewer := getDynamicStyle(item.PullRequestReviewRequested.RequestedReviewer.User.Login).Render(item.PullRequestReviewRequested.RequestedReviewer.User.Login)
 		title = fmt.Sprintf("%srequested a review from %s", actor, reviewer)
+
 	case tlItemPRReview:
 		author := getDynamicStyle(item.PullRequestReview.Author.Login).Render(item.PullRequestReview.Author.Login)
 		date = dateStyle.Render(humanize.Time(item.PullRequestReview.CreatedAt))
 		var comments string
 		var more string
+		if item.PullRequestReview.Comments.TotalCount > 0 {
+			more = " ⏎"
+		}
 		if item.PullRequestReview.Comments.TotalCount > 1 {
 			comments = numCommentsStyle.Render(fmt.Sprintf("with %d comments", item.PullRequestReview.Comments.TotalCount))
 		} else if item.PullRequestReview.Comments.TotalCount == 1 {
 			comments = numCommentsStyle.Render("with 1 comment")
-			more = " ⏎"
 		}
 		title = fmt.Sprintf("%sreviewed%s%s%s", author, comments, date, more)
+
 	case tlItemMergedEvent:
 		author := getDynamicStyle(item.MergedEvent.Actor.Login).Render(item.MergedEvent.Actor.Login)
 		date = dateStyle.Render(humanize.Time(item.MergedEvent.CreatedAt))

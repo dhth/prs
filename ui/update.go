@@ -124,17 +124,22 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			case prTLListView:
 				item, ok := m.prTLList.SelectedItem().(*prTLItemResult)
-				if ok {
-					if item.item.Type == tlItemPRReview {
-						revCmts := item.item.PullRequestReview.Comments.Nodes
-						if len(revCmts) == 0 {
-							break
-						}
-
-						m.setPRTLContent(revCmts)
-						m.activePane = prRevCmtsView
-					}
+				if !ok {
+					break
 				}
+
+				if item.item.Type != tlItemPRReview {
+					break
+				}
+
+				if len(item.item.PullRequestReview.Comments.Nodes) == 0 {
+					break
+				}
+
+				m.setPRReviewCmt(item.item, 0)
+				m.prRevCurCmtNum = 0
+				m.activePane = prRevCmtsView
+
 			case repoListView:
 				selected := m.repoList.SelectedItem()
 				if selected != nil {
@@ -170,21 +175,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case prDetailsView:
 				m.GoToPRDetailSection(2)
 			default:
-				item, ok := m.prTLList.SelectedItem().(*prTLItemResult)
+				tlItem, ok := m.prTLList.SelectedItem().(*prTLItemResult)
 				if !ok {
 					break
 				}
 
-				if item.item.Type != tlItemPRReview {
+				if tlItem.item.Type != tlItemPRReview {
 					break
 				}
 
-				revCmts := item.item.PullRequestReview.Comments.Nodes
-				if len(revCmts) == 0 {
+				if len(tlItem.item.PullRequestReview.Comments.Nodes) == 0 {
 					break
 				}
 
-				m.setPRTLContent(revCmts)
+				m.setPRReviewCmt(tlItem.item, 0)
 				m.activePane = prRevCmtsView
 			}
 
@@ -422,134 +426,186 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.activePane = prDetailsView
 
 		case "l", "n", "right":
-			if m.activePane != prDetailsView {
+			if m.activePane != prDetailsView && m.activePane != prRevCmtsView {
 				break
 			}
 
-			pr, ok := m.prsList.SelectedItem().(*prResult)
-			if !ok {
-				break
-			}
-
-			prDetails, ok := m.prDetailsCache[fmt.Sprintf("%s/%s:%d", pr.pr.Repository.Owner.Login, pr.pr.Repository.Name, pr.pr.Number)]
-			if !ok {
-				break
-			}
-
-			nextSectionFound := false
-			var nextSection uint
-			if m.prDetailsCurrentSection == uint(len(PRDetailsSectionList)-1) {
-				nextSection = 0
-			} else {
-				nextSection = m.prDetailsCurrentSection + 1
-			}
-
-			for {
-				switch nextSection {
-				case 0:
-					nextSectionFound = true
-				case 1:
-					if prDetails.Body != "" {
-						nextSectionFound = true
-					}
-				case 2:
-					if len(prDetails.IssueReferences.Nodes) > 0 {
-						nextSectionFound = true
-					}
-				case 3:
-					if len(prDetails.Files.Nodes) > 0 {
-						nextSectionFound = true
-					}
-				case 4:
-					if len(prDetails.Commits.Nodes) > 0 {
-						nextSectionFound = true
-					}
-				case 5:
-					if len(prDetails.Comments.Nodes) > 0 {
-						nextSectionFound = true
-					} else {
-						nextSection = 0
-						nextSectionFound = true
-					}
-				}
-
-				if nextSectionFound {
+			switch m.activePane {
+			case prDetailsView:
+				pr, ok := m.prsList.SelectedItem().(*prResult)
+				if !ok {
 					break
 				}
 
-				nextSection += 1
-			}
+				prDetails, ok := m.prDetailsCache[fmt.Sprintf("%s/%s:%d", pr.pr.Repository.Owner.Login, pr.pr.Repository.Name, pr.pr.Number)]
+				if !ok {
+					break
+				}
 
-			if !nextSectionFound {
-				break
-			}
+				nextSectionFound := false
+				var nextSection uint
+				if m.prDetailsCurrentSection == uint(len(PRDetailsSectionList)-1) {
+					nextSection = 0
+				} else {
+					nextSection = m.prDetailsCurrentSection + 1
+				}
 
-			if nextSection > uint(len(PRDetailsSectionList)-1) {
-				m.message = "Something went wrong"
-				break
-			}
+				for {
+					switch nextSection {
+					case 0:
+						nextSectionFound = true
+					case 1:
+						if prDetails.Body != "" {
+							nextSectionFound = true
+						}
+					case 2:
+						if len(prDetails.IssueReferences.Nodes) > 0 {
+							nextSectionFound = true
+						}
+					case 3:
+						if len(prDetails.Files.Nodes) > 0 {
+							nextSectionFound = true
+						}
+					case 4:
+						if len(prDetails.Commits.Nodes) > 0 {
+							nextSectionFound = true
+						}
+					case 5:
+						if len(prDetails.Comments.Nodes) > 0 {
+							nextSectionFound = true
+						} else {
+							nextSection = 0
+							nextSectionFound = true
+						}
+					}
 
-			m.setPRDetailsContent(prDetails, PRDetailsSectionList[nextSection])
-			m.prDetailsCurrentSection = nextSection
+					if nextSectionFound {
+						break
+					}
+
+					nextSection += 1
+				}
+
+				if !nextSectionFound {
+					break
+				}
+
+				if nextSection > uint(len(PRDetailsSectionList)-1) {
+					m.message = "Something went wrong"
+					break
+				}
+
+				m.setPRDetailsContent(prDetails, PRDetailsSectionList[nextSection])
+				m.prDetailsCurrentSection = nextSection
+
+			case prRevCmtsView:
+				tlItem, ok := m.prTLList.SelectedItem().(*prTLItemResult)
+				if !ok {
+					break
+				}
+
+				if tlItem.item.Type != tlItemPRReview {
+					break
+				}
+
+				if len(tlItem.item.PullRequestReview.Comments.Nodes) <= 1 {
+					break
+				}
+
+				nextCommentIndex := m.prRevCurCmtNum + 1
+				if nextCommentIndex > uint(len(tlItem.item.PullRequestReview.Comments.Nodes))-1 {
+					nextCommentIndex = 0
+				}
+
+				m.setPRReviewCmt(tlItem.item, nextCommentIndex)
+				m.prRevCurCmtNum = nextCommentIndex
+			}
 
 		case "h", "N", "left":
-			if m.activePane != prDetailsView {
+			if m.activePane != prDetailsView && m.activePane != prRevCmtsView {
 				break
 			}
 
-			pr, ok := m.prsList.SelectedItem().(*prResult)
-			if !ok {
-				break
-			}
-
-			prDetails, ok := m.prDetailsCache[fmt.Sprintf("%s/%s:%d", pr.pr.Repository.Owner.Login, pr.pr.Repository.Name, pr.pr.Number)]
-			if !ok {
-				break
-			}
-
-			prevSectionFound := false
-			var prevSection uint
-			if m.prDetailsCurrentSection == 0 {
-				prevSection = uint(len(PRDetailsSectionList) - 1)
-			} else {
-				prevSection = m.prDetailsCurrentSection - 1
-			}
-
-			for {
-				switch prevSection {
-				case 0:
-					prevSectionFound = true
-				case 1:
-					if prDetails.Body != "" {
-						prevSectionFound = true
-					}
-				case 2:
-					if len(prDetails.IssueReferences.Nodes) > 0 {
-						prevSectionFound = true
-					}
-				case 3:
-					if len(prDetails.Files.Nodes) > 0 {
-						prevSectionFound = true
-					}
-				case 4:
-					if len(prDetails.Commits.Nodes) > 0 {
-						prevSectionFound = true
-					}
-				case 5:
-					if len(prDetails.Comments.Nodes) > 0 {
-						prevSectionFound = true
-					}
-				}
-
-				if prevSectionFound {
+			switch m.activePane {
+			case prDetailsView:
+				pr, ok := m.prsList.SelectedItem().(*prResult)
+				if !ok {
 					break
 				}
 
-				prevSection -= 1
-			}
+				prDetails, ok := m.prDetailsCache[fmt.Sprintf("%s/%s:%d", pr.pr.Repository.Owner.Login, pr.pr.Repository.Name, pr.pr.Number)]
+				if !ok {
+					break
+				}
 
-			m.setPRDetailsContent(prDetails, PRDetailsSectionList[prevSection])
-			m.prDetailsCurrentSection = prevSection
+				prevSectionFound := false
+				var prevSection uint
+				if m.prDetailsCurrentSection == 0 {
+					prevSection = uint(len(PRDetailsSectionList) - 1)
+				} else {
+					prevSection = m.prDetailsCurrentSection - 1
+				}
+
+				for {
+					switch prevSection {
+					case 0:
+						prevSectionFound = true
+					case 1:
+						if prDetails.Body != "" {
+							prevSectionFound = true
+						}
+					case 2:
+						if len(prDetails.IssueReferences.Nodes) > 0 {
+							prevSectionFound = true
+						}
+					case 3:
+						if len(prDetails.Files.Nodes) > 0 {
+							prevSectionFound = true
+						}
+					case 4:
+						if len(prDetails.Commits.Nodes) > 0 {
+							prevSectionFound = true
+						}
+					case 5:
+						if len(prDetails.Comments.Nodes) > 0 {
+							prevSectionFound = true
+						}
+					}
+
+					if prevSectionFound {
+						break
+					}
+
+					prevSection -= 1
+				}
+
+				m.setPRDetailsContent(prDetails, PRDetailsSectionList[prevSection])
+				m.prDetailsCurrentSection = prevSection
+
+			case prRevCmtsView:
+				tlItem, ok := m.prTLList.SelectedItem().(*prTLItemResult)
+				if !ok {
+					break
+				}
+
+				if tlItem.item.Type != tlItemPRReview {
+					break
+				}
+
+				if len(tlItem.item.PullRequestReview.Comments.Nodes) <= 1 {
+					break
+				}
+
+				var prevCommentIndex uint
+				if m.prRevCurCmtNum == 0 {
+					prevCommentIndex = uint(len(tlItem.item.PullRequestReview.Comments.Nodes) - 1)
+				} else {
+					prevCommentIndex = m.prRevCurCmtNum - 1
+				}
+
+				m.setPRReviewCmt(tlItem.item, prevCommentIndex)
+				m.prRevCurCmtNum = prevCommentIndex
+			}
 
 		case "?":
 			if m.activePane == helpView {
@@ -906,130 +962,4 @@ func (m *model) setTL() (tea.Cmd, bool) {
 	m.activePane = prTLListView
 
 	return nil, true
-}
-
-func (m *model) setPRTLContent(revCmts []prReviewComment) {
-	prReviewCmts := make([]string, len(revCmts))
-	for i, cmt := range revCmts {
-		var outdated string
-		if cmt.Outdated {
-			outdated = " `(outdated)`"
-		}
-
-		prReviewCmt := fmt.Sprintf("### %s%s\n%s\n```diff\n%s\n```", cmt.Path, outdated, cmt.Body, cmt.DiffHunk)
-		prReviewCmts[i] = prReviewCmt
-	}
-
-	content := strings.Join(prReviewCmts, "\n---\n")
-	glErr := true
-	if m.mdRenderer != nil {
-		contentGl, err := m.mdRenderer.Render(content)
-		if err == nil {
-			m.prRevCmtVP.SetContent(contentGl)
-			glErr = false
-		}
-	}
-	if glErr {
-		m.prRevCmtVP.SetContent(content)
-	}
-}
-
-func (m *model) setPRDetailsContent(prDetails prDetails, section PRDetailSection) {
-	content := fmt.Sprintf(`# %d: %s 
-`, prDetails.Number, prDetails.PRTitle,
-	)
-
-	switch section {
-	case PRMetadata:
-		content += prDetails.Metadata()
-	case PRDescription:
-		content += prDetails.Description()
-	case PRReferences:
-		content += prDetails.References()
-	case PRFilesChanged:
-		content += prDetails.FilesChanged()
-	case PRCommits:
-		content += prDetails.CommitsList()
-	case PRComments:
-		content += prDetails.CommentsList()
-	}
-
-	glErr := true
-	if m.mdRenderer != nil {
-		contentGl, err := m.mdRenderer.Render(content)
-		if err == nil {
-			m.prDetailsVP.SetContent(contentGl)
-			glErr = false
-		}
-	}
-	if glErr {
-		m.prDetailsVP.SetContent(content)
-	}
-
-	sections := make([]string, len(PRDetailsSectionList))
-	for i := 0; i < len(PRDetailsSectionList); i++ {
-		sections[i] = "◯"
-	}
-
-	if prDetails.Body == "" {
-		sections[PRDescription] = "◌"
-	}
-	if len(prDetails.IssueReferences.Nodes) == 0 {
-		sections[PRReferences] = "◌"
-	}
-	if len(prDetails.Files.Nodes) == 0 {
-		sections[PRFilesChanged] = "◌"
-	}
-	if len(prDetails.Commits.Nodes) == 0 {
-		sections[PRCommits] = "◌"
-	}
-	if len(prDetails.Comments.Nodes) == 0 {
-		sections[PRComments] = "◌"
-	}
-
-	sections[section] = "◉"
-
-	m.prDetailsTitle = fmt.Sprintf("PR #%d Details (%s/%s)  %s", prDetails.Number, prDetails.Repository.Owner.Login, prDetails.Repository.Name, strings.Join(sections, " "))
-
-	m.prDetailsVP.GotoTop()
-}
-
-func (m *model) GoToPRDetailSection(section uint) {
-	if m.prDetailsCurrentSection == section {
-		return
-	}
-	pr, ok := m.prsList.SelectedItem().(*prResult)
-	if !ok {
-		return
-	}
-
-	prDetails, ok := m.prDetailsCache[fmt.Sprintf("%s/%s:%d", pr.pr.Repository.Owner.Login, pr.pr.Repository.Name, pr.pr.Number)]
-	if !ok {
-		return
-	}
-	switch section {
-	case 1:
-		if prDetails.Body == "" {
-			return
-		}
-	case 2:
-		if len(prDetails.IssueReferences.Nodes) == 0 {
-			return
-		}
-	case 3:
-		if len(prDetails.Files.Nodes) == 0 {
-			return
-		}
-	case 4:
-		if len(prDetails.Commits.Nodes) == 0 {
-			return
-		}
-	case 5:
-		if len(prDetails.Comments.Nodes) == 0 {
-			return
-		}
-	}
-
-	m.setPRDetailsContent(prDetails, PRDetailsSectionList[section])
-	m.prDetailsCurrentSection = section
 }

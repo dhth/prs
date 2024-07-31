@@ -40,7 +40,7 @@ func (m model) View() string {
 			prRevCmtsVP = "\n  Initializing..."
 		} else {
 			prRevCmtsVP = viewPortStyle.Render(fmt.Sprintf("  %s\n\n%s\n",
-				helpVPTitleStyle.Render("Review Comments"),
+				helpVPTitleStyle.Render(m.prTLItemDetailTitle),
 				m.prRevCmtVP.View()))
 		}
 		content = prRevCmtsVP
