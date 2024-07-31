@@ -59,13 +59,11 @@ func Execute() {
 	}
 
 	if config.Query != nil {
+		if strings.Contains(*config.Query, "is:issue") || strings.Contains(*config.Query, "is: issue") {
+			die("is:issue cannot be used in the query")
+		}
 		if strings.Contains(*config.Query, "type:issue") || strings.Contains(*config.Query, "type: issue") {
 			die("type:issue cannot be used in the query")
-		}
-
-		if !strings.Contains(*config.Query, "type:pr") && !strings.Contains(*config.Query, "type: pr") {
-			updatedQuery := fmt.Sprintf("type: pr %s", *config.Query)
-			config.Query = &updatedQuery
 		}
 	}
 
