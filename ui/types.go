@@ -197,8 +197,8 @@ type PRDetailSection uint
 
 const (
 	PRMetadata PRDetailSection = iota
-	PRReferences
 	PRDescription
+	PRReferences
 	PRFilesChanged
 	PRCommits
 	PRComments
@@ -206,8 +206,8 @@ const (
 
 var PRDetailsSectionList = []PRDetailSection{
 	PRMetadata,
-	PRReferences,
 	PRDescription,
+	PRReferences,
 	PRFilesChanged,
 	PRCommits,
 	PRComments,

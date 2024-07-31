@@ -425,10 +425,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				break
 			}
 
-			if m.prDetailsCurrentSection == uint(len(PRDetailsSectionList)-1) {
-				break
-			}
-
 			pr, ok := m.prsList.SelectedItem().(*prResult)
 			if !ok {
 				break
@@ -440,16 +436,23 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			nextSectionFound := false
-			nextSection := m.prDetailsCurrentSection + 1
+			var nextSection uint
+			if m.prDetailsCurrentSection == uint(len(PRDetailsSectionList)-1) {
+				nextSection = 0
+			} else {
+				nextSection = m.prDetailsCurrentSection + 1
+			}
 
 			for {
 				switch nextSection {
+				case 0:
+					nextSectionFound = true
 				case 1:
-					if len(prDetails.IssueReferences.Nodes) > 0 {
+					if prDetails.Body != "" {
 						nextSectionFound = true
 					}
 				case 2:
-					if prDetails.Body != "" {
+					if len(prDetails.IssueReferences.Nodes) > 0 {
 						nextSectionFound = true
 					}
 				case 3:
@@ -463,6 +466,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				case 5:
 					if len(prDetails.Comments.Nodes) > 0 {
 						nextSectionFound = true
+					} else {
+						nextSection = 0
+						nextSectionFound = true
 					}
 				}
 
@@ -470,9 +476,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					break
 				}
 
-				if nextSection > uint(len(PRDetailsSectionList)-1) {
-					break
-				}
 				nextSection += 1
 			}
 
@@ -493,10 +496,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				break
 			}
 
-			if m.prDetailsCurrentSection == 0 {
-				break
-			}
-
 			pr, ok := m.prsList.SelectedItem().(*prResult)
 			if !ok {
 				break
@@ -508,18 +507,23 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			prevSectionFound := false
-			prevSection := m.prDetailsCurrentSection - 1
+			var prevSection uint
+			if m.prDetailsCurrentSection == 0 {
+				prevSection = uint(len(PRDetailsSectionList) - 1)
+			} else {
+				prevSection = m.prDetailsCurrentSection - 1
+			}
 
 			for {
 				switch prevSection {
 				case 0:
 					prevSectionFound = true
 				case 1:
-					if len(prDetails.IssueReferences.Nodes) > 0 {
+					if prDetails.Body != "" {
 						prevSectionFound = true
 					}
 				case 2:
-					if prDetails.Body != "" {
+					if len(prDetails.IssueReferences.Nodes) > 0 {
 						prevSectionFound = true
 					}
 				case 3:
@@ -537,9 +541,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 
 				if prevSectionFound {
-					break
-				}
-				if prevSection <= 0 {
 					break
 				}
 
@@ -930,41 +931,17 @@ func (m *model) setPRTLContent(revCmts []prReviewComment) {
 }
 
 func (m *model) setPRDetailsContent(prDetails prDetails, section PRDetailSection) {
-	sections := make([]string, len(PRDetailsSectionList))
-	for i := 0; i < len(PRDetailsSectionList); i++ {
-		sections[i] = "◯"
-	}
-
-	if len(prDetails.IssueReferences.Nodes) == 0 {
-		sections[PRReferences] = "◌"
-	}
-	if prDetails.Body == "" {
-		sections[PRDescription] = "◌"
-	}
-	if len(prDetails.Files.Nodes) == 0 {
-		sections[PRFilesChanged] = "◌"
-	}
-	if len(prDetails.Commits.Nodes) == 0 {
-		sections[PRCommits] = "◌"
-	}
-	if len(prDetails.Comments.Nodes) == 0 {
-		sections[PRComments] = "◌"
-	}
-
-	sections[section] = "◉"
-
-	content := fmt.Sprintf(`# %d: %s
-%s            %s
-`, prDetails.Number, prDetails.PRTitle, strings.Join(sections, " "), "`h/N/←  →n/l`",
+	content := fmt.Sprintf(`# %d: %s 
+`, prDetails.Number, prDetails.PRTitle,
 	)
 
 	switch section {
 	case PRMetadata:
 		content += prDetails.Metadata()
-	case PRReferences:
-		content += prDetails.References()
 	case PRDescription:
 		content += prDetails.Description()
+	case PRReferences:
+		content += prDetails.References()
 	case PRFilesChanged:
 		content += prDetails.FilesChanged()
 	case PRCommits:
@@ -985,9 +962,30 @@ func (m *model) setPRDetailsContent(prDetails prDetails, section PRDetailSection
 		m.prDetailsVP.SetContent(content)
 	}
 
-	if section == 0 {
-		m.prDetailsTitle = fmt.Sprintf("PR #%d Details (%s/%s)", prDetails.Number, prDetails.Repository.Owner.Login, prDetails.Repository.Name)
+	sections := make([]string, len(PRDetailsSectionList))
+	for i := 0; i < len(PRDetailsSectionList); i++ {
+		sections[i] = "◯"
 	}
+
+	if prDetails.Body == "" {
+		sections[PRDescription] = "◌"
+	}
+	if len(prDetails.IssueReferences.Nodes) == 0 {
+		sections[PRReferences] = "◌"
+	}
+	if len(prDetails.Files.Nodes) == 0 {
+		sections[PRFilesChanged] = "◌"
+	}
+	if len(prDetails.Commits.Nodes) == 0 {
+		sections[PRCommits] = "◌"
+	}
+	if len(prDetails.Comments.Nodes) == 0 {
+		sections[PRComments] = "◌"
+	}
+
+	sections[section] = "◉"
+
+	m.prDetailsTitle = fmt.Sprintf("PR #%d Details (%s/%s)  %s", prDetails.Number, prDetails.Repository.Owner.Login, prDetails.Repository.Name, strings.Join(sections, " "))
 
 	m.prDetailsVP.GotoTop()
 }
@@ -1007,11 +1005,11 @@ func (m *model) GoToPRDetailSection(section uint) {
 	}
 	switch section {
 	case 1:
-		if len(prDetails.IssueReferences.Nodes) == 0 {
+		if prDetails.Body == "" {
 			return
 		}
 	case 2:
-		if prDetails.Body == "" {
+		if len(prDetails.IssueReferences.Nodes) == 0 {
 			return
 		}
 	case 3:
