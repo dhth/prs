@@ -670,7 +670,7 @@ func (pr prDetails) CommitsList() string {
 
 	var commitsNumStr string
 	if len(pr.Commits.Nodes) < pr.Commits.TotalCount {
-		commitsNumStr = fmt.Sprintf(" (last %d out of %d)", len(pr.Comments.Nodes), pr.Comments.TotalCount)
+		commitsNumStr = fmt.Sprintf(" (last %d out of %d)", len(pr.Commits.Nodes), pr.Commits.TotalCount)
 	}
 
 	commitsStr = fmt.Sprintf(`
