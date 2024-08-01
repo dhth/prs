@@ -22,16 +22,19 @@ func InitialModel(ghClient *ghapi.GraphQLClient, config Config, mode Mode) model
 	prDetailsCache := make(map[string]prDetails)
 	prTLCache := make(map[string][]*prTLItemResult)
 
+	prDetailsCurSectionCache := make(map[string]uint)
+
 	m := model{
-		mode:            mode,
-		config:          config,
-		ghClient:        ghClient,
-		prsList:         list.New(nil, prListDel, 0, 0),
-		prTLList:        list.New(nil, prTLListDel, 0, 0),
-		prDetailsCache:  prDetailsCache,
-		prTLCache:       prTLCache,
-		showHelp:        true,
-		terminalDetails: terminalDetails{width: widthBudgetDefault},
+		mode:                     mode,
+		config:                   config,
+		ghClient:                 ghClient,
+		prsList:                  list.New(nil, prListDel, 0, 0),
+		prTLList:                 list.New(nil, prTLListDel, 0, 0),
+		prDetailsCache:           prDetailsCache,
+		prTLCache:                prTLCache,
+		showHelp:                 true,
+		terminalDetails:          terminalDetails{width: widthBudgetDefault},
+		prDetailsCurSectionCache: prDetailsCurSectionCache,
 	}
 
 	switch m.mode {

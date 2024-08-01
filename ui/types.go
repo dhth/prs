@@ -72,6 +72,7 @@ type prResult struct {
 	pr          *pr
 	title       string
 	description string
+	identifier  string
 }
 
 type prTLItemResult struct {
@@ -537,16 +538,16 @@ func (repo Repo) FilterValue() string {
 	return fmt.Sprintf("%s:::%s", repo.Owner, repo.Name)
 }
 
-func (pr prResult) Title() string {
-	return pr.title
+func (prRes prResult) Title() string {
+	return prRes.title
 }
 
-func (pr prResult) Description() string {
-	return pr.description
+func (prRes prResult) Description() string {
+	return prRes.description
 }
 
-func (pr prResult) FilterValue() string {
-	return fmt.Sprintf("%d", pr.pr.Number)
+func (prRes prResult) FilterValue() string {
+	return fmt.Sprintf("%d", prRes.pr.Number)
 }
 
 func (ir prTLItemResult) Title() string {

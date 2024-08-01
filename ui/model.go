@@ -32,36 +32,37 @@ const (
 )
 
 type model struct {
-	mode                    Mode
-	config                  Config
-	ghClient                *ghapi.GraphQLClient
-	repoOwner               string
-	repoName                string
-	repoList                list.Model
-	prsList                 list.Model
-	prTLList                list.Model
-	prCache                 []*prResult
-	prRevCmtVP              viewport.Model
-	prRevCmtVPReady         bool
-	prDetailsTitle          string
-	prTLItemDetailTitle     string
-	prDetailsVP             viewport.Model
-	prDetailsVPReady        bool
-	prDetailsCache          map[string]prDetails
-	prTLCache               map[string][]*prTLItemResult
-	message                 string
-	helpVP                  viewport.Model
-	helpVPReady             bool
-	activePane              Pane
-	lastPane                Pane
-	secondLastActivePane    Pane
-	showHelp                bool
-	repoChosen              bool
-	userLogin               string
-	terminalDetails         terminalDetails
-	mdRenderer              *glamour.TermRenderer
-	prDetailsCurrentSection uint
-	prRevCurCmtNum          uint
+	mode                     Mode
+	config                   Config
+	ghClient                 *ghapi.GraphQLClient
+	repoOwner                string
+	repoName                 string
+	repoList                 list.Model
+	prsList                  list.Model
+	prTLList                 list.Model
+	prCache                  []*prResult
+	prRevCmtVP               viewport.Model
+	prRevCmtVPReady          bool
+	prDetailsTitle           string
+	prTLItemDetailTitle      string
+	prDetailsVP              viewport.Model
+	prDetailsVPReady         bool
+	prDetailsCache           map[string]prDetails
+	prTLCache                map[string][]*prTLItemResult
+	message                  string
+	helpVP                   viewport.Model
+	helpVPReady              bool
+	activePane               Pane
+	lastPane                 Pane
+	secondLastActivePane     Pane
+	showHelp                 bool
+	repoChosen               bool
+	userLogin                string
+	terminalDetails          terminalDetails
+	mdRenderer               *glamour.TermRenderer
+	prDetailsCurrentSection  uint
+	prDetailsCurSectionCache map[string]uint
+	prRevCurCmtNum           uint
 }
 
 func (m model) Init() tea.Cmd {

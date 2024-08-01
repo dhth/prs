@@ -366,18 +366,26 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			m.prsList.CursorUp()
-			pr, ok := m.prsList.SelectedItem().(*prResult)
+			prRes, ok := m.prsList.SelectedItem().(*prResult)
 			if !ok {
 				break
 			}
 
-			prDetails, ok := m.prDetailsCache[fmt.Sprintf("%s/%s:%d", pr.pr.Repository.Owner.Login, pr.pr.Repository.Name, pr.pr.Number)]
+			prDetails, ok := m.prDetailsCache[prRes.identifier]
 			if !ok {
 				break
 			}
 
-			m.setPRDetailsContent(prDetails, 0)
-			m.prDetailsCurrentSection = 0
+			var section uint
+			lastSection, ok := m.prDetailsCurSectionCache[prRes.identifier]
+			if ok {
+				section = lastSection
+			} else {
+				section = 0
+			}
+
+			m.setPRDetailsContent(prDetails, PRDetailsSectionList[section])
+			m.prDetailsCurrentSection = section
 
 		case "J", "]":
 			if m.activePane != prDetailsView {
@@ -385,18 +393,26 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			m.prsList.CursorDown()
-			pr, ok := m.prsList.SelectedItem().(*prResult)
+			prRes, ok := m.prsList.SelectedItem().(*prResult)
 			if !ok {
 				break
 			}
 
-			prDetails, ok := m.prDetailsCache[fmt.Sprintf("%s/%s:%d", pr.pr.Repository.Owner.Login, pr.pr.Repository.Name, pr.pr.Number)]
+			prDetails, ok := m.prDetailsCache[prRes.identifier]
 			if !ok {
 				break
 			}
 
-			m.setPRDetailsContent(prDetails, 0)
-			m.prDetailsCurrentSection = 0
+			var section uint
+			lastSection, ok := m.prDetailsCurSectionCache[prRes.identifier]
+			if ok {
+				section = lastSection
+			} else {
+				section = 0
+			}
+
+			m.setPRDetailsContent(prDetails, PRDetailsSectionList[section])
+			m.prDetailsCurrentSection = section
 
 		case "d":
 			if m.activePane != prListView && m.activePane != prDetailsView && m.activePane != prTLListView && m.activePane != prRevCmtsView {
@@ -408,18 +424,27 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				break
 			}
 
-			pr, ok := m.prsList.SelectedItem().(*prResult)
+			prRes, ok := m.prsList.SelectedItem().(*prResult)
 			if !ok {
 				break
 			}
 
-			prDetails, ok := m.prDetailsCache[fmt.Sprintf("%s/%s:%d", pr.pr.Repository.Owner.Login, pr.pr.Repository.Name, pr.pr.Number)]
+			prDetails, ok := m.prDetailsCache[prRes.identifier]
 			if !ok {
+				m.message = "PR details were not retrieved"
 				break
 			}
 
-			m.setPRDetailsContent(prDetails, 0)
-			m.prDetailsCurrentSection = 0
+			var section uint
+			lastSection, ok := m.prDetailsCurSectionCache[prRes.identifier]
+			if ok {
+				section = lastSection
+			} else {
+				section = 0
+			}
+
+			m.setPRDetailsContent(prDetails, PRDetailsSectionList[section])
+			m.prDetailsCurrentSection = section
 
 			m.prDetailsVP.GotoTop()
 			m.lastPane = m.activePane
@@ -432,12 +457,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			switch m.activePane {
 			case prDetailsView:
-				pr, ok := m.prsList.SelectedItem().(*prResult)
+				prRes, ok := m.prsList.SelectedItem().(*prResult)
 				if !ok {
 					break
 				}
 
-				prDetails, ok := m.prDetailsCache[fmt.Sprintf("%s/%s:%d", pr.pr.Repository.Owner.Login, pr.pr.Repository.Name, pr.pr.Number)]
+				prDetails, ok := m.prDetailsCache[prRes.identifier]
 				if !ok {
 					break
 				}
@@ -496,6 +521,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 
 				m.setPRDetailsContent(prDetails, PRDetailsSectionList[nextSection])
+				m.prDetailsCurSectionCache[prRes.identifier] = nextSection
 				m.prDetailsCurrentSection = nextSection
 
 			case prRevCmtsView:
@@ -528,12 +554,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			switch m.activePane {
 			case prDetailsView:
-				pr, ok := m.prsList.SelectedItem().(*prResult)
+				prRes, ok := m.prsList.SelectedItem().(*prResult)
 				if !ok {
 					break
 				}
 
-				prDetails, ok := m.prDetailsCache[fmt.Sprintf("%s/%s:%d", pr.pr.Repository.Owner.Login, pr.pr.Repository.Name, pr.pr.Number)]
+				prDetails, ok := m.prDetailsCache[prRes.identifier]
 				if !ok {
 					break
 				}
@@ -580,6 +606,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 
 				m.setPRDetailsContent(prDetails, PRDetailsSectionList[prevSection])
+				m.prDetailsCurSectionCache[prRes.identifier] = prevSection
 				m.prDetailsCurrentSection = prevSection
 
 			case prRevCmtsView:
@@ -739,12 +766,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		prs := make([]list.Item, len(msg.prs))
 		prResults := make([]*prResult, len(msg.prs))
+		m.prDetailsCurSectionCache = make(map[string]uint)
 
 		for i, pr := range msg.prs {
 			prResults[i] = &prResult{
 				pr:          &pr,
 				title:       getPRTitle(&pr),
 				description: getPRDesc(&pr, m.mode, m.terminalDetails),
+				identifier:  fmt.Sprintf("%s/%s:%d", pr.Repository.Owner.Login, pr.Repository.Name, pr.Number),
 			}
 			prs[i] = prResults[i]
 		}
@@ -784,14 +813,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		prs := make([]list.Item, len(msg.prs))
-
 		prResults := make([]*prResult, len(msg.prs))
+		m.prDetailsCurSectionCache = make(map[string]uint)
 
 		for i, pr := range msg.prs {
 			prResults[i] = &prResult{
 				pr:          &pr,
 				title:       getPRTitle(&pr),
 				description: getPRDesc(&pr, m.mode, m.terminalDetails),
+				identifier:  fmt.Sprintf("%s/%s:%d", pr.Repository.Owner.Login, pr.Repository.Name, pr.Number),
 			}
 			prs[i] = prResults[i]
 		}
@@ -815,35 +845,37 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case authoredPRsFetchedMsg:
 		if msg.err != nil {
 			m.message = msg.err.Error()
-		} else {
-			prs := make([]list.Item, len(msg.prs))
+			break
+		}
 
-			prResults := make([]*prResult, len(msg.prs))
+		prs := make([]list.Item, len(msg.prs))
+		prResults := make([]*prResult, len(msg.prs))
+		m.prDetailsCurSectionCache = make(map[string]uint)
 
-			for i, pr := range msg.prs {
-				prResults[i] = &prResult{
-					pr:          &pr,
-					title:       getPRTitle(&pr),
-					description: getPRDesc(&pr, m.mode, m.terminalDetails),
-				}
-				prs[i] = prResults[i]
+		for i, pr := range msg.prs {
+			prResults[i] = &prResult{
+				pr:          &pr,
+				title:       getPRTitle(&pr),
+				description: getPRDesc(&pr, m.mode, m.terminalDetails),
+				identifier:  fmt.Sprintf("%s/%s:%d", pr.Repository.Owner.Login, pr.Repository.Name, pr.Number),
 			}
+			prs[i] = prResults[i]
+		}
 
-			m.prCache = prResults
-			m.prsList.SetItems(prs)
-			m.prsList.Title = "Open PRs authored by you"
-			m.prsList.ResetSelected()
-			m.prsList.Styles.Title = m.prsList.Styles.Title.Background(lipgloss.Color(prListColor))
+		m.prCache = prResults
+		m.prsList.SetItems(prs)
+		m.prsList.Title = "Open PRs authored by you"
+		m.prsList.ResetSelected()
+		m.prsList.Styles.Title = m.prsList.Styles.Title.Background(lipgloss.Color(prListColor))
 
-			if len(msg.prs) > 0 {
-				for _, pr := range msg.prs {
-					cmds = append(cmds, fetchPRTLItems(m.ghClient, pr.Repository.Owner.Login, pr.Repository.Name, pr.Number, 100, false))
-					cmds = append(cmds, fetchPRMetadata(m.ghClient,
-						pr.Repository.Owner.Login,
-						pr.Repository.Name,
-						pr.Number,
-					))
-				}
+		if len(msg.prs) > 0 {
+			for _, pr := range msg.prs {
+				cmds = append(cmds, fetchPRTLItems(m.ghClient, pr.Repository.Owner.Login, pr.Repository.Name, pr.Number, 100, false))
+				cmds = append(cmds, fetchPRMetadata(m.ghClient,
+					pr.Repository.Owner.Login,
+					pr.Repository.Name,
+					pr.Number,
+				))
 			}
 		}
 
@@ -928,16 +960,16 @@ func (m *model) setTL() (tea.Cmd, bool) {
 	var repoOwner, repoName string
 	var prNumber int
 
-	prItem, prOk := m.prsList.SelectedItem().(*prResult)
+	prRes, prOk := m.prsList.SelectedItem().(*prResult)
 	if !prOk {
 		return nil, false
 	}
 
-	repoOwner = prItem.pr.Repository.Owner.Login
-	repoName = prItem.pr.Repository.Name
-	prNumber = prItem.pr.Number
+	repoOwner = prRes.pr.Repository.Owner.Login
+	repoName = prRes.pr.Repository.Name
+	prNumber = prRes.pr.Number
 
-	tlFromCache, ok := m.prTLCache[fmt.Sprintf("%s/%s:%d", repoOwner, repoName, prNumber)]
+	tlFromCache, ok := m.prTLCache[prRes.identifier]
 	if !ok {
 		cmd = fetchPRTLItems(m.ghClient, repoOwner, repoName, prNumber, 100, true)
 		return cmd, true
