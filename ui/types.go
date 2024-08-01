@@ -35,9 +35,11 @@ const (
 	statusStateSuccess          = "SUCCESS"
 	statusStateFailure          = "FAILURE"
 	statusStateError            = "ERROR"
+	requestedReviewerUser       = "User"
 	prDetailsMetadataKeyPadding = 30
 	checkNamePadding            = 40
 	statusConclusionPadding     = 16
+	reviewRequestsCount         = 20
 	latestReviewsCount          = 30
 	filesCount                  = 50
 	labelsCount                 = 10
@@ -142,8 +144,18 @@ type prDetails struct {
 	Author         struct {
 		Login string
 	}
-	Additions     int
-	Deletions     int
+	Additions      int
+	Deletions      int
+	ReviewRequests *struct {
+		Nodes []struct {
+			RequestedReviewer *struct {
+				Type string `graphql:"type: __typename"`
+				User struct {
+					Login string
+				} `graphql:"... on User "`
+			}
+		}
+	} `graphql:"reviewRequests (first:$reviewRequestsCount)"`
 	LatestReviews struct {
 		Nodes []struct {
 			Author struct {
@@ -409,6 +421,23 @@ func (pr prDetails) Metadata() string {
 			RightPadTrim("Participants", prDetailsMetadataKeyPadding),
 			strings.Join(participants, ", "),
 		))
+	}
+
+	if pr.ReviewRequests != nil && len(pr.ReviewRequests.Nodes) > 0 {
+		var requested []string
+		for _, r := range pr.ReviewRequests.Nodes {
+			if r.RequestedReviewer.Type != requestedReviewerUser {
+				continue
+			}
+			requested = append(requested, fmt.Sprintf("`@%s`", r.RequestedReviewer.User.Login))
+		}
+
+		if len(requested) > 0 {
+			metadata = append(metadata, fmt.Sprintf("- %s %s",
+				RightPadTrim("Review requested from", prDetailsMetadataKeyPadding),
+				strings.Join(requested, ", "),
+			))
+		}
 	}
 
 	metadata = append(metadata, fmt.Sprintf("- %s %s (%s)",

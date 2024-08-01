@@ -35,6 +35,7 @@ func getPRMetadata(ghClient *ghapi.GraphQLClient, repoOwner string, repoName str
 		"repositoryOwner":          ghgql.String(repoOwner),
 		"repositoryName":           ghgql.String(repoName),
 		"pullRequestNumber":        ghgql.Int(prNumber),
+		"reviewRequestsCount":      ghgql.Int(reviewRequestsCount),
 		"latestReviewsCount":       ghgql.Int(latestReviewsCount),
 		"filesCount":               ghgql.Int(filesCount),
 		"labelsCount":              ghgql.Int(labelsCount),
