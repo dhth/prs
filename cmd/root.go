@@ -92,7 +92,7 @@ func Execute() {
 
 	opts := ghapi.ClientOptions{
 		EnableCache: true,
-		CacheTTL:    time.Minute * 5,
+		CacheTTL:    time.Second * 30,
 		Timeout:     8 * time.Second,
 	}
 
