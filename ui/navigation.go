@@ -19,6 +19,8 @@ func (m *model) setPRDetailsContent(prDetails prDetails, section PRDetailSection
 		content += prDetails.Metadata()
 	case PRDescription:
 		content += prDetails.Description()
+	case PRChecks:
+		content += prDetails.Checks()
 	case PRReferences:
 		content += prDetails.References()
 	case PRFilesChanged:
@@ -48,6 +50,12 @@ func (m *model) setPRDetailsContent(prDetails prDetails, section PRDetailSection
 
 	if prDetails.Body == "" {
 		sections[PRDescription] = "◌"
+	}
+	// not foolproof, but should work in most cases
+	// func (pr prDetails) Checks() will return with an appropriate message in
+	// that case
+	if !(len(prDetails.LastCommit.Nodes) > 0 && prDetails.LastCommit.Nodes[0].Commit.StatusCheckRollup != nil) {
+		sections[PRChecks] = "◌"
 	}
 	if len(prDetails.IssueReferences.Nodes) == 0 {
 		sections[PRReferences] = "◌"
@@ -88,18 +96,22 @@ func (m *model) GoToPRDetailSection(section uint) {
 			return
 		}
 	case 2:
-		if len(prDetails.IssueReferences.Nodes) == 0 {
+		if !(len(prDetails.LastCommit.Nodes) > 0 && prDetails.LastCommit.Nodes[0].Commit.StatusCheckRollup != nil) {
 			return
 		}
 	case 3:
-		if len(prDetails.Files.Nodes) == 0 {
+		if len(prDetails.IssueReferences.Nodes) == 0 {
 			return
 		}
 	case 4:
-		if len(prDetails.Commits.Nodes) == 0 {
+		if len(prDetails.Files.Nodes) == 0 {
 			return
 		}
 	case 5:
+		if len(prDetails.Commits.Nodes) == 0 {
+			return
+		}
+	case 6:
 		if len(prDetails.Comments.Nodes) == 0 {
 			return
 		}

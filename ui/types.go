@@ -26,26 +26,29 @@ const (
 	reviewApproved              = "APPROVED"
 	reviewChangesRequested      = "CHANGES_REQUESTED"
 	reviewDismissed             = "DISMISSED"
-	mergeableConflicting        = "CONFLICTING"
 	checkStatusStateCompleted   = "COMPLETED"
 	checkRunType                = "CheckRun"
+	statusContextType           = "StatusContext"
 	checkConclusionStateSuccess = "SUCCESS"
 	checkConclusionStateFailure = "FAILURE"
-
-	timeFormat                  = "2006/01/02 15:04"
-	prDetailsMetadataKeyPadding = 30
-	checkNamePadding            = 30
+	checkConclusionStateError   = "ERROR"
 	statusStateSuccess          = "SUCCESS"
 	statusStateFailure          = "FAILURE"
-
-	latestReviewsCount = 30
-	filesCount         = 50
-	labelsCount        = 10
-	assigneesCount     = 10
-	issuesCount        = 10
-	participantsCount  = 30
-	commentsCount      = 10
-	commitsCount       = 30
+	statusStateError            = "ERROR"
+	prDetailsMetadataKeyPadding = 30
+	checkNamePadding            = 40
+	statusConclusionPadding     = 16
+	latestReviewsCount          = 30
+	filesCount                  = 50
+	labelsCount                 = 10
+	assigneesCount              = 10
+	issuesCount                 = 10
+	participantsCount           = 30
+	commentsCount               = 10
+	commitsCount                = 30
+	statusCheckContextsCount    = 50
+	timeFormat                  = "2006/01/02 15:04"
+	mergeableConflicting        = "CONFLICTING"
 )
 
 type terminalDetails struct {
@@ -221,8 +224,12 @@ type prDetails struct {
 								Conclusion *string
 								Name       string
 							} `graphql:"... on CheckRun"`
+							StatusContext struct {
+								State   string
+								Context string
+							} `graphql:"... on StatusContext"`
 						}
-					} `graphql:"contexts (first:10) "`
+					} `graphql:"contexts (first: $statusCheckContextsCount) "`
 					State string
 				}
 			}
@@ -235,6 +242,7 @@ type PRDetailSection uint
 const (
 	PRMetadata PRDetailSection = iota
 	PRDescription
+	PRChecks
 	PRReferences
 	PRFilesChanged
 	PRCommits
@@ -244,6 +252,7 @@ const (
 var PRDetailsSectionList = []PRDetailSection{
 	PRMetadata,
 	PRDescription,
+	PRChecks,
 	PRReferences,
 	PRFilesChanged,
 	PRCommits,
@@ -365,58 +374,6 @@ type prTLQuery struct {
 			} `graphql:"pullRequest(number: $pullRequestNumber)"`
 		} `graphql:"repository(name: $repositoryName)"`
 	} `graphql:"repositoryOwner(login: $repositoryOwner)"`
-}
-
-func (pr prDetails) Checks() []string {
-	if len(pr.LastCommit.Nodes) == 0 {
-		return nil
-	}
-	if pr.LastCommit.Nodes[0].Commit.StatusCheckRollup == nil {
-		return nil
-	}
-	if len(pr.LastCommit.Nodes[0].Commit.StatusCheckRollup.Contexts.Nodes) == 0 {
-		return nil
-	}
-	var checks []string
-
-	var commitStatus string
-	switch pr.LastCommit.Nodes[0].Commit.StatusCheckRollup.State {
-	case statusStateSuccess:
-		commitStatus = "✅"
-	case statusStateFailure:
-		commitStatus = "❌"
-	default:
-		commitStatus = pr.LastCommit.Nodes[0].Commit.StatusCheckRollup.State
-	}
-
-	checks = append(checks, fmt.Sprintf("%s %s\n",
-		RightPadTrim("> Status of latest commit", checkNamePadding+2),
-		commitStatus,
-	))
-
-	for _, n := range pr.LastCommit.Nodes[0].Commit.StatusCheckRollup.Contexts.Nodes {
-		if n.Type != checkRunType {
-			break
-		}
-
-		checkName := RightPadTrim(n.CheckRun.Name, checkNamePadding)
-		if n.CheckRun.Status == checkStatusStateCompleted && n.CheckRun.Conclusion != nil {
-			var conclusion string
-			switch *n.CheckRun.Conclusion {
-			case checkConclusionStateSuccess:
-				conclusion = "✅"
-			case checkConclusionStateFailure:
-				conclusion = "❌"
-			default:
-				conclusion = *n.CheckRun.Conclusion
-			}
-			checks = append(checks, fmt.Sprintf("- %s %s", checkName, conclusion))
-		} else {
-			checks = append(checks, fmt.Sprintf("- %s  `%s`", checkName, n.CheckRun.Status))
-		}
-
-	}
-	return checks
 }
 
 func (pr prDetails) Metadata() string {
@@ -558,12 +515,6 @@ func (pr prDetails) Metadata() string {
 		))
 	}
 
-	checks := pr.Checks()
-	if len(checks) > 0 {
-		metadata = append(metadata, "\n---\n")
-		metadata = append(metadata, strings.Join(checks, "\n"))
-	}
-
 	return fmt.Sprintf(`
 ## Metadata
 
@@ -575,6 +526,69 @@ func (pr prDetails) Description() string {
 ## Description
 
 %s`, pr.Body)
+}
+
+func (pr prDetails) Checks() string {
+	if len(pr.LastCommit.Nodes) == 0 {
+		return "## No Checks"
+	}
+	if pr.LastCommit.Nodes[0].Commit.StatusCheckRollup == nil {
+		return "## No Checks"
+	}
+	if len(pr.LastCommit.Nodes[0].Commit.StatusCheckRollup.Contexts.Nodes) == 0 {
+		return "## No Checks"
+	}
+
+	var checks []string
+	for _, n := range pr.LastCommit.Nodes[0].Commit.StatusCheckRollup.Contexts.Nodes {
+		switch n.Type {
+		case checkRunType:
+			checkName := RightPadTrim(n.CheckRun.Name, checkNamePadding)
+			if n.CheckRun.Conclusion != nil {
+				var conclusionMarker string
+				switch *n.CheckRun.Conclusion {
+				case checkConclusionStateSuccess:
+					conclusionMarker = " ✅"
+				case checkConclusionStateFailure, checkConclusionStateError:
+					conclusionMarker = " ❌"
+				}
+				checks = append(checks, fmt.Sprintf("- %s %s%s",
+					checkName,
+					RightPadTrim(fmt.Sprintf("`%s`", *n.CheckRun.Conclusion), statusConclusionPadding),
+					conclusionMarker,
+				))
+			} else {
+				checks = append(checks, fmt.Sprintf("- %s %s", checkName, n.CheckRun.Status))
+			}
+		case statusContextType:
+			var stateMarker string
+			switch n.StatusContext.State {
+			case statusStateSuccess:
+				stateMarker = " ✅"
+			case statusStateFailure, statusStateError:
+				stateMarker = " ❌"
+			}
+			checks = append(checks, fmt.Sprintf("- %s %s%s",
+				RightPadTrim(n.StatusContext.Context, checkNamePadding),
+				RightPadTrim(fmt.Sprintf("`%s`", n.StatusContext.State), statusConclusionPadding),
+				stateMarker,
+			))
+		}
+	}
+
+	if len(checks) == 0 {
+		return "## No Checks"
+	}
+
+	return fmt.Sprintf(`
+## Checks
+
+%s **%s**
+
+%s`,
+		RightPadTrim("> Status of latest commit", checkNamePadding+2),
+		pr.LastCommit.Nodes[0].Commit.StatusCheckRollup.State,
+		strings.Join(checks, "\n"))
 }
 
 func (pr prDetails) References() string {

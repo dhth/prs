@@ -484,18 +484,24 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							nextSectionFound = true
 						}
 					case 2:
-						if len(prDetails.IssueReferences.Nodes) > 0 {
+						// this may still lead to no status checks being shown
+						// but the probability of that happening is pretty low
+						if len(prDetails.LastCommit.Nodes) > 0 && prDetails.LastCommit.Nodes[0].Commit.StatusCheckRollup != nil {
 							nextSectionFound = true
 						}
 					case 3:
-						if len(prDetails.Files.Nodes) > 0 {
+						if len(prDetails.IssueReferences.Nodes) > 0 {
 							nextSectionFound = true
 						}
 					case 4:
-						if len(prDetails.Commits.Nodes) > 0 {
+						if len(prDetails.Files.Nodes) > 0 {
 							nextSectionFound = true
 						}
 					case 5:
+						if len(prDetails.Commits.Nodes) > 0 {
+							nextSectionFound = true
+						}
+					case 6:
 						if len(prDetails.Comments.Nodes) > 0 {
 							nextSectionFound = true
 						} else {
@@ -581,18 +587,22 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							prevSectionFound = true
 						}
 					case 2:
-						if len(prDetails.IssueReferences.Nodes) > 0 {
+						if len(prDetails.LastCommit.Nodes) > 0 && prDetails.LastCommit.Nodes[0].Commit.StatusCheckRollup != nil {
 							prevSectionFound = true
 						}
 					case 3:
-						if len(prDetails.Files.Nodes) > 0 {
+						if len(prDetails.IssueReferences.Nodes) > 0 {
 							prevSectionFound = true
 						}
 					case 4:
-						if len(prDetails.Commits.Nodes) > 0 {
+						if len(prDetails.Files.Nodes) > 0 {
 							prevSectionFound = true
 						}
 					case 5:
+						if len(prDetails.Commits.Nodes) > 0 {
+							prevSectionFound = true
+						}
+					case 6:
 						if len(prDetails.Comments.Nodes) > 0 {
 							prevSectionFound = true
 						}

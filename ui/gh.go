@@ -32,17 +32,18 @@ func getPRMetadata(ghClient *ghapi.GraphQLClient, repoOwner string, repoName str
 	var query prDetailsQuery
 
 	variables := map[string]interface{}{
-		"repositoryOwner":    ghgql.String(repoOwner),
-		"repositoryName":     ghgql.String(repoName),
-		"pullRequestNumber":  ghgql.Int(prNumber),
-		"latestReviewsCount": ghgql.Int(latestReviewsCount),
-		"filesCount":         ghgql.Int(filesCount),
-		"labelsCount":        ghgql.Int(labelsCount),
-		"assigneesCount":     ghgql.Int(assigneesCount),
-		"issuesCount":        ghgql.Int(issuesCount),
-		"participantsCount":  ghgql.Int(participantsCount),
-		"commentsCount":      ghgql.Int(commentsCount),
-		"commitsCount":       ghgql.Int(commitsCount),
+		"repositoryOwner":          ghgql.String(repoOwner),
+		"repositoryName":           ghgql.String(repoName),
+		"pullRequestNumber":        ghgql.Int(prNumber),
+		"latestReviewsCount":       ghgql.Int(latestReviewsCount),
+		"filesCount":               ghgql.Int(filesCount),
+		"labelsCount":              ghgql.Int(labelsCount),
+		"assigneesCount":           ghgql.Int(assigneesCount),
+		"issuesCount":              ghgql.Int(issuesCount),
+		"participantsCount":        ghgql.Int(participantsCount),
+		"commentsCount":            ghgql.Int(commentsCount),
+		"commitsCount":             ghgql.Int(commitsCount),
+		"statusCheckContextsCount": ghgql.Int(statusCheckContextsCount),
 	}
 	err := ghClient.Query("PRTL", &query, variables)
 	if err != nil {
