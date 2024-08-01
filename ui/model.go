@@ -18,7 +18,7 @@ const (
 	prDetailsView
 	reviewPRListView
 	prTLListView
-	prRevCmtsView
+	prTLItemDetailView
 	helpView
 )
 
@@ -41,8 +41,8 @@ type model struct {
 	prsList                  list.Model
 	prTLList                 list.Model
 	prCache                  []*prResult
-	prRevCmtVP               viewport.Model
-	prRevCmtVPReady          bool
+	prTLItemDetailVP         viewport.Model
+	prTLItemDetailVPReady    bool
 	prDetailsTitle           string
 	prTLItemDetailTitle      string
 	prDetailsVP              viewport.Model

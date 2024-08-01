@@ -27,21 +27,21 @@ func (m model) View() string {
 	case repoListView:
 		content = listStyle.Render(m.repoList.View())
 	case prDetailsView:
-		if !m.prRevCmtVPReady {
+		if !m.prTLItemDetailVPReady {
 			content = "\n  Initializing..."
 		} else {
 			content = viewPortStyle.Render(fmt.Sprintf("  %s\n\n%s\n",
 				prDetailsTitleStyle.Render(m.prDetailsTitle),
 				m.prDetailsVP.View()))
 		}
-	case prRevCmtsView:
+	case prTLItemDetailView:
 		var prRevCmtsVP string
-		if !m.prRevCmtVPReady {
+		if !m.prTLItemDetailVPReady {
 			prRevCmtsVP = "\n  Initializing..."
 		} else {
 			prRevCmtsVP = viewPortStyle.Render(fmt.Sprintf("  %s\n\n%s\n",
 				helpVPTitleStyle.Render(m.prTLItemDetailTitle),
-				m.prRevCmtVP.View()))
+				m.prTLItemDetailVP.View()))
 		}
 		content = prRevCmtsVP
 	case helpView:

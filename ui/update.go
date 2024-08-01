@@ -44,8 +44,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.activePane = m.lastPane
 			case helpView:
 				m.activePane = m.lastPane
-			case prRevCmtsView:
-				m.prRevCmtVP.GotoTop()
+			case prTLItemDetailView:
+				m.prTLItemDetailVP.GotoTop()
 				m.activePane = prTLListView
 			case prTLListView:
 				m.prTLList.ResetSelected()
@@ -100,7 +100,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.prTLList.Styles.Title = m.prTLList.Styles.Title.Background(lipgloss.Color(fetchingColor))
 			}
 		case "1":
-			if m.activePane != prTLListView && m.activePane != prRevCmtsView && m.activePane != prDetailsView {
+			if m.activePane != prTLListView && m.activePane != prTLItemDetailView && m.activePane != prDetailsView {
 				break
 			}
 
@@ -138,7 +138,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 				m.setPRReviewCmt(item.item, 0)
 				m.prRevCurCmtNum = 0
-				m.activePane = prRevCmtsView
+				m.activePane = prTLItemDetailView
 
 			case repoListView:
 				selected := m.repoList.SelectedItem()
@@ -147,7 +147,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 		case "2":
-			if m.activePane != prListView && m.activePane != prRevCmtsView && m.activePane != prDetailsView {
+			if m.activePane != prListView && m.activePane != prTLItemDetailView && m.activePane != prDetailsView {
 				break
 			}
 
@@ -189,7 +189,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 
 				m.setPRReviewCmt(tlItem.item, 0)
-				m.activePane = prRevCmtsView
+				m.activePane = prTLItemDetailView
 			}
 
 		case "4":
@@ -214,16 +214,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.GoToPRDetailSection(5)
 
 		case "j", "down":
-			if m.activePane != prRevCmtsView && m.activePane != helpView && m.activePane != prDetailsView {
+			if m.activePane != prTLItemDetailView && m.activePane != helpView && m.activePane != prDetailsView {
 				break
 			}
 
 			switch m.activePane {
-			case prRevCmtsView:
-				if m.prRevCmtVP.AtBottom() {
+			case prTLItemDetailView:
+				if m.prTLItemDetailVP.AtBottom() {
 					break
 				}
-				m.prRevCmtVP.LineDown(viewPortMoveLineCount)
+				m.prTLItemDetailVP.LineDown(viewPortMoveLineCount)
 			case prDetailsView:
 				if m.prDetailsVP.AtBottom() {
 					break
@@ -237,16 +237,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case "k", "up":
-			if m.activePane != prRevCmtsView && m.activePane != helpView && m.activePane != prDetailsView {
+			if m.activePane != prTLItemDetailView && m.activePane != helpView && m.activePane != prDetailsView {
 				break
 			}
 
 			switch m.activePane {
-			case prRevCmtsView:
-				if m.prRevCmtVP.AtTop() {
+			case prTLItemDetailView:
+				if m.prTLItemDetailVP.AtTop() {
 					break
 				}
-				m.prRevCmtVP.LineUp(viewPortMoveLineCount)
+				m.prTLItemDetailVP.LineUp(viewPortMoveLineCount)
 			case prDetailsView:
 				if m.prDetailsVP.AtTop() {
 					break
@@ -295,7 +295,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 
 				cmds = append(cmds, openURLInBrowser(pr.pr.Url))
-			case prTLListView, prRevCmtsView:
+			case prTLListView, prTLItemDetailView:
 				item, ok := m.prTLList.SelectedItem().(*prTLItemResult)
 				if !ok {
 					break
@@ -314,7 +314,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case "ctrl+d":
-			if m.activePane != prListView && m.activePane != prTLListView && m.activePane != prRevCmtsView {
+			if m.activePane != prListView && m.activePane != prTLListView && m.activePane != prTLItemDetailView {
 				break
 			}
 
@@ -343,8 +343,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "g":
 			switch m.activePane {
-			case prRevCmtsView:
-				m.prRevCmtVP.GotoTop()
+			case prTLItemDetailView:
+				m.prTLItemDetailVP.GotoTop()
 			case prDetailsView:
 				m.prDetailsVP.GotoTop()
 			case helpView:
@@ -352,8 +352,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "G":
 			switch m.activePane {
-			case prRevCmtsView:
-				m.prRevCmtVP.GotoBottom()
+			case prTLItemDetailView:
+				m.prTLItemDetailVP.GotoBottom()
 			case prDetailsView:
 				m.prDetailsVP.GotoBottom()
 			case helpView:
@@ -415,7 +415,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.prDetailsCurrentSection = section
 
 		case "d":
-			if m.activePane != prListView && m.activePane != prDetailsView && m.activePane != prTLListView && m.activePane != prRevCmtsView {
+			if m.activePane != prListView && m.activePane != prDetailsView && m.activePane != prTLListView && m.activePane != prTLItemDetailView {
 				break
 			}
 
@@ -451,7 +451,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.activePane = prDetailsView
 
 		case "l", "n", "right":
-			if m.activePane != prDetailsView && m.activePane != prRevCmtsView {
+			if m.activePane != prDetailsView && m.activePane != prTLItemDetailView {
 				break
 			}
 
@@ -524,7 +524,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.prDetailsCurSectionCache[prRes.identifier] = nextSection
 				m.prDetailsCurrentSection = nextSection
 
-			case prRevCmtsView:
+			case prTLItemDetailView:
 				tlItem, ok := m.prTLList.SelectedItem().(*prTLItemResult)
 				if !ok {
 					break
@@ -548,7 +548,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case "h", "N", "left":
-			if m.activePane != prDetailsView && m.activePane != prRevCmtsView {
+			if m.activePane != prDetailsView && m.activePane != prTLItemDetailView {
 				break
 			}
 
@@ -609,7 +609,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.prDetailsCurSectionCache[prRes.identifier] = prevSection
 				m.prDetailsCurrentSection = prevSection
 
-			case prRevCmtsView:
+			case prTLItemDetailView:
 				tlItem, ok := m.prTLList.SelectedItem().(*prTLItemResult)
 				if !ok {
 					break
@@ -663,16 +663,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.prTLList.SetHeight(msg.Height - h - 2)
 		m.prTLList.SetWidth(msg.Width - w)
 
-		if !m.prRevCmtVPReady {
-			m.prRevCmtVP = viewport.New(msg.Width-2, msg.Height-7)
-			m.prRevCmtVP.HighPerformanceRendering = useHighPerformanceRenderer
-			m.prRevCmtVPReady = true
-			m.prRevCmtVP.KeyMap.HalfPageDown.SetKeys("ctrl+d")
-			m.prRevCmtVP.KeyMap.Up.SetEnabled(false)
-			m.prRevCmtVP.KeyMap.Down.SetEnabled(false)
+		if !m.prTLItemDetailVPReady {
+			m.prTLItemDetailVP = viewport.New(msg.Width-2, msg.Height-7)
+			m.prTLItemDetailVP.HighPerformanceRendering = useHighPerformanceRenderer
+			m.prTLItemDetailVPReady = true
+			m.prTLItemDetailVP.KeyMap.HalfPageDown.SetKeys("ctrl+d")
+			m.prTLItemDetailVP.KeyMap.Up.SetEnabled(false)
+			m.prTLItemDetailVP.KeyMap.Down.SetEnabled(false)
 		} else {
-			m.prRevCmtVP.Width = msg.Width - 2
-			m.prRevCmtVP.Height = msg.Height - 7
+			m.prTLItemDetailVP.Width = msg.Width - 2
+			m.prTLItemDetailVP.Height = msg.Height - 7
 		}
 
 		if !m.prDetailsVPReady {
@@ -941,8 +941,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case prDetailsView:
 		m.prDetailsVP, cmd = m.prDetailsVP.Update(msg)
 		cmds = append(cmds, cmd)
-	case prRevCmtsView:
-		m.prRevCmtVP, cmd = m.prRevCmtVP.Update(msg)
+	case prTLItemDetailView:
+		m.prTLItemDetailVP, cmd = m.prTLItemDetailVP.Update(msg)
 		cmds = append(cmds, cmd)
 	case repoListView:
 		m.repoList, cmd = m.repoList.Update(msg)

@@ -92,8 +92,8 @@ func Execute() {
 
 	opts := ghapi.ClientOptions{
 		EnableCache: true,
-		CacheTTL:    time.Minute * 1,
-		Timeout:     5 * time.Second,
+		CacheTTL:    time.Minute * 5,
+		Timeout:     8 * time.Second,
 	}
 
 	ghClient, err := ghapi.NewGraphQLClient(opts)

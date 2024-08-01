@@ -31,13 +31,14 @@ const (
 	timeFormat                  = "2006/01/02 15:04"
 	prDetailsMetadataKeyPadding = 20
 
-	filesCount        = 50
-	labelsCount       = 10
-	assigneesCount    = 10
-	issuesCount       = 10
-	participantsCount = 30
-	commentsCount     = 10
-	commitsCount      = 30
+	latestReviewsCount = 30
+	filesCount         = 50
+	labelsCount        = 10
+	assigneesCount     = 10
+	issuesCount        = 10
+	participantsCount  = 30
+	commentsCount      = 10
+	commitsCount       = 30
 )
 
 type terminalDetails struct {
@@ -131,11 +132,16 @@ type prDetails struct {
 	Author         struct {
 		Login string
 	}
-	Additions int
-	Deletions int
-	Reviews   struct {
-		TotalCount int
-	}
+	Additions     int
+	Deletions     int
+	LatestReviews struct {
+		Nodes []struct {
+			Author struct {
+				Login string
+			}
+			State string
+		}
+	} `graphql:"latestReviews (last: $latestReviewsCount)"`
 	Body  string
 	Files struct {
 		Nodes []struct {
@@ -191,6 +197,9 @@ type prDetails struct {
 	} `graphql:"commits (last: $commitsCount)"`
 	MergedBy *struct {
 		Login string
+	}
+	Milestone *struct {
+		Title string
 	}
 }
 
@@ -335,22 +344,16 @@ type prTLQuery struct {
 
 func (pr prDetails) Metadata() string {
 	var metadata []string
+
+	metadata = append(metadata, fmt.Sprintf("- %s *%s*",
+		RightPadTrim("State", prDetailsMetadataKeyPadding),
+		pr.State,
+	))
+
 	metadata = append(metadata, fmt.Sprintf("- %s `@%s`",
 		RightPadTrim("Author", prDetailsMetadataKeyPadding),
 		pr.Author.Login,
 	))
-	metadata = append(metadata, fmt.Sprintf("- %s %s (%s)",
-		RightPadTrim("Created at", prDetailsMetadataKeyPadding),
-		pr.CreatedAt.Format(timeFormat),
-		humanize.Time(pr.CreatedAt),
-	))
-	if pr.LastEditedAt != nil && *pr.LastEditedAt != pr.CreatedAt {
-		metadata = append(metadata, fmt.Sprintf("- %s %s (%s)",
-			RightPadTrim("Last edited at", prDetailsMetadataKeyPadding),
-			pr.LastEditedAt.Format(timeFormat),
-			humanize.Time(*pr.LastEditedAt),
-		))
-	}
 
 	if len(pr.Assignees.Nodes) > 0 {
 		assignees := make([]string, len(pr.Assignees.Nodes))
@@ -371,6 +374,19 @@ func (pr prDetails) Metadata() string {
 		metadata = append(metadata, fmt.Sprintf("- %s %s",
 			RightPadTrim("Participants", prDetailsMetadataKeyPadding),
 			strings.Join(participants, ", "),
+		))
+	}
+
+	metadata = append(metadata, fmt.Sprintf("- %s %s (%s)",
+		RightPadTrim("Created at", prDetailsMetadataKeyPadding),
+		pr.CreatedAt.Format(timeFormat),
+		humanize.Time(pr.CreatedAt),
+	))
+	if pr.LastEditedAt != nil && *pr.LastEditedAt != pr.CreatedAt {
+		metadata = append(metadata, fmt.Sprintf("- %s %s (%s)",
+			RightPadTrim("Last edited at", prDetailsMetadataKeyPadding),
+			pr.LastEditedAt.Format(timeFormat),
+			humanize.Time(*pr.LastEditedAt),
 		))
 	}
 
@@ -429,6 +445,42 @@ func (pr prDetails) Metadata() string {
 			prDetailsMetadataKeyPadding),
 		))
 	}
+
+	if pr.Milestone != nil {
+		metadata = append(metadata, fmt.Sprintf("- %s %s", RightPadTrim("Milestone",
+			prDetailsMetadataKeyPadding),
+			pr.Milestone.Title,
+		))
+	}
+
+	if len(pr.LatestReviews.Nodes) > 0 {
+		reviews := make([]string, len(pr.LatestReviews.Nodes))
+
+		for i, r := range pr.LatestReviews.Nodes {
+			var state string
+			switch r.State {
+			case reviewPending:
+				state = "🟡"
+			case reviewCommented:
+				state = "💬"
+			case reviewChangesRequested:
+				state = "🔄"
+			case reviewApproved:
+				state = "✅"
+			case reviewDismissed:
+				state = "❌"
+			}
+			reviews[i] = fmt.Sprintf("`@%s` %s", r.Author.Login, state)
+		}
+
+		metadata = append(metadata, "\n---\n")
+
+		metadata = append(metadata, fmt.Sprintf("- %s %s",
+			RightPadTrim("Reviewed by", prDetailsMetadataKeyPadding),
+			strings.Join(reviews, ", "),
+		))
+	}
+
 	return fmt.Sprintf(`
 ## Metadata
 

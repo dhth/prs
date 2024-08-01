@@ -10,8 +10,8 @@ const (
 )
 
 func (m *model) setPRDetailsContent(prDetails prDetails, section PRDetailSection) {
-	content := fmt.Sprintf(`# %d: %s 
-`, prDetails.Number, prDetails.PRTitle,
+	content := fmt.Sprintf(`# %s (%s/%s/pull/%d)
+`, prDetails.PRTitle, prDetails.Repository.Owner.Login, prDetails.Repository.Name, prDetails.Number,
 	)
 
 	switch section {
@@ -62,9 +62,9 @@ func (m *model) setPRDetailsContent(prDetails prDetails, section PRDetailSection
 		sections[PRComments] = "◌"
 	}
 
-	sections[section] = "◉"
+	sections[section] = "●"
 
-	m.prDetailsTitle = fmt.Sprintf("PR #%d Details (%s/%s)  %s", prDetails.Number, prDetails.Repository.Owner.Login, prDetails.Repository.Name, strings.Join(sections, " "))
+	m.prDetailsTitle = fmt.Sprintf("PR Details%s", "  "+strings.Join(sections, " "))
 
 	m.prDetailsVP.GotoTop()
 }
@@ -120,8 +120,8 @@ func (m *model) setPRReviewCmt(tlItem *prTLItem, commentNum uint) {
 		for i := 0; i < len(revCmts); i++ {
 			sections[i] = "◯"
 		}
-		sections[commentNum] = "◉"
-		sectionsStr = strings.Join(sections, " ")
+		sections[commentNum] = "●"
+		sectionsStr = "  " + strings.Join(sections, " ")
 	}
 
 	var outdated string
@@ -129,13 +129,13 @@ func (m *model) setPRReviewCmt(tlItem *prTLItem, commentNum uint) {
 		outdated = " `(outdated)`"
 	}
 
-	content := fmt.Sprintf("### %s%s\n%s\n```diff\n%s\n```", revCmts[commentNum].Path, outdated, revCmts[commentNum].Body, revCmts[commentNum].DiffHunk)
+	content := fmt.Sprintf("# from @%s\n## %s%s\n%s\n```diff\n%s\n```", tlItem.PullRequestReview.Author.Login, revCmts[commentNum].Path, outdated, revCmts[commentNum].Body, revCmts[commentNum].DiffHunk)
 
 	glErr := true
 	if m.mdRenderer != nil {
 		contentGl, err := m.mdRenderer.Render(content)
 		if err == nil {
-			m.prRevCmtVP.SetContent(contentGl)
+			m.prTLItemDetailVP.SetContent(contentGl)
 			glErr = false
 		}
 	}
@@ -143,6 +143,6 @@ func (m *model) setPRReviewCmt(tlItem *prTLItem, commentNum uint) {
 		m.prDetailsVP.SetContent(content)
 	}
 
-	m.prTLItemDetailTitle = fmt.Sprintf("Review Comments by @%s  %s", tlItem.PullRequestReview.Author.Login, sectionsStr)
-	m.prRevCmtVP.GotoTop()
+	m.prTLItemDetailTitle = fmt.Sprintf("Review Comments%s", sectionsStr)
+	m.prTLItemDetailVP.GotoTop()
 }
