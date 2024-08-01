@@ -25,12 +25,10 @@ func openURLInBrowser(url string) tea.Cmd {
 		openCmd = "xdg-open"
 	}
 	c := exec.Command(openCmd, url)
-	return tea.ExecProcess(c, func(err error) tea.Msg {
-		if err != nil {
-			return urlOpenedinBrowserMsg{url: url, err: err}
-		}
-		return tea.Msg(urlOpenedinBrowserMsg{url: url})
-	})
+	err := c.Run()
+	return func() tea.Msg {
+		return urlOpenedinBrowserMsg{url: url, err: err}
+	}
 }
 
 func showDiff(repoOwner, repoName string, prNumber int, pager *string) tea.Cmd {

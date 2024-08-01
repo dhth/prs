@@ -127,14 +127,8 @@ func getPRTLItemTitle(item *prTLItem) string {
 
 	case tlItemHeadRefForcePushed:
 		actor := getDynamicStyle(item.HeadRefForcePushed.Actor.Login).Render(item.HeadRefForcePushed.Actor.Login)
-		beforeCommitHash := item.HeadRefForcePushed.BeforeCommit.Oid
-		afterCommitHash := item.HeadRefForcePushed.AfterCommit.Oid
-		if len(beforeCommitHash) >= commitHashLen {
-			beforeCommitHash = beforeCommitHash[:commitHashLen]
-		}
-		if len(afterCommitHash) >= commitHashLen {
-			afterCommitHash = afterCommitHash[:commitHashLen]
-		}
+		beforeCommitHash := item.HeadRefForcePushed.BeforeCommit.AbbreviatedOid
+		afterCommitHash := item.HeadRefForcePushed.AfterCommit.AbbreviatedOid
 		date = dateStyle.Render(humanize.Time(item.HeadRefForcePushed.CreatedAt))
 		title = fmt.Sprintf("%sforce pushed head ref from %s to %s%s", actor, beforeCommitHash, afterCommitHash, date)
 

@@ -27,7 +27,6 @@ const (
 	reviewChangesRequested      = "CHANGES_REQUESTED"
 	reviewDismissed             = "DISMISSED"
 	mergeableConflicting        = "CONFLICTING"
-	commitHashLen               = 7
 	timeFormat                  = "2006/01/02 15:04"
 	prDetailsMetadataKeyPadding = 20
 
@@ -186,7 +185,7 @@ type prDetails struct {
 		TotalCount int
 		Nodes      []struct {
 			Commit struct {
-				Oid             string
+				AbbreviatedOid  string
 				MessageHeadline string
 				AuthoredDate    time.Time
 				Author          struct {
@@ -262,7 +261,6 @@ type prTLItem struct {
 	PullRequestCommit struct {
 		Url    string
 		Commit struct {
-			Oid             string
 			CommittedDate   time.Time
 			MessageHeadline string
 			Author          struct {
@@ -279,10 +277,10 @@ type prTLItem struct {
 			Login string
 		}
 		BeforeCommit struct {
-			Oid string
+			AbbreviatedOid string
 		}
 		AfterCommit struct {
-			Oid             string
+			AbbreviatedOid  string
 			Url             string
 			MessageHeadline string
 		}
@@ -321,7 +319,6 @@ type prTLItem struct {
 		CreatedAt   time.Time
 		Url         string
 		MergeCommit struct {
-			Oid             string
 			MessageHeadline string
 		} `graphql:"mergeCommit: commit"`
 		Actor struct {
@@ -532,10 +529,7 @@ func (pr prDetails) CommitsList() string {
 
 	commits := make([]string, len(pr.Commits.Nodes))
 	for i, c := range pr.Commits.Nodes {
-		hash := c.Commit.Oid
-		if len(hash) >= commitHashLen {
-			hash = hash[:commitHashLen]
-		}
+		hash := c.Commit.AbbreviatedOid
 
 		commits[i] = fmt.Sprintf("- `%s`: %s **(%s)** `<%s>`",
 			hash,
