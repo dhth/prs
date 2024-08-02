@@ -72,4 +72,6 @@ prs has 6 views:
   2                                 Switch focus to PR Timeline List View
   ctrl+d                            Show PR diff
   ctrl+b                            Open timeline item in browser
+  h/N/←                             Go to previous section
+  l/n/→                             Go to next section
 ```
