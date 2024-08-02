@@ -31,19 +31,17 @@ func openURLInBrowser(url string) tea.Cmd {
 	}
 }
 
-func showDiff(repoOwner, repoName string, prNumber int, pager *string) tea.Cmd {
-	var pagerPrefix string
-	if pager != nil {
-		pagerPrefix = fmt.Sprintf("GH_PAGER='%s' ", *pager)
-
+func showDiff(repoOwner, repoName string, prNumber int) tea.Cmd {
+	cmd := []string{
+		"gh",
+		"--repo",
+		fmt.Sprintf("%s/%s", repoOwner, repoName),
+		"pr",
+		"diff",
+		fmt.Sprintf("%d", prNumber),
 	}
-	c := exec.Command("bash", "-c",
-		fmt.Sprintf("%sgh --repo %s/%s pr diff %d",
-			pagerPrefix,
-			repoOwner,
-			repoName,
-			prNumber,
-		))
+	c := exec.Command(cmd[0], cmd[1:]...)
+
 	return tea.ExecProcess(c, func(err error) tea.Msg {
 		if err != nil {
 			return prDiffDoneMsg{err: err}
@@ -53,12 +51,17 @@ func showDiff(repoOwner, repoName string, prNumber int, pager *string) tea.Cmd {
 }
 
 func showPR(repoOwner, repoName string, prNumber int) tea.Cmd {
-	c := exec.Command("bash", "-c",
-		fmt.Sprintf("gh --repo %s/%s pr view --comments %d",
-			repoOwner,
-			repoName,
-			prNumber,
-		))
+	cmd := []string{
+		"gh",
+		"--repo",
+		fmt.Sprintf("%s/%s", repoOwner, repoName),
+		"pr",
+		"view",
+		"--comments",
+		fmt.Sprintf("%d", prNumber),
+	}
+	c := exec.Command(cmd[0], cmd[1:]...)
+
 	return tea.ExecProcess(c, func(err error) tea.Msg {
 		if err != nil {
 			return prDiffDoneMsg{err: err}
@@ -73,13 +76,6 @@ func hideHelp(interval time.Duration) tea.Cmd {
 	})
 }
 
-func fetchViewerLogin(ghClient *ghapi.GraphQLClient) tea.Cmd {
-	return func() tea.Msg {
-		login, err := getViewerLoginData(ghClient)
-		return viewerLoginFetched{login, err}
-	}
-}
-
 func fetchPRSFromQuery(ghClient *ghapi.GraphQLClient, queryStr string, prCount int) tea.Cmd {
 	return func() tea.Msg {
 		prs, err := getPRDataFromQuery(ghClient, queryStr, prCount)
@@ -89,25 +85,9 @@ func fetchPRSFromQuery(ghClient *ghapi.GraphQLClient, queryStr string, prCount i
 
 func fetchPRSForRepo(ghClient *ghapi.GraphQLClient, repoOwner string, repoName string, prCount int) tea.Cmd {
 	return func() tea.Msg {
-		queryStr := fmt.Sprintf("is:pr repo:%s/%s sort:updated-desc", repoOwner, repoName)
+		queryStr := fmt.Sprintf("type:pr repo:%s/%s sort:updated-desc", repoOwner, repoName)
 		prs, err := getPRDataFromQuery(ghClient, queryStr, prCount)
 		return prsFetchedMsg{prs, err}
-	}
-}
-
-func fetchPRsToReview(ghClient *ghapi.GraphQLClient, authorLogin string, prCount int) tea.Cmd {
-	return func() tea.Msg {
-		queryStr := fmt.Sprintf("is:pr state:open review-requested:%s sort:updated-desc", authorLogin)
-		prs, err := getPRDataFromQuery(ghClient, queryStr, prCount)
-		return reviewPRsFetchedMsg{prs, err}
-	}
-}
-
-func fetchAuthoredPRs(ghClient *ghapi.GraphQLClient, authorLogin string, prCount int) tea.Cmd {
-	return func() tea.Msg {
-		queryStr := fmt.Sprintf("is:pr is:open author:%s sort:updated-desc", authorLogin)
-		prs, err := getPRDataFromQuery(ghClient, queryStr, prCount)
-		return authoredPRsFetchedMsg{prs, err}
 	}
 }
 

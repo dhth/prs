@@ -23,11 +23,6 @@ type reviewPRsFetchedMsg prsFetchedMsg
 
 type authoredPRsFetchedMsg prsFetchedMsg
 
-type viewerLoginFetched struct {
-	login string
-	err   error
-}
-
 type prTLFetchedMsg struct {
 	repoOwner string
 	repoName  string

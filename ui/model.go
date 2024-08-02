@@ -27,8 +27,6 @@ type Mode uint
 const (
 	QueryMode Mode = iota
 	RepoMode
-	ReviewerMode
-	AuthorMode
 )
 
 type model struct {
@@ -57,7 +55,6 @@ type model struct {
 	secondLastActivePane     Pane
 	showHelp                 bool
 	repoChosen               bool
-	userLogin                string
 	terminalDetails          terminalDetails
 	mdRenderer               *glamour.TermRenderer
 	prDetailsCurrentSection  uint
@@ -73,8 +70,5 @@ func (m model) Init() tea.Cmd {
 		cmds = append(cmds, fetchPRSFromQuery(m.ghClient, *m.config.Query, m.config.PRCount))
 	}
 
-	if m.mode == ReviewerMode || m.mode == AuthorMode {
-		cmds = append(cmds, fetchViewerLogin(m.ghClient))
-	}
 	return tea.Batch(cmds...)
 }

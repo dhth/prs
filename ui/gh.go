@@ -54,16 +54,6 @@ func getPRMetadata(ghClient *ghapi.GraphQLClient, repoOwner string, repoName str
 	return query.RepositoryOwner.Repository.PullRequest, nil
 }
 
-func getViewerLoginData(ghClient *ghapi.GraphQLClient) (string, error) {
-	var query userLoginQuery
-
-	err := ghClient.Query("PullRequests", &query, nil)
-	if err != nil {
-		return "", err
-	}
-	return query.Viewer.Login, nil
-}
-
 func getPRTLData(ghClient *ghapi.GraphQLClient, repoOwner string, repoName string, prNumber int, tlItemsCount int) ([]prTLItem, error) {
 	var query prTLQuery
 
