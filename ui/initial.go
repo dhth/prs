@@ -8,14 +8,6 @@ import (
 
 func InitialModel(ghClient *ghapi.GraphQLClient, config Config, mode Mode) model {
 
-	repoListItems := make([]list.Item, len(config.Repos))
-	if mode == RepoMode {
-		for i, issue := range config.Repos {
-			repoListItems[i] = issue
-		}
-	}
-
-	repoListDel := newRepoListItemDel()
 	prListDel := newPRListItemDel()
 	prTLListDel := newPRTLListItemDel()
 
@@ -39,6 +31,13 @@ func InitialModel(ghClient *ghapi.GraphQLClient, config Config, mode Mode) model
 
 	switch m.mode {
 	case RepoMode:
+		repoListItems := make([]list.Item, len(config.Repos))
+		if mode == RepoMode {
+			for i, issue := range config.Repos {
+				repoListItems[i] = issue
+			}
+		}
+		repoListDel := newRepoListItemDel()
 		m.repoList = list.New(repoListItems, repoListDel, 0, 0)
 		m.repoList.Title = "Repos"
 		m.repoList.SetStatusBarItemName("repo", "repos")
