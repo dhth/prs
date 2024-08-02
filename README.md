@@ -221,10 +221,10 @@ want):
 
    ```shell
    cosign verify-blob prs_1.0.0_checksums.txt \
-   --certificate prs_1.0.0_checksums.txt.pem \
-   --signature prs_1.0.0_checksums.txt.sig \
-   --certificate-identity-regexp 'https://github\.com/dhth/prs/\.github/workflows/.+' \
-   --certificate-oidc-issuer "https://token.actions.githubusercontent.com"
+       --certificate prs_1.0.0_checksums.txt.pem \
+       --signature prs_1.0.0_checksums.txt.sig \
+       --certificate-identity-regexp 'https://github\.com/dhth/prs/\.github/workflows/.+' \
+       --certificate-oidc-issuer "https://token.actions.githubusercontent.com"
    ```
 
 3. Download the compressed archive you want, and validate its checksum:
