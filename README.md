@@ -3,7 +3,7 @@
 ✨ Overview
 ---
 
-`prs` lets you stay updated on PRs from your terminal.
+`prs` lets you stay updated on pull requests from your terminal.
 
 <p align="center">
   <img src="https://tools.dhruvs.space/images/prs/v1-0-0/prs.gif" alt="Usage" />

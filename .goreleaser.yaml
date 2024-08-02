@@ -36,7 +36,7 @@ brews:
     directory: Formula
     license: MIT
     homepage: "https://github.com/dhth/prs"
-    description: "Stay updated on PRs from your terminal"
+    description: "Stay updated on pull requests from your terminal"
 
 changelog:
   sort: asc
