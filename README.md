@@ -3,15 +3,13 @@
 ✨ Overview
 ---
 
-`prs` lets you stay updated on the PRs from your terminal.
-
-Use it to query for specific pull requests based on a filter query (using
-Github's search syntax), or have it let you pick a repository from a predefined
-list.
+`prs` lets you stay updated on PRs from your terminal.
 
 <p align="center">
   <img src="https://tools.dhruvs.space/images/prs/v1-0-0/prs.gif" alt="Usage" />
 </p>
+
+[source video](https://youtu.be/H81ru9cQhDo)
 
 🤔 Motivation
 ---
@@ -94,7 +92,7 @@ prs -m repos
 - `prs`'s config file, which looks like this:
 
     ```yaml
-    pr-count: 20
+    num: 20
     repos:
       - dhth/omm
       - dhth/hours
@@ -109,18 +107,25 @@ prs -m repos
     ```
 
 For every configuration property, the order of priority is: `flag >>
-environment variables >> config file`
+environment variables >> config file`, ie, flags take the highest priority.
 
 **[`^ back to top ^`](#prs)**
 
 Screenshots
 ---
 
+### PR List View
+
 ![Screen 1](https://tools.dhruvs.space/images/prs/v1-0-0/prs-1.png)
+
+### PR Timeline List View
 
 ![Screen 2](https://tools.dhruvs.space/images/prs/v1-0-0/prs-2.png)
 
+### PR Timeline Item Detail View
 ![Screen 3](https://tools.dhruvs.space/images/prs/v1-0-0/prs-3.png)
+
+### PR Details View
 
 ![Screen 4](https://tools.dhruvs.space/images/prs/v1-0-0/prs-4.png)
 
