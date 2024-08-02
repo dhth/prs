@@ -279,12 +279,6 @@ type prReviewComment struct {
 	Url       string
 }
 
-type userLoginQuery struct {
-	Viewer struct {
-		Login string
-	}
-}
-
 type prSearchQuery struct {
 	Search struct {
 		Edges []struct {

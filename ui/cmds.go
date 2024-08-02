@@ -76,13 +76,6 @@ func hideHelp(interval time.Duration) tea.Cmd {
 	})
 }
 
-func fetchViewerLogin(ghClient *ghapi.GraphQLClient) tea.Cmd {
-	return func() tea.Msg {
-		login, err := getViewerLoginData(ghClient)
-		return viewerLoginFetched{login, err}
-	}
-}
-
 func fetchPRSFromQuery(ghClient *ghapi.GraphQLClient, queryStr string, prCount int) tea.Cmd {
 	return func() tea.Msg {
 		prs, err := getPRDataFromQuery(ghClient, queryStr, prCount)
@@ -92,25 +85,9 @@ func fetchPRSFromQuery(ghClient *ghapi.GraphQLClient, queryStr string, prCount i
 
 func fetchPRSForRepo(ghClient *ghapi.GraphQLClient, repoOwner string, repoName string, prCount int) tea.Cmd {
 	return func() tea.Msg {
-		queryStr := fmt.Sprintf("is:pr repo:%s/%s sort:updated-desc", repoOwner, repoName)
+		queryStr := fmt.Sprintf("type:pr repo:%s/%s sort:updated-desc", repoOwner, repoName)
 		prs, err := getPRDataFromQuery(ghClient, queryStr, prCount)
 		return prsFetchedMsg{prs, err}
-	}
-}
-
-func fetchPRsToReview(ghClient *ghapi.GraphQLClient, authorLogin string, prCount int) tea.Cmd {
-	return func() tea.Msg {
-		queryStr := fmt.Sprintf("is:pr state:open review-requested:%s sort:updated-desc", authorLogin)
-		prs, err := getPRDataFromQuery(ghClient, queryStr, prCount)
-		return reviewPRsFetchedMsg{prs, err}
-	}
-}
-
-func fetchAuthoredPRs(ghClient *ghapi.GraphQLClient, authorLogin string, prCount int) tea.Cmd {
-	return func() tea.Msg {
-		queryStr := fmt.Sprintf("is:pr is:open author:%s sort:updated-desc", authorLogin)
-		prs, err := getPRDataFromQuery(ghClient, queryStr, prCount)
-		return authoredPRsFetchedMsg{prs, err}
 	}
 }
 

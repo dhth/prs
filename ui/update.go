@@ -78,10 +78,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					cmds = append(cmds, fetchPRSForRepo(m.ghClient, m.repoOwner, m.repoName, m.config.PRCount))
 				case QueryMode:
 					cmds = append(cmds, fetchPRSFromQuery(m.ghClient, *m.config.Query, m.config.PRCount))
-				case ReviewerMode:
-					cmds = append(cmds, fetchPRsToReview(m.ghClient, m.userLogin, m.config.PRCount))
-				case AuthorMode:
-					cmds = append(cmds, fetchAuthoredPRs(m.ghClient, m.userLogin, m.config.PRCount))
 				}
 				m.prsList.Title = "fetching PRs..."
 				m.prsList.Styles.Title = m.prsList.Styles.Title.Background(lipgloss.Color(fetchingColor))
@@ -753,18 +749,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.prsList.ResetSelected()
 			m.prTLList.ResetSelected()
 			cmds = append(cmds, fetchPRSForRepo(m.ghClient, m.repoOwner, m.repoName, m.config.PRCount))
-		}
-	case viewerLoginFetched:
-		if msg.err != nil {
-			m.message = fmt.Sprintf("Error fetching gh username: %s", msg.err)
-		} else {
-			m.userLogin = msg.login
-			switch m.mode {
-			case ReviewerMode:
-				cmds = append(cmds, fetchPRsToReview(m.ghClient, m.userLogin, m.config.PRCount))
-			case AuthorMode:
-				cmds = append(cmds, fetchAuthoredPRs(m.ghClient, m.userLogin, m.config.PRCount))
-			}
 		}
 	case prsFetchedMsg:
 		if msg.err != nil {

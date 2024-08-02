@@ -49,7 +49,7 @@ func InitialModel(ghClient *ghapi.GraphQLClient, config Config, mode Mode) model
 			Bold(true)
 		m.repoList.KeyMap.PrevPage.SetKeys("left", "h", "pgup")
 		m.repoList.KeyMap.NextPage.SetKeys("right", "l", "pgdown")
-	case QueryMode, ReviewerMode, AuthorMode:
+	case QueryMode:
 		m.activePane = prListView
 	}
 

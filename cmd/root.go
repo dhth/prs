@@ -20,23 +20,23 @@ import (
 const (
 	envPrefix          = "PRS"
 	author             = "@dhth"
-	repoIssuesUrl      = "https://github.com/dhth/prs/issues"
+	projectHomePage    = "https://github.com/dhth/prs"
+	issuesUrl          = "https://github.com/dhth/prs/issues"
 	configFileName     = "prs/prs.yml"
-	defaultSearchQuery = "is:pr author:@me sort:updated-desc state:open"
+	defaultSearchQuery = "type:pr author:@me sort:updated-desc state:open"
 	defaultPRNum       = 20
 	maxPRNum           = 50
 )
 
 var (
-	errModeIncorrect         = errors.New("mode value is incorrect")
+	errModeIncorrect         = errors.New("incorrect mode provided")
 	errConfigFileDoesntExist = errors.New("config file does not exist")
 	errNoReposProvided       = errors.New("no repos were provided")
 )
 
 func Execute(version string) {
-	rootCmd, err := NewRootCommand()
+	rootCmd, err := NewRootCommand(version)
 
-	rootCmd.Version = version
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %s\n", err)
 		os.Exit(1)
@@ -45,7 +45,7 @@ func Execute(version string) {
 	_ = rootCmd.Execute()
 }
 
-func NewRootCommand() (*cobra.Command, error) {
+func NewRootCommand(version string) (*cobra.Command, error) {
 
 	var (
 		configFilePath string
@@ -60,10 +60,30 @@ func NewRootCommand() (*cobra.Command, error) {
 	)
 
 	rootCmd := &cobra.Command{
-		Use:          "prs",
-		Short:        "prs lets you stay updated on pull requests from your terminal",
+		Use:   "prs",
+		Short: "prs lets you stay updated on pull requests from your terminal",
+		Long: fmt.Sprintf(`prs lets you stay updated on pull requests from your terminal.
+
+Use it to query for specific pull requests based on a filter query (using
+Github's search syntax), or have it let you pick a repository from a predefined
+list.
+
+Examples:
+$ prs --query='type:pr repo:neovim/neovim state:open label:lua linked:issue'
+$ prs -q 'type:pr author:@me state:open'
+$ PRS_QUERY='type:pr user-review-requested:@me state:open' prs
+$ prs # will read query from config file
+
+$ prs --mode=repos --repos='dhth/prs,dhth/omm,dhth/hours'
+$ PRS_REPOS='dhth/prs,dhth/omm,dhth/hours' prs --mode=repos
+$ prs -m repos # will read repos from config file
+
+Project home page: %s
+`, projectHomePage),
+
 		Args:         cobra.MaximumNArgs(0),
 		SilenceUsage: true,
+		Version:      version,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			configPathFull = expandTilde(configFilePath)
 
@@ -95,29 +115,34 @@ func NewRootCommand() (*cobra.Command, error) {
 				mode = ui.RepoMode
 			case "query":
 				mode = ui.QueryMode
-			case "reviewer":
-				mode = ui.ReviewerMode
-			case "author":
-				mode = ui.AuthorMode
 			default:
 				return errModeIncorrect
 			}
 
 			if mode == ui.RepoMode {
-				reposSl := v.GetStringSlice("repos")
-				if len(reposSl) == 0 {
+				var reposToUse []string
+				// pretty ugly hack to get around the fact that
+				// v.GetStringSlice("repos") always seems to prioritise the config file
+				if len(repoStrs) > 0 && len(repoStrs[0]) > 0 && !strings.HasPrefix(repoStrs[0], "[") {
+					reposToUse = repoStrs
+				} else {
+					reposToUse = v.GetStringSlice("repos")
+				}
+
+				if len(reposToUse) == 0 {
 					return errNoReposProvided
 				}
 
-				for _, r := range reposSl {
+				for _, r := range reposToUse {
 					repoEls := strings.Split(r, "/")
+					// TODO: there can be more validations done here, maybe regex based
 					if len(repoEls) != 2 {
 						return fmt.Errorf("Incorrect repo provided: %s", r)
 					}
 
 					repos = append(repos, ui.Repo{
-						Owner: repoEls[0],
-						Name:  repoEls[1],
+						Owner: strings.TrimSpace(repoEls[0]),
+						Name:  strings.TrimSpace(repoEls[1]),
 					})
 				}
 			}
@@ -160,7 +185,7 @@ Underlying error: %s`, err.Error())
 use --config-path to specify config file path manually.
 Let %s know about this via %s.
 
-Error: %s`, author, repoIssuesUrl, err)
+Error: %s`, author, issuesUrl, err)
 	}
 
 	var defaultConfigFilePath string
@@ -175,16 +200,16 @@ Error: %s`, author, repoIssuesUrl, err)
 use --config-path to specify config file path manually
 Let %s know about this via %s.
 
-Error: %s`, author, repoIssuesUrl, err)
+Error: %s`, author, issuesUrl, err)
 		}
 		defaultConfigFilePath = filepath.Join(hd, ".config", configFileName)
 	}
 
 	rootCmd.Flags().StringVarP(&configFilePath, "config-path", "c", defaultConfigFilePath, "location of prs's config file")
-	rootCmd.Flags().StringVarP(&modeInp, "mode", "m", "query", "mode to run prs in; values: query, repos, reviewer, author")
+	rootCmd.Flags().StringVarP(&modeInp, "mode", "m", "query", "mode to run prs in; values: query, repos")
 	rootCmd.Flags().StringVarP(&searchQuery, "query", "q", defaultSearchQuery, "query to search PRs for")
 	rootCmd.Flags().IntVarP(&prNum, "num", "n", defaultPRNum, "number of PRs to fetch")
-	rootCmd.Flags().StringSliceVarP(&repoStrs, "repos", "r", nil, "repos to use for repo mode")
+	rootCmd.Flags().StringSliceVarP(&repoStrs, "repos", "r", nil, "comma separated list of repos to use for repo mode")
 
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 

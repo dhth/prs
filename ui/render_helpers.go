@@ -50,10 +50,6 @@ func getPRDesc(pr *pr, mode Mode, terminalDetails terminalDetails) string {
 		widthFixed = 30
 	case QueryMode:
 		widthFixed = 16
-	case ReviewerMode:
-		widthFixed = 22
-	case AuthorMode:
-		widthFixed = 20
 	}
 
 	if terminalDetails.width > responsiveWidthCutOff {
@@ -93,19 +89,6 @@ func getPRDesc(pr *pr, mode Mode, terminalDetails terminalDetails) string {
 		repo := getDynamicStyle(repoStr).Render(RightPadTrim(repoStr, getFracInt(widthBudget, 0.3)))
 
 		desc = fmt.Sprintf("%s%s%s%s%s%s%s", author, repo, updatedAt, state, additions, deletions, reviews)
-
-	case ReviewerMode:
-		updatedAt := dateStyle.Render(RightPadTrim("updated "+humanize.Time(pr.UpdatedAt), getFracInt(widthBudget, 0.3)))
-		author := getDynamicStyle(pr.Author.Login).Render(RightPadTrim(pr.Author.Login, getFracInt(widthBudget, 0.4)))
-		repo := getDynamicStyle(pr.Repository.Name).Render(RightPadTrim(pr.Repository.Name, getFracInt(widthBudget, 0.3)))
-
-		desc = fmt.Sprintf("%s%s%s%s%s%s", author, repo, updatedAt, additions, deletions, reviews)
-
-	case AuthorMode:
-		updatedAt := dateStyle.Render(RightPadTrim("updated "+humanize.Time(pr.UpdatedAt), getFracInt(widthBudget, 0.3)))
-		repo := getDynamicStyle(pr.Repository.Name).Render(RightPadTrim(pr.Repository.Name, getFracInt(widthBudget, 0.7)))
-
-		desc = fmt.Sprintf("%s%s%s%s%s", repo, updatedAt, additions, deletions, reviews)
 	}
 
 	return desc
