@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	contextWordWrapUpperLimit = 160
+	viewPortWrapUpperLimit = 160
 )
 
 func (m model) View() string {
@@ -20,20 +20,28 @@ func (m model) View() string {
 	}
 
 	switch m.activePane {
-	case prList:
+	case prListView:
 		content = listStyle.Render(m.prsList.View())
-	case prTLList:
+	case prTLListView:
 		content = listStyle.Render(m.prTLList.View())
-	case repoList:
+	case repoListView:
 		content = listStyle.Render(m.repoList.View())
-	case prRevCmts:
+	case prDetailsView:
+		if !m.prTLItemDetailVPReady {
+			content = "\n  Initializing..."
+		} else {
+			content = viewPortStyle.Render(fmt.Sprintf("  %s\n\n%s\n",
+				prDetailsTitleStyle.Render(m.prDetailsTitle),
+				m.prDetailsVP.View()))
+		}
+	case prTLItemDetailView:
 		var prRevCmtsVP string
-		if !m.prRevCmtVPReady {
+		if !m.prTLItemDetailVPReady {
 			prRevCmtsVP = "\n  Initializing..."
 		} else {
 			prRevCmtsVP = viewPortStyle.Render(fmt.Sprintf("  %s\n\n%s\n",
-				helpVPTitleStyle.Render("Review Comments"),
-				m.prRevCmtVP.View()))
+				helpVPTitleStyle.Render(m.prTLItemDetailTitle),
+				m.prTLItemDetailVP.View()))
 		}
 		content = prRevCmtsVP
 	case helpView:

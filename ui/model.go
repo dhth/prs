@@ -13,11 +13,12 @@ import (
 type Pane uint
 
 const (
-	repoList Pane = iota
-	prList
-	reviewPRList
-	prTLList
-	prRevCmts
+	repoListView Pane = iota
+	prListView
+	prDetailsView
+	reviewPRListView
+	prTLListView
+	prTLItemDetailView
 	helpView
 )
 
@@ -31,28 +32,37 @@ const (
 )
 
 type model struct {
-	mode            Mode
-	config          Config
-	ghClient        *ghapi.GraphQLClient
-	repoOwner       string
-	repoName        string
-	repoList        list.Model
-	prsList         list.Model
-	prTLList        list.Model
-	prCache         []*prResult
-	prRevCmtVP      viewport.Model
-	prRevCmtVPReady bool
-	prTLCache       map[string][]*prTLItemResult
-	message         string
-	helpVP          viewport.Model
-	helpVPReady     bool
-	activePane      Pane
-	lastPane        Pane
-	showHelp        bool
-	repoChosen      bool
-	userLogin       string
-	terminalDetails terminalDetails
-	mdRenderer      *glamour.TermRenderer
+	mode                     Mode
+	config                   Config
+	ghClient                 *ghapi.GraphQLClient
+	repoOwner                string
+	repoName                 string
+	repoList                 list.Model
+	prsList                  list.Model
+	prTLList                 list.Model
+	prCache                  []*prResult
+	prTLItemDetailVP         viewport.Model
+	prTLItemDetailVPReady    bool
+	prDetailsTitle           string
+	prTLItemDetailTitle      string
+	prDetailsVP              viewport.Model
+	prDetailsVPReady         bool
+	prDetailsCache           map[string]prDetails
+	prTLCache                map[string][]*prTLItemResult
+	message                  string
+	helpVP                   viewport.Model
+	helpVPReady              bool
+	activePane               Pane
+	lastPane                 Pane
+	secondLastActivePane     Pane
+	showHelp                 bool
+	repoChosen               bool
+	userLogin                string
+	terminalDetails          terminalDetails
+	mdRenderer               *glamour.TermRenderer
+	prDetailsCurrentSection  uint
+	prDetailsCurSectionCache map[string]uint
+	prRevCurCmtNum           uint
 }
 
 func (m model) Init() tea.Cmd {

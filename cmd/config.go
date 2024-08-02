@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	defaultPRCount = 30
-	maxPRCount     = 100
+	defaultPRCount = 20
+	maxPRCount     = 50
 )
 
 func expandTilde(path string) string {

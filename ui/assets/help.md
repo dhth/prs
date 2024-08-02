@@ -4,12 +4,13 @@
 
 ## Views
 
-prs has 5 views:
+prs has 6 views:
 
 - PR List View
+- PR Details View
 - PR Timeline List View
-- PR Review Comments View
-- Repo List View (only applicable when -mode=repos)
+- PR Timeline Item Detail View
+- Repo List View (only applicable when --mode=repos)
 - Help View (this one)
 
 ## Keyboard Shortcuts
@@ -17,20 +18,11 @@ prs has 5 views:
 ### General
 
 ```text
-  tab                               Switch focus between PR List and PR Timeline Pane
-  1                                 Switch focus to PR List View
-  2                                 Switch focus to PR Timeline List View
-  3                                 Switch focus to PR Review Comments View
-  ctrl+s                            Switch focus to Repo List View
-  ?                                 Switch focus to Help View
-```
-
-### PR List/Timeline List View
-
-
-```text
-  ctrl+v                            Show PR details
-  ctrl+d                            Show PR diff
+  q/esc/ctrl+c                      go back
+  Q                                 quit from anywhere
+  ?                                 Open Help View
+  d                                 Open PR Details View
+  ctrl+v                            Show PR details using gh
 ```
 
 ### PR List View
@@ -42,16 +34,42 @@ prs has 5 views:
   🟡 implies                        REVIEW_REQUIRED
   ✅ implies                        APPROVED
 
-  ctrl+b                            Open PR in the browser
+  ⏎/tab/shift+tab/2                 Switch focus to PR Timeline View
+  ctrl+s                            Switch focus to Repo List View (when --mode=repos)
+  ctrl+d                            Show PR diff
   ctrl+r                            Reload PR list
-  enter                             Switch focus to PR Timeline View for currently selected PR
-  enter                             Show commit/revision range
+  ctrl+b                            Open PR in browser
 ```
 
-### PR Timeline View
+### PR Details View
 
 ```text
+  h/N/←                             Go to previous section
+  l/n/→                             Go to next section
+  1/2/3...                          Go to specific section
+  J/]                               Go to next PR
+  K/[                               Go to previous PR
+  d                                 Go back to last view
+  ctrl+b                            Open PR in browser
+```
+
+### Timeline List View
+
+
+```text
+  tab/shift+tab/1                   Switch focus to PR List View
+  ⏎/3                               Show details for PR timeline item (when applicable)
+  ctrl+d                            Show PR diff
   ctrl+b                            Open timeline item in browser
-  ctrl+r                            Reload timeline list
-  enter                             Switch focus to Review Comments View for currently selected item
+  ctrl+r                            Reload PR timeline
+```
+
+### Timeline Item Detail View
+
+
+```text
+  1                                 Switch focus to PR List View
+  2                                 Switch focus to PR Timeline List View
+  ctrl+d                            Show PR diff
+  ctrl+b                            Open timeline item in browser
 ```

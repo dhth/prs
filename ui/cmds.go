@@ -25,12 +25,10 @@ func openURLInBrowser(url string) tea.Cmd {
 		openCmd = "xdg-open"
 	}
 	c := exec.Command(openCmd, url)
-	return tea.ExecProcess(c, func(err error) tea.Msg {
-		if err != nil {
-			return urlOpenedinBrowserMsg{url: url, err: err}
-		}
-		return tea.Msg(urlOpenedinBrowserMsg{url: url})
-	})
+	err := c.Run()
+	return func() tea.Msg {
+		return urlOpenedinBrowserMsg{url: url, err: err}
+	}
 }
 
 func showDiff(repoOwner, repoName string, prNumber int, pager *string) tea.Cmd {
@@ -110,6 +108,13 @@ func fetchAuthoredPRs(ghClient *ghapi.GraphQLClient, authorLogin string, prCount
 		queryStr := fmt.Sprintf("is:pr is:open author:%s sort:updated-desc", authorLogin)
 		prs, err := getPRDataFromQuery(ghClient, queryStr, prCount)
 		return authoredPRsFetchedMsg{prs, err}
+	}
+}
+
+func fetchPRMetadata(ghClient *ghapi.GraphQLClient, repoOwner, repoName string, prNumber int) tea.Cmd {
+	return func() tea.Msg {
+		metadata, err := getPRMetadata(ghClient, repoOwner, repoName, prNumber)
+		return prMetadataFetchedMsg{repoOwner, repoName, prNumber, metadata, err}
 	}
 }
 

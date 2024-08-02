@@ -19,17 +19,22 @@ func InitialModel(ghClient *ghapi.GraphQLClient, config Config, mode Mode) model
 	prListDel := newPRListItemDel()
 	prTLListDel := newPRTLListItemDel()
 
+	prDetailsCache := make(map[string]prDetails)
 	prTLCache := make(map[string][]*prTLItemResult)
 
+	prDetailsCurSectionCache := make(map[string]uint)
+
 	m := model{
-		mode:            mode,
-		config:          config,
-		ghClient:        ghClient,
-		prsList:         list.New(nil, prListDel, 0, 0),
-		prTLList:        list.New(nil, prTLListDel, 0, 0),
-		prTLCache:       prTLCache,
-		showHelp:        true,
-		terminalDetails: terminalDetails{width: widthBudgetDefault},
+		mode:                     mode,
+		config:                   config,
+		ghClient:                 ghClient,
+		prsList:                  list.New(nil, prListDel, 0, 0),
+		prTLList:                 list.New(nil, prTLListDel, 0, 0),
+		prDetailsCache:           prDetailsCache,
+		prTLCache:                prTLCache,
+		showHelp:                 true,
+		terminalDetails:          terminalDetails{width: widthBudgetDefault},
+		prDetailsCurSectionCache: prDetailsCurSectionCache,
 	}
 
 	switch m.mode {
@@ -43,8 +48,10 @@ func InitialModel(ghClient *ghapi.GraphQLClient, config Config, mode Mode) model
 		m.repoList.Styles.Title = m.repoList.Styles.Title.Background(lipgloss.Color(repoListColor)).
 			Foreground(lipgloss.Color(defaultBackgroundColor)).
 			Bold(true)
+		m.repoList.KeyMap.PrevPage.SetKeys("left", "h", "pgup")
+		m.repoList.KeyMap.NextPage.SetKeys("right", "l", "pgdown")
 	case QueryMode, ReviewerMode, AuthorMode:
-		m.activePane = prList
+		m.activePane = prListView
 	}
 
 	m.prsList.Title = "fetching PRs..."
@@ -55,6 +62,8 @@ func InitialModel(ghClient *ghapi.GraphQLClient, config Config, mode Mode) model
 	m.prsList.Styles.Title = m.prsList.Styles.Title.Background(lipgloss.Color(fetchingColor)).
 		Foreground(lipgloss.Color(defaultBackgroundColor)).
 		Bold(true)
+	m.prsList.KeyMap.PrevPage.SetKeys("left", "h", "pgup")
+	m.prsList.KeyMap.NextPage.SetKeys("right", "l", "pgdown")
 
 	m.prTLList.Title = "fetching timeline..."
 	m.prTLList.SetStatusBarItemName("item", "items")
@@ -64,6 +73,8 @@ func InitialModel(ghClient *ghapi.GraphQLClient, config Config, mode Mode) model
 	m.prTLList.Styles.Title = m.prTLList.Styles.Title.Background(lipgloss.Color(prTLListColor)).
 		Foreground(lipgloss.Color(defaultBackgroundColor)).
 		Bold(true)
+	m.prTLList.KeyMap.PrevPage.SetKeys("left", "h", "pgup")
+	m.prTLList.KeyMap.NextPage.SetKeys("right", "l", "pgdown")
 
 	return m
 }

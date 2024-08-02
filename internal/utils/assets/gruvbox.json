@@ -21,7 +21,7 @@
   "h1": {
     "prefix": "# ",
     "suffix": "",
-    "color": "#fe8019",
+    "color": "#d3869b",
     "bold": true
   },
   "h2": {
@@ -29,7 +29,7 @@
     "color": "#83a598"
   },
   "h3": {
-    "prefix": "",
+    "prefix": "### ",
     "color": "#83a598"
   },
   "h4": {
@@ -51,7 +51,9 @@
   },
   "emph": {
     "color": "#83a598",
-    "italic": true
+    "italic": true,
+    "prefix": " ",
+    "suffix": " "
   },
   "strong": {
     "color": "#fe8019",

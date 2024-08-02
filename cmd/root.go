@@ -59,13 +59,11 @@ func Execute() {
 	}
 
 	if config.Query != nil {
+		if strings.Contains(*config.Query, "is:issue") || strings.Contains(*config.Query, "is: issue") {
+			die("is:issue cannot be used in the query")
+		}
 		if strings.Contains(*config.Query, "type:issue") || strings.Contains(*config.Query, "type: issue") {
 			die("type:issue cannot be used in the query")
-		}
-
-		if !strings.Contains(*config.Query, "type:pr") && !strings.Contains(*config.Query, "type: pr") {
-			updatedQuery := fmt.Sprintf("type: pr %s", *config.Query)
-			config.Query = &updatedQuery
 		}
 	}
 
@@ -88,14 +86,14 @@ func Execute() {
 	}
 
 	if mode == ui.QueryMode && config.Query == nil {
-		sampleQuery := "is:pr repo:neovim/neovim sort:updated-desc"
+		sampleQuery := "is:pr author:@me sort:updated-desc state:open"
 		config.Query = &sampleQuery
 	}
 
 	opts := ghapi.ClientOptions{
 		EnableCache: true,
-		CacheTTL:    time.Minute * 1,
-		Timeout:     5 * time.Second,
+		CacheTTL:    time.Second * 30,
+		Timeout:     8 * time.Second,
 	}
 
 	ghClient, err := ghapi.NewGraphQLClient(opts)

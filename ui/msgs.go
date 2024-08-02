@@ -11,6 +11,14 @@ type prsFetchedMsg struct {
 	err error
 }
 
+type prMetadataFetchedMsg struct {
+	repoOwner string
+	repoName  string
+	prNumber  int
+	metadata  prDetails
+	err       error
+}
+
 type reviewPRsFetchedMsg prsFetchedMsg
 
 type authoredPRsFetchedMsg prsFetchedMsg
