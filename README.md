@@ -32,7 +32,7 @@ go install github.com/dhth/prs@latest
 ```
 
 Or get the binaries directly from a [release][3]. Read more about verifying the
-authenticity of released artifacts [here](#verifying-release-artifacts).
+authenticity of released artifacts [here](#-verifying-release-artifacts).
 
 🛠️ Pre-requisites
 ---
@@ -67,18 +67,18 @@ query: 'is: pr repo:neovim/neovim is:open label:lua'
 
 ```bash
 prs
-prs --query='type:pr repo:neovim/neovim is:open label:treesitter'
+prs --query='is:pr repo:neovim/neovim is:open label:treesitter'
 ```
 
 Or configure `prs`' YAML configuration file as follows:
 
 ```yaml
-query: 'is: pr repo:neovim/neovim is:open label:lua'
+query: 'is:pr repo:neovim/neovim is:open label:lua'
 ```
 
 ### Repos Mode
 
-Configure `prs`' YAML configuration file as follows:
+Add the following to `prs`' YAML configuration file:
 
 ```yaml
 sources:
@@ -88,6 +88,8 @@ sources:
     - name: repo-b
     - name: repo-c
 ```
+
+Then run `prs` with the `--mode` flag.
 
 ```bash
 prs --mode=repos
@@ -128,6 +130,8 @@ Screenshots
 ![Screen 5](https://tools.dhruvs.space/images/prs/v0-3-0/prs-5.png)
 
 ![Screen 6](https://tools.dhruvs.space/images/prs/v0-3-0/prs-6.png)
+
+![Screen 7](https://tools.dhruvs.space/images/prs/v0-3-0/prs-7.png)
 
 **[`^ back to top ^`](#prs)**
 
