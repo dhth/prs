@@ -325,8 +325,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			cmds = append(cmds, showDiff(pr.pr.Repository.Owner.Login,
 				pr.pr.Repository.Name,
-				pr.pr.Number,
-				m.config.DiffPager))
+				pr.pr.Number))
 
 		case "ctrl+v":
 			if m.activePane == helpView {
@@ -933,11 +932,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case prDiffDoneMsg:
 		if msg.err != nil {
-			m.message = fmt.Sprintf("Error opening diff: %s", msg.err.Error())
+			m.message = fmt.Sprintf("Error opening diff (is gh installed?): %s", msg.err.Error())
 		}
 	case prViewDoneMsg:
 		if msg.err != nil {
-			m.message = fmt.Sprintf("Error showing PR: %s", msg.err.Error())
+			m.message = fmt.Sprintf("Error showing PR details (is gh installed?): %s", msg.err.Error())
 		}
 	}
 

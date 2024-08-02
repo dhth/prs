@@ -31,19 +31,17 @@ func openURLInBrowser(url string) tea.Cmd {
 	}
 }
 
-func showDiff(repoOwner, repoName string, prNumber int, pager *string) tea.Cmd {
-	var pagerPrefix string
-	if pager != nil {
-		pagerPrefix = fmt.Sprintf("GH_PAGER='%s' ", *pager)
-
+func showDiff(repoOwner, repoName string, prNumber int) tea.Cmd {
+	cmd := []string{
+		"gh",
+		"--repo",
+		fmt.Sprintf("%s/%s", repoOwner, repoName),
+		"pr",
+		"diff",
+		fmt.Sprintf("%d", prNumber),
 	}
-	c := exec.Command("bash", "-c",
-		fmt.Sprintf("%sgh --repo %s/%s pr diff %d",
-			pagerPrefix,
-			repoOwner,
-			repoName,
-			prNumber,
-		))
+	c := exec.Command(cmd[0], cmd[1:]...)
+
 	return tea.ExecProcess(c, func(err error) tea.Msg {
 		if err != nil {
 			return prDiffDoneMsg{err: err}
@@ -53,12 +51,17 @@ func showDiff(repoOwner, repoName string, prNumber int, pager *string) tea.Cmd {
 }
 
 func showPR(repoOwner, repoName string, prNumber int) tea.Cmd {
-	c := exec.Command("bash", "-c",
-		fmt.Sprintf("gh --repo %s/%s pr view --comments %d",
-			repoOwner,
-			repoName,
-			prNumber,
-		))
+	cmd := []string{
+		"gh",
+		"--repo",
+		fmt.Sprintf("%s/%s", repoOwner, repoName),
+		"pr",
+		"view",
+		"--comments",
+		fmt.Sprintf("%d", prNumber),
+	}
+	c := exec.Command(cmd[0], cmd[1:]...)
+
 	return tea.ExecProcess(c, func(err error) tea.Msg {
 		if err != nil {
 			return prDiffDoneMsg{err: err}

@@ -28,10 +28,9 @@ const (
 )
 
 var (
-	errModeIncorrect          = errors.New("mode value is incorrect")
-	errConfigFileDoesntExist  = errors.New("config file does not exist")
-	errQuerySearchesForIssues = errors.New("searching for issues not supported")
-	errNoReposProvided        = errors.New("no repos were provided")
+	errModeIncorrect         = errors.New("mode value is incorrect")
+	errConfigFileDoesntExist = errors.New("config file does not exist")
+	errNoReposProvided       = errors.New("no repos were provided")
 )
 
 func Execute(version string) {
@@ -58,7 +57,6 @@ func NewRootCommand() (*cobra.Command, error) {
 		searchQuery    string
 		ghClient       *ghapi.GraphQLClient
 		prNum          int
-		diffPager      string
 	)
 
 	rootCmd := &cobra.Command{
@@ -133,19 +131,21 @@ func NewRootCommand() (*cobra.Command, error) {
 			ghClient, err = ghapi.NewGraphQLClient(opts)
 			if err != nil {
 				return fmt.Errorf(`Couldn't set up a Github client.
-Is gh (https://github.com/cli/cli) installed and configured? (prs depends on gh for communicating with Github).
 
-Error: %s`, err.Error())
+If the error is due to misconfigured authentication, you can fix that by either of the following:
+- Provide a valid Github token via $GH_TOKEN
+- Have an authenticated instance of gh (https://github.com/cli/cli) available
+
+Underlying error: %s`, err.Error())
 			}
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			config := ui.Config{
-				DiffPager: &diffPager,
-				PRCount:   prNum,
-				Repos:     repos,
-				Query:     &searchQuery,
+				PRCount: prNum,
+				Repos:   repos,
+				Query:   &searchQuery,
 			}
 			return ui.RenderUI(ghClient, config, mode)
 		},
@@ -184,7 +184,6 @@ Error: %s`, author, repoIssuesUrl, err)
 	rootCmd.Flags().StringVarP(&modeInp, "mode", "m", "query", "mode to run prs in; values: query, repos, reviewer, author")
 	rootCmd.Flags().StringVarP(&searchQuery, "query", "q", defaultSearchQuery, "query to search PRs for")
 	rootCmd.Flags().IntVarP(&prNum, "num", "n", defaultPRNum, "number of PRs to fetch")
-	rootCmd.Flags().StringVar(&diffPager, "diff-pager", "", "pager to use for showing diffs")
 	rootCmd.Flags().StringSliceVarP(&repoStrs, "repos", "r", nil, "repos to use for repo mode")
 
 	rootCmd.CompletionOptions.DisableDefaultCmd = true

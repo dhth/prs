@@ -75,10 +75,9 @@ type Repo struct {
 }
 
 type Config struct {
-	DiffPager *string
-	PRCount   int
-	Repos     []Repo
-	Query     *string
+	PRCount int
+	Repos   []Repo
+	Query   *string
 }
 
 type prResult struct {
