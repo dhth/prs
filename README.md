@@ -44,17 +44,17 @@ of two ways:
 
 - Have an authenticated instance of [gh](https://github.com/cli/cli) available
     (recommended).
-- Provide a valid Github token via $GH_TOKEN.
+- Provide a valid Github token via `$GH_TOKEN`.
 
 ⚡️ Usage
 ---
 
 `prs` has two modes:
 
-- "Query" mode (default): lets you search PRs based on a query you provide (based
+- **Query mode** (default): lets you search PRs based on a query you provide (based
   on github's [search
   syntax](https://docs.github.com/en/search-github/searching-on-github/searching-issues-and-pull-requests))
-- "Repos" mode: let you pick a repository from a predefined list
+- **Repos mode**: let you pick a repository from a predefined list
 
 ### Query Mode
 
