@@ -5,12 +5,12 @@ go 1.22.5
 require (
 	github.com/charmbracelet/bubbles v0.18.0
 	github.com/charmbracelet/bubbletea v0.26.6
-	github.com/charmbracelet/glamour v0.7.0
+	github.com/charmbracelet/glamour v0.8.0
 	github.com/charmbracelet/lipgloss v0.12.1
 	github.com/cli/go-gh/v2 v2.9.0
 	github.com/cli/shurcooL-graphql v0.0.4
 	github.com/dustin/go-humanize v1.0.1
-	github.com/muesli/termenv v0.15.2
+	github.com/muesli/termenv v0.15.3-0.20240618155329-98d742f6907a
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
@@ -45,7 +45,6 @@ require (
 	github.com/muesli/ansi v0.0.0-20230316100256-276c6243b2f6 // indirect
 	github.com/muesli/cancelreader v0.2.2 // indirect
 	github.com/muesli/reflow v0.3.0 // indirect
-	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
