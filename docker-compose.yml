@@ -3,7 +3,7 @@ version: '3.8'
 # to test workings on linux
 services:
   prs-dev:
-    image: golang:1.22.5-alpine
+    image: golang:1.23-alpine
     volumes:
       - .:/go/src/app
     working_dir: /go/src/app

@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 env:
-  GO_VERSION: '1.22.5'
+  GO_VERSION: '1.23.0'
 
 jobs:
   build:
@@ -30,4 +30,4 @@ jobs:
     - name: golangci-lint
       uses: golangci/golangci-lint-action@v6
       with:
-        version: v1.58
+        version: v1.60
