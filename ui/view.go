@@ -8,9 +8,10 @@ import (
 
 const (
 	viewPortWrapUpperLimit = 160
+	vpNotReadyMsg          = "Initializing..."
 )
 
-func (m model) View() string {
+func (m Model) View() string {
 	var content string
 	var footer string
 
@@ -28,7 +29,7 @@ func (m model) View() string {
 		content = listStyle.Render(m.repoList.View())
 	case prDetailsView:
 		if !m.prTLItemDetailVPReady {
-			content = "\n  Initializing..."
+			content = vpNotReadyMsg
 		} else {
 			content = viewPortStyle.Render(fmt.Sprintf("  %s\n\n%s\n",
 				prDetailsTitleStyle.Render(m.prDetailsTitle),
@@ -37,7 +38,7 @@ func (m model) View() string {
 	case prTLItemDetailView:
 		var prRevCmtsVP string
 		if !m.prTLItemDetailVPReady {
-			prRevCmtsVP = "\n  Initializing..."
+			prRevCmtsVP = vpNotReadyMsg
 		} else {
 			prRevCmtsVP = viewPortStyle.Render(fmt.Sprintf("  %s\n\n%s\n",
 				helpVPTitleStyle.Render(m.prTLItemDetailTitle),
@@ -47,7 +48,7 @@ func (m model) View() string {
 	case helpView:
 		var helpVP string
 		if !m.helpVPReady {
-			helpVP = "\n  Initializing..."
+			helpVP = vpNotReadyMsg
 		} else {
 			helpVP = viewPortStyle.Render(fmt.Sprintf("  %s\n\n%s\n",
 				helpVPTitleStyle.Render("Help"),

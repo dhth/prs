@@ -51,6 +51,7 @@ const (
 	statusCheckContextsCount    = 50
 	timeFormat                  = "2006/01/02 15:04"
 	mergeableConflicting        = "CONFLICTING"
+	noChecksHeader              = "## No Checks"
 )
 
 type terminalDetails struct {
@@ -114,7 +115,7 @@ type pr struct {
 	Author         struct {
 		Login string
 	}
-	Url       string
+	URL       string
 	Additions int
 	Deletions int
 	Reviews   struct {
@@ -185,7 +186,7 @@ type prDetails struct {
 		Nodes []struct {
 			Number int
 			Title  string
-			Url    string
+			URL    string
 		}
 	} `graphql:"closingIssuesReferences (first: $issuesCount)"`
 	Participants struct {
@@ -276,7 +277,7 @@ type prReviewComment struct {
 	Outdated  bool
 	DiffHunk  string
 	Path      string
-	Url       string
+	URL       string
 }
 
 type prSearchQuery struct {
@@ -301,7 +302,7 @@ type prDetailsQuery struct {
 type prTLItem struct {
 	Type              string `graphql:"type: __typename"`
 	PullRequestCommit struct {
-		Url    string
+		URL    string
 		Commit struct {
 			CommittedDate   time.Time
 			MessageHeadline string
@@ -323,7 +324,7 @@ type prTLItem struct {
 		}
 		AfterCommit struct {
 			AbbreviatedOid  string
-			Url             string
+			URL             string
 			MessageHeadline string
 		}
 	} `graphql:"... on HeadRefForcePushedEvent"`
@@ -345,7 +346,7 @@ type prTLItem struct {
 		}
 	} `graphql:"... on ReviewRequestedEvent"`
 	PullRequestReview struct {
-		Url       string
+		URL       string
 		CreatedAt time.Time
 		State     string
 		Body      string
@@ -359,7 +360,7 @@ type prTLItem struct {
 	} `graphql:"... on PullRequestReview"`
 	MergedEvent struct {
 		CreatedAt   time.Time
-		Url         string
+		URL         string
 		MergeCommit struct {
 			MessageHeadline string
 		} `graphql:"mergeCommit: commit"`
@@ -552,13 +553,13 @@ func (pr prDetails) Description() string {
 
 func (pr prDetails) Checks() string {
 	if len(pr.LastCommit.Nodes) == 0 {
-		return "## No Checks"
+		return noChecksHeader
 	}
 	if pr.LastCommit.Nodes[0].Commit.StatusCheckRollup == nil {
-		return "## No Checks"
+		return noChecksHeader
 	}
 	if len(pr.LastCommit.Nodes[0].Commit.StatusCheckRollup.Contexts.Nodes) == 0 {
-		return "## No Checks"
+		return noChecksHeader
 	}
 
 	var checks []string
@@ -599,7 +600,7 @@ func (pr prDetails) Checks() string {
 	}
 
 	if len(checks) == 0 {
-		return "## No Checks"
+		return noChecksHeader
 	}
 
 	return fmt.Sprintf(`
@@ -616,7 +617,7 @@ func (pr prDetails) Checks() string {
 func (pr prDetails) References() string {
 	issues := make([]string, len(pr.IssueReferences.Nodes))
 	for i, iss := range pr.IssueReferences.Nodes {
-		issues[i] = fmt.Sprintf("- `#%d`: %s (%s)", iss.Number, iss.Title, iss.Url)
+		issues[i] = fmt.Sprintf("- `#%d`: %s (%s)", iss.Number, iss.Title, iss.URL)
 	}
 	return fmt.Sprintf(`
 ## Referenced by
@@ -676,7 +677,6 @@ func (pr prDetails) CommitsList() string {
 }
 
 func (pr prDetails) CommentsList() string {
-
 	comments := make([]string, len(pr.Comments.Nodes))
 	for i, c := range pr.Comments.Nodes {
 		comments[i] = fmt.Sprintf("`@%s` (%s):\n\n%s", c.Author.Login, humanize.Time(c.UpdatedAt), c.Body)
@@ -721,6 +721,7 @@ func (prRes prResult) FilterValue() string {
 func (ir prTLItemResult) Title() string {
 	return ir.title
 }
+
 func (ir prTLItemResult) Description() string {
 	return ir.description
 }

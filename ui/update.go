@@ -16,6 +16,7 @@ import (
 const (
 	useHighPerformanceRenderer = false
 	viewPortMoveLineCount      = 5
+	couldntGetPRDetailsMsg     = "Couldn't get repo/pr details. Inform @dhth on Github."
 )
 
 var (
@@ -25,7 +26,7 @@ var (
 	ErrPRDetailsNotCached = errors.New("PR details were not saved")
 )
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 	m.message = ""
@@ -79,7 +80,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				case QueryMode:
 					cmds = append(cmds, fetchPRSFromQuery(m.ghClient, *m.config.Query, m.config.PRCount))
 				}
-				m.prsList.Title = "fetching PRs..."
+				m.prsList.Title = fetchingPRsTitle
 				m.prsList.Styles.Title = m.prsList.Styles.Title.Background(lipgloss.Color(fetchingColor))
 
 			case prTLListView:
@@ -112,7 +113,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case prListView:
 				setTlCmd, ok := m.setTL()
 				if !ok {
-					m.message = "Could't get repo/pr details. Inform @dhth on github."
+					m.message = couldntGetPRDetailsMsg
 				} else {
 					if setTlCmd != nil {
 						cmds = append(cmds, setTlCmd)
@@ -290,7 +291,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					break
 				}
 
-				cmds = append(cmds, openURLInBrowser(pr.pr.Url))
+				cmds = append(cmds, openURLInBrowser(pr.pr.URL))
 			case prTLListView, prTLItemDetailView:
 				item, ok := m.prTLList.SelectedItem().(*prTLItemResult)
 				if !ok {
@@ -299,18 +300,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 				switch item.item.Type {
 				case tlItemPRCommit:
-					cmds = append(cmds, openURLInBrowser(item.item.PullRequestCommit.Url))
+					cmds = append(cmds, openURLInBrowser(item.item.PullRequestCommit.URL))
 				case tlItemHeadRefForcePushed:
-					cmds = append(cmds, openURLInBrowser(item.item.HeadRefForcePushed.AfterCommit.Url))
+					cmds = append(cmds, openURLInBrowser(item.item.HeadRefForcePushed.AfterCommit.URL))
 				case tlItemPRReview:
-					cmds = append(cmds, openURLInBrowser(item.item.PullRequestReview.Url))
+					cmds = append(cmds, openURLInBrowser(item.item.PullRequestReview.URL))
 				case tlItemMergedEvent:
-					cmds = append(cmds, openURLInBrowser(item.item.MergedEvent.Url))
+					cmds = append(cmds, openURLInBrowser(item.item.MergedEvent.URL))
 				}
 			}
 
 		case "ctrl+d":
-			if m.activePane != prListView && m.activePane != prTLListView && m.activePane != prTLItemDetailView {
+			if m.activePane != prListView && m.activePane != prTLListView {
 				break
 			}
 
@@ -509,7 +510,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						break
 					}
 
-					nextSection += 1
+					nextSection++
 				}
 
 				if !nextSectionFound {
@@ -607,7 +608,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						break
 					}
 
-					prevSection -= 1
+					prevSection--
 				}
 
 				m.setPRDetailsContent(prDetails, PRDetailsSectionList[prevSection])
@@ -741,7 +742,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.message = "Something went horribly wrong. Let @dhth know about this failure."
 		} else {
 			m.repoChosen = true
-			m.prsList.Title = "fetching PRs..."
+			m.prsList.Title = fetchingPRsTitle
 			m.prsList.Styles.Title = m.prsList.Styles.Title.Background(lipgloss.Color(fetchingColor))
 			m.repoOwner = repoDetails[0]
 			m.repoName = repoDetails[1]
@@ -948,7 +949,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m *model) setTL() (tea.Cmd, bool) {
+func (m *Model) setTL() (tea.Cmd, bool) {
 	var cmd tea.Cmd
 	var repoOwner, repoName string
 	var prNumber int

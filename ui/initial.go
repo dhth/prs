@@ -6,8 +6,11 @@ import (
 	ghapi "github.com/cli/go-gh/v2/pkg/api"
 )
 
-func InitialModel(ghClient *ghapi.GraphQLClient, config Config, mode Mode) model {
+const (
+	fetchingPRsTitle = "fetching PRs..."
+)
 
+func InitialModel(ghClient *ghapi.GraphQLClient, config Config, mode Mode) Model {
 	prListDel := newPRListItemDel()
 	prTLListDel := newPRTLListItemDel()
 
@@ -16,7 +19,7 @@ func InitialModel(ghClient *ghapi.GraphQLClient, config Config, mode Mode) model
 
 	prDetailsCurSectionCache := make(map[string]uint)
 
-	m := model{
+	m := Model{
 		mode:                     mode,
 		config:                   config,
 		ghClient:                 ghClient,
@@ -53,7 +56,7 @@ func InitialModel(ghClient *ghapi.GraphQLClient, config Config, mode Mode) model
 		m.activePane = prListView
 	}
 
-	m.prsList.Title = "fetching PRs..."
+	m.prsList.Title = fetchingPRsTitle
 	m.prsList.SetStatusBarItemName("PR", "PRs")
 	m.prsList.DisableQuitKeybindings()
 	m.prsList.SetShowHelp(false)

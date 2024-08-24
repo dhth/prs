@@ -18,7 +18,7 @@ func getPRDataFromQuery(ghClient *ghapi.GraphQLClient, queryStr string, prCount 
 	if err != nil {
 		return nil, err
 	}
-	var prs []pr
+	var prs []pr //nolint:prealloc
 	for _, edge := range query.Search.Edges {
 		if edge.Node.Type != "PullRequest" {
 			continue

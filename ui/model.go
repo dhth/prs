@@ -29,7 +29,7 @@ const (
 	RepoMode
 )
 
-type model struct {
+type Model struct {
 	mode                     Mode
 	config                   Config
 	ghClient                 *ghapi.GraphQLClient
@@ -62,7 +62,7 @@ type model struct {
 	prRevCurCmtNum           uint
 }
 
-func (m model) Init() tea.Cmd {
+func (m Model) Init() tea.Cmd {
 	var cmds []tea.Cmd
 	cmds = append(cmds, hideHelp(time.Minute*1))
 

@@ -1,13 +1,13 @@
 package main
 
 import (
-	"github.com/dhth/prs/cmd"
+	"os"
 	"runtime/debug"
+
+	"github.com/dhth/prs/cmd"
 )
 
-var (
-	version = "dev"
-)
+var version = "dev"
 
 func main() {
 	v := version
@@ -17,5 +17,8 @@ func main() {
 			v = info.Main.Version
 		}
 	}
-	cmd.Execute(v)
+	err := cmd.Execute(v)
+	if err != nil {
+		os.Exit(1)
+	}
 }

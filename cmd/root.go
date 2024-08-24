@@ -21,7 +21,7 @@ const (
 	envPrefix          = "PRS"
 	author             = "@dhth"
 	projectHomePage    = "https://github.com/dhth/prs"
-	issuesUrl          = "https://github.com/dhth/prs/issues"
+	issuesURL          = "https://github.com/dhth/prs/issues"
 	configFileName     = "prs/prs.yml"
 	defaultSearchQuery = "type:pr author:@me sort:updated-desc state:open"
 	defaultPRNum       = 20
@@ -29,24 +29,45 @@ const (
 )
 
 var (
-	errModeIncorrect         = errors.New("incorrect mode provided")
-	errConfigFileDoesntExist = errors.New("config file does not exist")
-	errNoReposProvided       = errors.New("no repos were provided")
+	errCouldntGetHomeDir        = errors.New("couldn't get home directory")
+	errCouldntGetConfigDir      = errors.New("couldn't get config directory")
+	errModeIncorrect            = errors.New("incorrect mode provided")
+	errConfigFileDoesntExist    = errors.New("config file does not exist")
+	errNoReposProvided          = errors.New("no repos were provided")
+	errIncorrectRepoProvided    = errors.New("incorrect repo provided")
+	errCouldntSetupGithubClient = errors.New("couldn't set up a Github Client")
 )
 
-func Execute(version string) {
-	rootCmd, err := NewRootCommand(version)
+var reportIssueMsg = fmt.Sprintf("Let %s know about this error via %s.", author, issuesURL)
 
+func Execute(version string) error {
+	rootCmd, err := NewRootCommand(version)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %s\n", err)
-		os.Exit(1)
+		fmt.Printf("Error: %s\n", err.Error())
+		switch {
+		case errors.Is(err, errCouldntGetHomeDir), errors.Is(err, errCouldntGetConfigDir):
+			fmt.Printf(`
+This is a fatal error; use --config-path to specify config file path manually.
+%s
+`, reportIssueMsg)
+		}
+		return err
 	}
 
-	_ = rootCmd.Execute()
+	err = rootCmd.Execute()
+
+	switch {
+	case errors.Is(err, errCouldntSetupGithubClient):
+		fmt.Printf(`
+If the error is due to misconfigured authentication, you can fix that by either of the following:
+- Provide a valid Github token via $GH_TOKEN
+- Have an authenticated instance of gh (https://github.com/cli/cli) available
+`)
+	}
+	return err
 }
 
 func NewRootCommand(version string) (*cobra.Command, error) {
-
 	var (
 		configFilePath string
 		configPathFull string
@@ -84,7 +105,7 @@ Project home page: %s
 		Args:         cobra.MaximumNArgs(0),
 		SilenceUsage: true,
 		Version:      version,
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 			configPathFull = expandTilde(configFilePath)
 
 			if filepath.Ext(configPathFull) != ".yml" {
@@ -122,7 +143,7 @@ Project home page: %s
 			if mode == ui.RepoMode {
 				var reposToUse []string
 				// pretty ugly hack to get around the fact that
-				// v.GetStringSlice("repos") always seems to prioritise the config file
+				// v.GetStringSlice("repos") always seems to prioritize the config file
 				if len(repoStrs) > 0 && len(repoStrs[0]) > 0 && !strings.HasPrefix(repoStrs[0], "[") {
 					reposToUse = repoStrs
 				} else {
@@ -137,7 +158,7 @@ Project home page: %s
 					repoEls := strings.Split(r, "/")
 					// TODO: there can be more validations done here, maybe regex based
 					if len(repoEls) != 2 {
-						return fmt.Errorf("Incorrect repo provided: %s", r)
+						return fmt.Errorf("%w: %s", errIncorrectRepoProvided, r)
 					}
 
 					repos = append(repos, ui.Repo{
@@ -155,18 +176,11 @@ Project home page: %s
 
 			ghClient, err = ghapi.NewGraphQLClient(opts)
 			if err != nil {
-				return fmt.Errorf(`Couldn't set up a Github client.
-
-If the error is due to misconfigured authentication, you can fix that by either of the following:
-- Provide a valid Github token via $GH_TOKEN
-- Have an authenticated instance of gh (https://github.com/cli/cli) available
-
-Underlying error: %s`, err.Error())
+				return fmt.Errorf("%w: %s", errCouldntSetupGithubClient, err.Error())
 			}
 			return nil
 		},
-		RunE: func(cmd *cobra.Command, args []string) error {
-
+		RunE: func(_ *cobra.Command, _ []string) error {
 			config := ui.Config{
 				PRCount: prNum,
 				Repos:   repos,
@@ -181,11 +195,7 @@ Underlying error: %s`, err.Error())
 	ros := runtime.GOOS
 	userCfgDir, err := os.UserConfigDir()
 	if err != nil {
-		return nil, fmt.Errorf(`Couldn't get your default config directory. This is a fatal error;
-use --config-path to specify config file path manually.
-Let %s know about this via %s.
-
-Error: %s`, author, issuesUrl, err)
+		return nil, fmt.Errorf("%w: %s", errCouldntGetConfigDir, err.Error())
 	}
 
 	var defaultConfigFilePath string
@@ -196,11 +206,7 @@ Error: %s`, author, issuesUrl, err)
 		// to use ~/.config instead of $HOME/Library/Application Support
 		hd, err := os.UserHomeDir()
 		if err != nil {
-			return nil, fmt.Errorf(`Couldn't get your home directory. This is a fatal error;
-use --config-path to specify config file path manually
-Let %s know about this via %s.
-
-Error: %s`, author, issuesUrl, err)
+			return nil, fmt.Errorf("%w: %s", errCouldntGetHomeDir, err.Error())
 		}
 		defaultConfigFilePath = filepath.Join(hd, ".config", configFileName)
 	}
@@ -223,11 +229,9 @@ func initializeConfig(cmd *cobra.Command, configFile string) (*viper.Viper, erro
 	v.SetConfigType("yaml")
 	v.AddConfigPath(filepath.Dir(configFile))
 
-	var err error
-	if err = v.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			return v, err
-		}
+	err := v.ReadInConfig()
+	if err != nil && !errors.As(err, &viper.ConfigFileNotFoundError{}) {
+		return v, err
 	}
 
 	v.SetEnvPrefix(envPrefix)
@@ -245,7 +249,6 @@ func initializeConfig(cmd *cobra.Command, configFile string) (*viper.Viper, erro
 func bindFlags(cmd *cobra.Command, v *viper.Viper) error {
 	var err error
 	cmd.Flags().VisitAll(func(f *pflag.Flag) {
-
 		if !f.Changed && v.IsSet(f.Name) {
 			val := v.Get(f.Name)
 			fErr := cmd.Flags().Set(f.Name, fmt.Sprintf("%v", val))

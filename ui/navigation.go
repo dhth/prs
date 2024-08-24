@@ -7,9 +7,12 @@ import (
 
 const (
 	maxCommentsForNavIndicator = 8
+	disabledSectionMarker      = "◌"
+	inactiveSectionMarker      = "◯"
+	activeSectionMarker        = "●"
 )
 
-func (m *model) setPRDetailsContent(prDetails prDetails, section PRDetailSection) {
+func (m *Model) setPRDetailsContent(prDetails prDetails, section PRDetailSection) {
 	content := fmt.Sprintf(`# %s (%s/%s/pull/%d)
 `, prDetails.PRTitle, prDetails.Repository.Owner.Login, prDetails.Repository.Name, prDetails.Number,
 	)
@@ -45,39 +48,39 @@ func (m *model) setPRDetailsContent(prDetails prDetails, section PRDetailSection
 
 	sections := make([]string, len(PRDetailsSectionList))
 	for i := 0; i < len(PRDetailsSectionList); i++ {
-		sections[i] = "◯"
+		sections[i] = inactiveSectionMarker
 	}
 
 	if prDetails.Body == "" {
-		sections[PRDescription] = "◌"
+		sections[PRDescription] = disabledSectionMarker
 	}
 	// not foolproof, but should work in most cases
 	// func (pr prDetails) Checks() will return with an appropriate message in
 	// that case
 	if !(len(prDetails.LastCommit.Nodes) > 0 && prDetails.LastCommit.Nodes[0].Commit.StatusCheckRollup != nil) {
-		sections[PRChecks] = "◌"
+		sections[PRChecks] = disabledSectionMarker
 	}
 	if len(prDetails.IssueReferences.Nodes) == 0 {
-		sections[PRReferences] = "◌"
+		sections[PRReferences] = disabledSectionMarker
 	}
 	if len(prDetails.Files.Nodes) == 0 {
-		sections[PRFilesChanged] = "◌"
+		sections[PRFilesChanged] = disabledSectionMarker
 	}
 	if len(prDetails.Commits.Nodes) == 0 {
-		sections[PRCommits] = "◌"
+		sections[PRCommits] = disabledSectionMarker
 	}
 	if len(prDetails.Comments.Nodes) == 0 {
-		sections[PRComments] = "◌"
+		sections[PRComments] = disabledSectionMarker
 	}
 
-	sections[section] = "●"
+	sections[section] = activeSectionMarker
 
 	m.prDetailsTitle = fmt.Sprintf("PR Details%s", "  "+strings.Join(sections, " "))
 
 	m.prDetailsVP.GotoTop()
 }
 
-func (m *model) GoToPRDetailSection(section uint) {
+func (m *Model) GoToPRDetailSection(section uint) {
 	if m.prDetailsCurrentSection == section {
 		return
 	}
@@ -121,7 +124,7 @@ func (m *model) GoToPRDetailSection(section uint) {
 	m.prDetailsCurrentSection = section
 }
 
-func (m *model) setPRReviewCmt(tlItem *prTLItem, commentNum uint) {
+func (m *Model) setPRReviewCmt(tlItem *prTLItem, commentNum uint) {
 	revCmts := tlItem.PullRequestReview.Comments.Nodes
 	var sectionsStr string
 
@@ -130,9 +133,9 @@ func (m *model) setPRReviewCmt(tlItem *prTLItem, commentNum uint) {
 	} else if len(revCmts) > 1 {
 		sections := make([]string, len(revCmts))
 		for i := 0; i < len(revCmts); i++ {
-			sections[i] = "◯"
+			sections[i] = inactiveSectionMarker
 		}
-		sections[commentNum] = "●"
+		sections[commentNum] = activeSectionMarker
 		sectionsStr = "  " + strings.Join(sections, " ")
 	}
 
