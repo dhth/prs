@@ -1,0 +1,22 @@
+name: lint-yml
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "**.yml"
+  pull_request:
+    paths:
+      - "**.yml"
+
+jobs:
+  lint-yml:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get yamlfmt
+        run: |
+          LATEST_VERSION=$(curl -s https://api.github.com/repos/google/yamlfmt/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/' | sed 's/^v//')
+          ./.github/scripts/get-yamlfmt.sh "Linux" "x86_64" "$LATEST_VERSION"
+      - name: Run yamlfmt
+        run: ./yamlfmt -lint -quiet $(find . -name '*.yml')
