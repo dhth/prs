@@ -10,7 +10,7 @@ on:
       - ".github/workflows/*.yml"
 
 env:
-  GO_VERSION: '1.23.0'
+  GO_VERSION: '1.23.2'
 
 jobs:
   lint:
@@ -24,4 +24,4 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
-          version: v1.60
+          version: v1.61
