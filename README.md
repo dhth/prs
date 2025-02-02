@@ -1,7 +1,9 @@
 # prs
 
-✨ Overview
----
+[![Build Workflow Status](https://img.shields.io/github/actions/workflow/status/dhth/prs/build.yml?style=flat-square)](https://github.com/dhth/prs/actions/workflows/build.yml)
+[![Vulncheck Workflow Status](https://img.shields.io/github/actions/workflow/status/dhth/prs/vulncheck.yml?style=flat-square&label=vulncheck)](https://github.com/dhth/prs/actions/workflows/vulncheck.yml)
+[![Latest Release](https://img.shields.io/github/release/dhth/prs.svg?style=flat-square)](https://github.com/dhth/prs/releases/latest)
+[![Commits Since Latest Release](https://img.shields.io/github/commits-since/dhth/prs/latest?style=flat-square)](https://github.com/dhth/prs/releases)
 
 `prs` lets you stay updated on pull requests from your terminal.
 
