@@ -14,9 +14,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Get yamlfmt
-        run: |
-          LATEST_VERSION=$(curl -s https://api.github.com/repos/google/yamlfmt/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/' | sed 's/^v//')
-          ./.github/scripts/get-yamlfmt.sh "Linux" "x86_64" "$LATEST_VERSION"
+      - name: Install yamlfmt
+        uses: jaxxstorm/action-install-gh-release@6096f2a2bbfee498ced520b6922ac2c06e990ed2 # v2.1.0
+        with:
+          repo: google/yamlfmt
+          tag: v0.16.0
       - name: Run yamlfmt
-        run: ./yamlfmt -lint -quiet $(find . -name '*.yml')
+        run: yamlfmt -lint -quiet $(find . -name '*.yml')

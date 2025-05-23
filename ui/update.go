@@ -14,9 +14,8 @@ import (
 )
 
 const (
-	useHighPerformanceRenderer = false
-	viewPortMoveLineCount      = 5
-	couldntGetPRDetailsMsg     = "Couldn't get repo/pr details. Inform @dhth on Github."
+	viewPortMoveLineCount  = 5
+	couldntGetPRDetailsMsg = "Couldn't get repo/pr details. Inform @dhth on Github."
 )
 
 var (
@@ -220,17 +219,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if m.prTLItemDetailVP.AtBottom() {
 					break
 				}
-				m.prTLItemDetailVP.LineDown(viewPortMoveLineCount)
+				m.prTLItemDetailVP.ScrollDown(viewPortMoveLineCount)
 			case prDetailsView:
 				if m.prDetailsVP.AtBottom() {
 					break
 				}
-				m.prDetailsVP.LineDown(viewPortMoveLineCount)
+				m.prDetailsVP.ScrollUp(viewPortMoveLineCount)
 			case helpView:
 				if m.helpVP.AtBottom() {
 					break
 				}
-				m.helpVP.LineDown(viewPortMoveLineCount)
+				m.helpVP.ScrollDown(viewPortMoveLineCount)
 			}
 
 		case "k", "up":
@@ -243,17 +242,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if m.prTLItemDetailVP.AtTop() {
 					break
 				}
-				m.prTLItemDetailVP.LineUp(viewPortMoveLineCount)
+				m.prTLItemDetailVP.ScrollUp(viewPortMoveLineCount)
 			case prDetailsView:
 				if m.prDetailsVP.AtTop() {
 					break
 				}
-				m.prDetailsVP.LineUp(viewPortMoveLineCount)
+				m.prDetailsVP.ScrollUp(viewPortMoveLineCount)
 			case helpView:
 				if m.helpVP.AtTop() {
 					break
 				}
-				m.helpVP.LineUp(viewPortMoveLineCount)
+				m.helpVP.ScrollUp(viewPortMoveLineCount)
 			}
 
 		case "tab", "shift+tab":
@@ -671,11 +670,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if !m.prTLItemDetailVPReady {
 			m.prTLItemDetailVP = viewport.New(msg.Width-2, msg.Height-7)
-			m.prTLItemDetailVP.HighPerformanceRendering = useHighPerformanceRenderer
 			m.prTLItemDetailVPReady = true
 			m.prTLItemDetailVP.KeyMap.HalfPageDown.SetKeys("ctrl+d")
-			m.prTLItemDetailVP.KeyMap.Up.SetEnabled(false)
-			m.prTLItemDetailVP.KeyMap.Down.SetEnabled(false)
 		} else {
 			m.prTLItemDetailVP.Width = msg.Width - 2
 			m.prTLItemDetailVP.Height = msg.Height - 7
@@ -683,20 +679,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if !m.prDetailsVPReady {
 			m.prDetailsVP = viewport.New(msg.Width-2, msg.Height-7)
-			m.prDetailsVP.HighPerformanceRendering = useHighPerformanceRenderer
 			m.prDetailsVPReady = true
 			m.prDetailsVP.KeyMap.HalfPageDown.SetKeys("ctrl+d")
-			m.prDetailsVP.KeyMap.Up.SetEnabled(false)
-			m.prDetailsVP.KeyMap.Down.SetEnabled(false)
 		} else {
 			m.prDetailsVP.Width = msg.Width - 2
 			m.prDetailsVP.Height = msg.Height - 7
 		}
 
-		vpWrap := (msg.Width - 4)
-		if vpWrap > viewPortWrapUpperLimit {
-			vpWrap = viewPortWrapUpperLimit
-		}
+		vpWrap := min((msg.Width - 4), viewPortWrapUpperLimit)
 
 		m.mdRenderer, _ = utils.GetMarkDownRenderer(vpWrap)
 
@@ -714,10 +704,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if !m.helpVPReady {
 			m.helpVP = viewport.New(msg.Width, msg.Height-7)
-			m.helpVP.HighPerformanceRendering = useHighPerformanceRenderer
 			m.helpVP.SetContent(helpToRender)
-			m.helpVP.KeyMap.Up.SetEnabled(false)
-			m.helpVP.KeyMap.Down.SetEnabled(false)
 			m.helpVPReady = true
 		} else {
 			m.helpVP.Width = msg.Width
@@ -725,7 +712,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		prs := make([]list.Item, len(m.prCache))
-		for i := 0; i < len(m.prCache); i++ {
+		for i := range m.prCache {
 			m.prCache[i].title = getPRTitle(m.prCache[i].pr)
 			m.prCache[i].description = getPRDesc(m.prCache[i].pr, m.mode, m.terminalDetails)
 			prs[i] = m.prCache[i]
