@@ -47,7 +47,7 @@ func (m *Model) setPRDetailsContent(prDetails prDetails, section PRDetailSection
 	}
 
 	sections := make([]string, len(PRDetailsSectionList))
-	for i := 0; i < len(PRDetailsSectionList); i++ {
+	for i := range PRDetailsSectionList {
 		sections[i] = inactiveSectionMarker
 	}
 
@@ -57,6 +57,8 @@ func (m *Model) setPRDetailsContent(prDetails prDetails, section PRDetailSection
 	// not foolproof, but should work in most cases
 	// func (pr prDetails) Checks() will return with an appropriate message in
 	// that case
+
+	//nolint:staticcheck
 	if !(len(prDetails.LastCommit.Nodes) > 0 && prDetails.LastCommit.Nodes[0].Commit.StatusCheckRollup != nil) {
 		sections[PRChecks] = disabledSectionMarker
 	}
@@ -99,6 +101,7 @@ func (m *Model) GoToPRDetailSection(section uint) {
 			return
 		}
 	case 2:
+		//nolint:staticcheck
 		if !(len(prDetails.LastCommit.Nodes) > 0 && prDetails.LastCommit.Nodes[0].Commit.StatusCheckRollup != nil) {
 			return
 		}
@@ -132,7 +135,7 @@ func (m *Model) setPRReviewCmt(tlItem *prTLItem, commentNum uint) {
 		sectionsStr = fmt.Sprintf("%d/%d", commentNum+1, len(revCmts))
 	} else if len(revCmts) > 1 {
 		sections := make([]string, len(revCmts))
-		for i := 0; i < len(revCmts); i++ {
+		for i := range revCmts {
 			sections[i] = inactiveSectionMarker
 		}
 		sections[commentNum] = activeSectionMarker
