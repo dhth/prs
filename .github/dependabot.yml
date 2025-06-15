@@ -4,21 +4,15 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
-    reviewers:
-      - "dhth"
     labels:
       - "dependencies"
     commit-message:
-      prefix: "chore"
-      include: "scope"
+      prefix: "build"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "monthly"
-    reviewers:
-      - "dhth"
     labels:
       - "dependencies"
     commit-message:
-      prefix: "chore"
-      include: "scope"
+      prefix: "ci"
