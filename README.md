@@ -1,9 +1,12 @@
-# prs
-
-[![Build Workflow Status](https://img.shields.io/github/actions/workflow/status/dhth/prs/main.yml?style=flat-square)](https://github.com/dhth/prs/actions/workflows/main.yml)
-[![Vulncheck Workflow Status](https://img.shields.io/github/actions/workflow/status/dhth/prs/vulncheck.yml?style=flat-square&label=vulncheck)](https://github.com/dhth/prs/actions/workflows/vulncheck.yml)
-[![Latest Release](https://img.shields.io/github/release/dhth/prs.svg?style=flat-square)](https://github.com/dhth/prs/releases/latest)
-[![Commits Since Latest Release](https://img.shields.io/github/commits-since/dhth/prs/latest?style=flat-square)](https://github.com/dhth/prs/releases)
+<p align="center">
+  <h1 align="center">prs</h1>
+  <p align="center">
+    <a href="https://github.com/dhth/prs/actions/workflows/main.yml"><img alt="build status" src="https://img.shields.io/github/actions/workflow/status/dhth/prs/main.yml?style=flat-square"></a>
+    <a href="https://github.com/dhth/prs/actions/workflows/vulncheck.yml"><img alt="vuln check" src="https://img.shields.io/github/actions/workflow/status/dhth/prs/vulncheck.yml?style=flat-square&label=vulncheck"></a>
+    <a href="https://github.com/dhth/prs/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/release/dhth/prs.svg?style=flat-square"></a>
+    <a href="https://github.com/dhth/prs/releases/latest"><img alt="Commits since latest release" src="https://img.shields.io/github/commits-since/dhth/prs/latest?style=flat-square"></a>
+  </p>
+</p>
 
 `prs` lets you stay updated on pull requests from your terminal.
 
