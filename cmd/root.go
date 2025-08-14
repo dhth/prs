@@ -56,8 +56,7 @@ This is a fatal error; use --config-path to specify config file path manually.
 
 	err = rootCmd.Execute()
 
-	switch {
-	case errors.Is(err, errCouldntSetupGithubClient):
+	if errors.Is(err, errCouldntSetupGithubClient) {
 		fmt.Printf(`
 If the error is due to misconfigured authentication, you can fix that by either of the following:
 - Provide a valid Github token via $GH_TOKEN

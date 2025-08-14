@@ -6,12 +6,13 @@ import (
 
 	"github.com/charmbracelet/glamour"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGetGlamourStyleFromFile(t *testing.T) {
 	gotOption := glamour.WithStylesFromJSONBytes(glamourJSONBytes)
 	renderer, err := glamour.NewTermRenderer(gotOption)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, renderer)
 
 	_, err = renderer.Render("a")

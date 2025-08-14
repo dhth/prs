@@ -691,10 +691,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.mdRenderer, _ = utils.GetMarkDownRenderer(vpWrap)
 
 		helpToRender := helpStr
-		switch m.mdRenderer {
-		case nil:
-			break
-		default:
+		if m.mdRenderer != nil {
 			helpStrGl, err := m.mdRenderer.Render(helpStr)
 			if err != nil {
 				break
