@@ -8,11 +8,49 @@ linters:
     - prealloc
     - predeclared
     - revive
-    - rowserrcheck
-    - sqlclosecheck
+    - testifylint
+    - thelper
     - unconvert
     - usestdlibvars
     - wastedassign
+  settings:
+    revive:
+      rules:
+        - name: blank-imports
+        - name: context-as-argument
+          arguments:
+            - allowTypesBefore: '*testing.T'
+        - name: context-keys-type
+        - name: dot-imports
+        - name: empty-block
+        - name: error-naming
+        - name: error-return
+        - name: error-strings
+        - name: errorf
+        - name: exported
+        - name: if-return
+        - name: increment-decrement
+        - name: indent-error-flow
+        - name: package-comments
+        - name: range
+        - name: receiver-naming
+        - name: redefines-builtin-id
+        - name: superfluous-else
+        - name: time-naming
+        - name: unexported-return
+        - name: unreachable-code
+        - name: unused-parameter
+        - name: var-declaration
+        - name: unnecessary-stmt
+        - name: confusing-naming
+        - name: unused-receiver
+        - name: unhandled-error
+          arguments:
+            - fmt.Print
+            - fmt.Println
+            - fmt.Printf
+            - fmt.Fprintf
+            - fmt.Fprint
   exclusions:
     generated: lax
     presets:
