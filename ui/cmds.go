@@ -18,13 +18,20 @@ func chooseRepo(repo string) tea.Cmd {
 
 func openURLInBrowser(url string) tea.Cmd {
 	var openCmd string
+	var args []string
+
 	switch runtime.GOOS {
+	case "windows":
+		openCmd = "rundll32"
+		args = []string{"url.dll,FileProtocolHandler", url}
 	case "darwin":
 		openCmd = "open"
+		args = []string{url}
 	default:
 		openCmd = "xdg-open"
+		args = []string{url}
 	}
-	c := exec.Command(openCmd, url)
+	c := exec.Command(openCmd, args...)
 	err := c.Run()
 	return func() tea.Msg {
 		return urlOpenedinBrowserMsg{url: url, err: err}
