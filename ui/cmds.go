@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"errors"
 	"fmt"
 	"os/exec"
 	"runtime"
@@ -10,6 +11,8 @@ import (
 	ghapi "github.com/cli/go-gh/v2/pkg/api"
 )
 
+var errOSNotSupported = errors.New("OS not supported")
+
 func chooseRepo(repo string) tea.Cmd {
 	return func() tea.Msg {
 		return repoChosenMsg{repo}
@@ -17,23 +20,27 @@ func chooseRepo(repo string) tea.Cmd {
 }
 
 func openURLInBrowser(url string) tea.Cmd {
-	var openCmd string
-	var args []string
-
-	switch runtime.GOOS {
-	case "windows":
-		openCmd = "rundll32"
-		args = []string{"url.dll,FileProtocolHandler", url}
-	case "darwin":
-		openCmd = "open"
-		args = []string{url}
-	default:
-		openCmd = "xdg-open"
-		args = []string{url}
-	}
-	c := exec.Command(openCmd, args...)
-	err := c.Run()
 	return func() tea.Msg {
+		var openCmd string
+		var args []string
+
+		switch runtime.GOOS {
+		case "darwin":
+			openCmd = "open"
+			args = []string{url}
+		case "linux":
+			openCmd = "xdg-open"
+			args = []string{url}
+		case "windows":
+			openCmd = "rundll32"
+			args = []string{"url.dll,FileProtocolHandler", url}
+		default:
+			return urlOpenedinBrowserMsg{url: url, err: errOSNotSupported}
+		}
+
+		c := exec.Command(openCmd, args...)
+		err := c.Run()
+
 		return urlOpenedinBrowserMsg{url: url, err: err}
 	}
 }
