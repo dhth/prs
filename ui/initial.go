@@ -1,8 +1,8 @@
 package ui
 
 import (
-	"github.com/charmbracelet/bubbles/list"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/list"
+	"charm.land/lipgloss/v2"
 	ghapi "github.com/cli/go-gh/v2/pkg/api"
 )
 
