@@ -3,7 +3,8 @@ package ui
 import (
 	"fmt"
 
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 const (
@@ -11,7 +12,7 @@ const (
 	vpNotReadyMsg          = "Initializing..."
 )
 
-func (m Model) View() string {
+func (m Model) View() tea.View {
 	var content string
 	var footer string
 
@@ -68,9 +69,14 @@ func (m Model) View() string {
 	)
 	footer = footerStyle.Render(footerStr)
 
-	return lipgloss.JoinVertical(lipgloss.Left,
+	rendered := lipgloss.JoinVertical(lipgloss.Left,
 		content,
 		statusBar,
 		footer,
 	)
+
+	v := tea.NewView(rendered)
+	v.AltScreen = true
+
+	return v
 }

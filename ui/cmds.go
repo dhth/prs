@@ -7,7 +7,7 @@ import (
 	"runtime"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	ghapi "github.com/cli/go-gh/v2/pkg/api"
 )
 

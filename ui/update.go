@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/list"
-	"github.com/charmbracelet/bubbles/viewport"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/list"
+	"charm.land/bubbles/v2/viewport"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/dhth/prs/internal/utils"
 )
 
@@ -31,7 +31,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.message = ""
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "Q":
 			return m, tea.Quit
@@ -669,21 +669,27 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.prTLList.SetWidth(msg.Width - w)
 
 		if !m.prTLItemDetailVPReady {
-			m.prTLItemDetailVP = viewport.New(msg.Width-2, msg.Height-7)
+			m.prTLItemDetailVP = viewport.New(
+				viewport.WithWidth(msg.Width-2),
+				viewport.WithHeight(msg.Height-7),
+			)
 			m.prTLItemDetailVPReady = true
 			m.prTLItemDetailVP.KeyMap.HalfPageDown.SetKeys("ctrl+d")
 		} else {
-			m.prTLItemDetailVP.Width = msg.Width - 2
-			m.prTLItemDetailVP.Height = msg.Height - 7
+			m.prTLItemDetailVP.SetWidth(msg.Width - 2)
+			m.prTLItemDetailVP.SetHeight(msg.Height - 7)
 		}
 
 		if !m.prDetailsVPReady {
-			m.prDetailsVP = viewport.New(msg.Width-2, msg.Height-7)
+			m.prDetailsVP = viewport.New(
+				viewport.WithWidth(msg.Width-2),
+				viewport.WithHeight(msg.Height-7),
+			)
 			m.prDetailsVPReady = true
 			m.prDetailsVP.KeyMap.HalfPageDown.SetKeys("ctrl+d")
 		} else {
-			m.prDetailsVP.Width = msg.Width - 2
-			m.prDetailsVP.Height = msg.Height - 7
+			m.prDetailsVP.SetWidth(msg.Width - 2)
+			m.prDetailsVP.SetHeight(msg.Height - 7)
 		}
 
 		vpWrap := min((msg.Width - 4), viewPortWrapUpperLimit)
@@ -700,12 +706,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		if !m.helpVPReady {
-			m.helpVP = viewport.New(msg.Width, msg.Height-7)
+			m.helpVP = viewport.New(
+				viewport.WithWidth(msg.Width),
+				viewport.WithHeight(msg.Height-7),
+			)
 			m.helpVP.SetContent(helpToRender)
 			m.helpVPReady = true
 		} else {
-			m.helpVP.Width = msg.Width
-			m.helpVP.Height = msg.Height - 7
+			m.helpVP.SetWidth(msg.Width)
+			m.helpVP.SetHeight(msg.Height - 7)
 		}
 
 		prs := make([]list.Item, len(m.prCache))

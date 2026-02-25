@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	ghapi "github.com/cli/go-gh/v2/pkg/api"
 )
 
@@ -17,7 +17,7 @@ func RenderUI(ghClient *ghapi.GraphQLClient, config Config, mode Mode) error {
 		}
 		defer f.Close()
 	}
-	p := tea.NewProgram(InitialModel(ghClient, config, mode), tea.WithAltScreen())
+	p := tea.NewProgram(InitialModel(ghClient, config, mode))
 	_, err := p.Run()
 	return err
 }
