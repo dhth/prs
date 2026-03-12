@@ -10,7 +10,7 @@ import (
 func getPRDataFromQuery(ghClient *ghapi.GraphQLClient, queryStr string, prCount int) ([]pr, error) {
 	var query prSearchQuery
 
-	variables := map[string]interface{}{
+	variables := map[string]any{
 		"query": ghgql.String(queryStr),
 		"count": ghgql.Int(prCount),
 	}
@@ -31,7 +31,7 @@ func getPRDataFromQuery(ghClient *ghapi.GraphQLClient, queryStr string, prCount 
 func getPRMetadata(ghClient *ghapi.GraphQLClient, repoOwner string, repoName string, prNumber int) (prDetails, error) {
 	var query prDetailsQuery
 
-	variables := map[string]interface{}{
+	variables := map[string]any{
 		"repositoryOwner":          ghgql.String(repoOwner),
 		"repositoryName":           ghgql.String(repoName),
 		"pullRequestNumber":        ghgql.Int(prNumber),
@@ -57,7 +57,7 @@ func getPRMetadata(ghClient *ghapi.GraphQLClient, repoOwner string, repoName str
 func getPRTLData(ghClient *ghapi.GraphQLClient, repoOwner string, repoName string, prNumber int, tlItemsCount int) ([]prTLItem, error) {
 	var query prTLQuery
 
-	variables := map[string]interface{}{
+	variables := map[string]any{
 		"repositoryOwner":    ghgql.String(repoOwner),
 		"repositoryName":     ghgql.String(repoName),
 		"pullRequestNumber":  ghgql.Int(prNumber),
