@@ -1,6 +1,6 @@
 module github.com/dhth/prs
 
-go 1.26.1
+go 1.26.2
 
 require (
 	charm.land/bubbles/v2 v2.1.0
