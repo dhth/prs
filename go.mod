@@ -6,7 +6,7 @@ require (
 	charm.land/bubbles/v2 v2.1.0
 	charm.land/bubbletea/v2 v2.0.6
 	charm.land/lipgloss/v2 v2.0.3
-	github.com/charmbracelet/glamour v1.0.0
+	github.com/charmbracelet/glamour/v2 v2.0.0
 	github.com/cli/go-gh/v2 v2.13.0
 	github.com/cli/shurcooL-graphql v0.0.4
 	github.com/dustin/go-humanize v1.0.1
